@@ -129,7 +129,7 @@ const ClockWeatherCorner = ({
             {Math.round(temp)}
             {unit}
           </Text>
-          <AnimatedWeatherIcon code={weather.current.weathercode} size={32} />
+          <AnimatedWeatherIcon code={weather.current.weathercode} size={48} />
         </Stack>
         {showDetails && <WeatherDescription weatherOnly weatherCode={weather.current.weathercode} />}
       </Group>

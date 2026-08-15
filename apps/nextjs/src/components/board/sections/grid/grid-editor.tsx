@@ -943,12 +943,7 @@ const DndGridEntryComponent = ({
 
     const handlePointerDownCapture = (event: PointerEvent) => {
       if (!(event.target instanceof Element)) return;
-      const grip = event.target.closest("[data-grid-container-drag-handle]");
-      if (grip) {
-        const owner = grip.closest('.board-grid-entry[data-grid-item-type="section"]');
-        setIsSectionChromeActive(owner === shell);
-        return;
-      }
+      if (event.target.closest("[data-grid-container-drag-handle]")) return;
 
       const resizeHandle = event.target.closest(".board-grid-resize-handle");
       if (!resizeHandle || resizeHandle.parentElement !== shell) {
@@ -956,8 +951,20 @@ const DndGridEntryComponent = ({
       }
     };
 
+    const handlePointerUpCapture = (event: PointerEvent) => {
+      if (!(event.target instanceof Element)) return;
+      const grip = event.target.closest("[data-grid-container-drag-handle]");
+      if (!grip) return;
+      const owner = grip.closest('.board-grid-entry[data-grid-item-type="section"]');
+      setIsSectionChromeActive(owner === shell);
+    };
+
     shell.addEventListener("pointerdown", handlePointerDownCapture, { capture: true });
-    return () => shell.removeEventListener("pointerdown", handlePointerDownCapture, { capture: true });
+    shell.addEventListener("pointerup", handlePointerUpCapture, { capture: true });
+    return () => {
+      shell.removeEventListener("pointerdown", handlePointerDownCapture, { capture: true });
+      shell.removeEventListener("pointerup", handlePointerUpCapture, { capture: true });
+    };
   }, [placement.type]);
 
   return (
