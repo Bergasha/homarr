@@ -123,12 +123,14 @@ const ClockWeatherCorner = ({
       gap={showDetails ? 4 : 0}
       align="flex-start"
     >
-      <Group gap={4} wrap="nowrap">
-        <AnimatedWeatherIcon code={weather.current.weathercode} size={22} />
-        <Text className="clock-weather-corner-temp" size="xs" c="dimmed">
-          {Math.round(temp)}
-          {unit}
-        </Text>
+      <Group gap={4} wrap="nowrap" align="flex-start">
+        <Stack gap={2} align="center">
+          <Text className="clock-weather-corner-temp" size="xs" c="dimmed">
+            {Math.round(temp)}
+            {unit}
+          </Text>
+          <AnimatedWeatherIcon code={weather.current.weathercode} size={32} />
+        </Stack>
         {showDetails && <WeatherDescription weatherOnly weatherCode={weather.current.weathercode} />}
       </Group>
       {showDetails && (
