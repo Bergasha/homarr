@@ -23,9 +23,11 @@ export const WidgetHoverOverlay = ({ item, integrations }: WidgetHoverOverlayPro
   if (!isEditMode) return null;
 
   return (
-    <Suspense fallback={null}>
-      <LoadedWidgetHoverOverlay item={item} integrations={integrations} />
-    </Suspense>
+    <div className={classes.wrapper} data-board-widget-header>
+      <Suspense fallback={null}>
+        <LoadedWidgetHoverOverlay item={item} integrations={integrations} />
+      </Suspense>
+    </div>
   );
 };
 
@@ -41,30 +43,23 @@ const LoadedWidgetHoverOverlay = ({ item, integrations }: WidgetHoverOverlayProp
   );
 
   return (
-    <div className={classes.wrapper} data-board-widget-header>
-      <div className={classes.panel}>
-        <div className={classes.nameSection}>
-          <WidgetIcon size={14} stroke={1.75} className={classes.widgetIcon} />
-          <Text className={classes.name} title={displayName}>
-            {displayName}
-          </Text>
-        </div>
-
-        {connectedIntegrations.length > 0 && (
-          <Avatar.Group spacing="xs" className={classes.integrations}>
-            {connectedIntegrations.map((integration) => (
-              <Tooltip key={integration.id} label={integration.name} withArrow position="top">
-                <Avatar
-                  src={getIconUrl(integration.kind)}
-                  size={18}
-                  radius="sm"
-                  className={classes.integrationAvatar}
-                />
-              </Tooltip>
-            ))}
-          </Avatar.Group>
-        )}
+    <div className={classes.panel}>
+      <div className={classes.nameSection}>
+        <WidgetIcon size={14} stroke={1.75} className={classes.widgetIcon} />
+        <Text className={classes.name} title={displayName}>
+          {displayName}
+        </Text>
       </div>
+
+      {connectedIntegrations.length > 0 && (
+        <Avatar.Group spacing="xs" className={classes.integrations}>
+          {connectedIntegrations.map((integration) => (
+            <Tooltip key={integration.id} label={integration.name} withArrow position="top">
+              <Avatar src={getIconUrl(integration.kind)} size={18} radius="sm" className={classes.integrationAvatar} />
+            </Tooltip>
+          ))}
+        </Avatar.Group>
+      )}
     </div>
   );
 };

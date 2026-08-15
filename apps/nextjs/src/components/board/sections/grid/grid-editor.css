@@ -239,6 +239,19 @@ body[data-board-grid-interacting] .board-grid-resize-handle::after {
   top: 0;
   right: 0;
   cursor: nesw-resize;
+  clip-path: polygon(
+    evenodd,
+    0 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0 0,
+    12px 12px,
+    12px 36px,
+    36px 36px,
+    36px 12px,
+    12px 12px
+  );
 }
 
 .board-grid-resize-handle[data-grid-resize-handle="se"] {

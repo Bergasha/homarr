@@ -454,6 +454,18 @@ export const BoardGridEditorProvider = ({ children }: PropsWithChildren) => {
     clearInteraction();
   }, [announce, clearInteraction, t]);
 
+  useEffect(() => {
+    const handleInterruption = () => {
+      if (activeRef.current) cancelActiveInteraction();
+    };
+    window.addEventListener("blur", handleInterruption);
+    document.addEventListener("visibilitychange", handleInterruption);
+    return () => {
+      window.removeEventListener("blur", handleInterruption);
+      document.removeEventListener("visibilitychange", handleInterruption);
+    };
+  }, [cancelActiveInteraction]);
+
   const handleBeforeDragStart = useCallback(() => {
     const overlay = document.querySelector<HTMLElement>(".board-grid-drag-overlay[data-dnd-overlay]");
     const ancestorZoom = overlay ? getAncestorCssZoom(overlay) : 1;
