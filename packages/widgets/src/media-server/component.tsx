@@ -306,11 +306,11 @@ export default function MediaServerWidget({
                     <Table.Td>
                       <Group gap="xs" wrap="nowrap" w="100%">
                         <Avatar size={28} src={session.user?.profilePictureUrl} />
-                        <Stack gap={2} className={classes.cellContent}>
+                        <Stack gap={6} className={classes.cellContent}>
                           <Text size="xs" truncate>
                             {session.user?.username ?? t("items.unknownUser")}
                           </Text>
-                          <Text size="10px" c="dimmed" truncate>
+                          <Text size="10px" c="dimmed" truncate mt={2}>
                             {session.sessionName}
                           </Text>
                         </Stack>
@@ -329,28 +329,24 @@ export default function MediaServerWidget({
                   {columnVisibility.status && (
                     <Table.Td>
                       {currentlyPlaying && (
-                        <Stack gap={4} align="flex-start" w="100%" className={classes.cellContent}>
+                        <Group gap="xs" align="center" wrap="nowrap" w="100%" className={classes.cellContent}>
                           <Badge size="xs" variant="light" color={playbackStatusColorMap[status]}>
                             {t(`items.${status}` as never)}
                           </Badge>
-                          {(location ?? bitrateLabel) && (
-                            <Group gap={4} align="center" justify="space-between" wrap="nowrap" w="100%">
-                              <Group gap={4} align="center" wrap="nowrap">
-                                {location && (location === "lan" ? <IconWifi size={12} /> : <IconWorld size={12} />)}
-                                {location && (
-                                  <Text size="10px" c="dimmed" tt="uppercase">
-                                    {location}
-                                  </Text>
-                                )}
-                              </Group>
-                              {bitrateLabel && (
-                                <Text size="10px" c="dimmed" style={{ whiteSpace: "nowrap" }}>
-                                  {bitrateLabel}
-                                </Text>
-                              )}
+                          {location && (
+                            <Group gap={4} align="center" wrap="nowrap">
+                              {location === "lan" ? <IconWifi size={12} /> : <IconWorld size={12} />}
+                              <Text size="10px" c="dimmed" tt="uppercase">
+                                {location}
+                              </Text>
                             </Group>
                           )}
-                        </Stack>
+                          {bitrateLabel && (
+                            <Text size="10px" c="dimmed" style={{ whiteSpace: "nowrap" }}>
+                              {bitrateLabel}
+                            </Text>
+                          )}
+                        </Group>
                       )}
                     </Table.Td>
                   )}
