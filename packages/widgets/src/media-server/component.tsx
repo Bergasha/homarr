@@ -243,7 +243,7 @@ export default function MediaServerWidget({
         data-media-server-streams
         style={{ pointerEvents: isEditMode ? "none" : undefined }}
       >
-        <Table highlightOnHover={!isEditMode} layout="fixed" className="media-server-widget-table">
+        <Table stickyHeader highlightOnHover={!isEditMode} layout="fixed" className="media-server-widget-table">
           <Table.Thead>
             <Table.Tr>
               {columnVisibility.user && (
