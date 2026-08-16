@@ -310,7 +310,7 @@ export default function MediaServerWidget({
                           <Text size="xs" truncate style={{ position: "relative", zIndex: 0 }}>
                             {session.user?.username ?? t("items.unknownUser")}
                           </Text>
-                          <Text size="10px" c="dimmed" truncate mt={2} style={{ position: "relative", zIndex: 1 }}>
+                          <Text size="xs" c="dimmed" truncate mt={2} style={{ position: "relative", zIndex: 1 }}>
                             {session.sessionName}
                           </Text>
                         </Stack>
@@ -336,13 +336,13 @@ export default function MediaServerWidget({
                           {location && (
                             <Group gap={4} align="center" wrap="nowrap">
                               {location === "lan" ? <IconWifi size={12} /> : <IconWorld size={12} />}
-                              <Text size="10px" c="dimmed" tt="uppercase">
+                              <Text size="xs" c="dimmed" tt="uppercase">
                                 {location}
                               </Text>
                             </Group>
                           )}
                           {bitrateLabel && (
-                            <Text size="10px" c="dimmed" style={{ whiteSpace: "nowrap" }}>
+                            <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }}>
                               {bitrateLabel}
                             </Text>
                           )}
@@ -435,7 +435,7 @@ function CurrentlyPlaying({ item }: { item: StreamSession }) {
           {currentlyPlaying.name}
         </Text>
         {seasonEpisodeLabel && (
-          <Text size="10px" c="dimmed" style={{ flexShrink: 0 }}>
+          <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>
             {seasonEpisodeLabel}
           </Text>
         )}
