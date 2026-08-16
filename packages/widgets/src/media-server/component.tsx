@@ -423,7 +423,7 @@ function CurrentlyPlaying({ item }: { item: StreamSession }) {
   const seasonNumber = currentlyPlaying.seasonName?.match(/\d+/)?.[0];
   const episodeNumber = currentlyPlaying.episodeCount;
   const seasonEpisodeLabel =
-    currentlyPlaying.type === "tv" && seasonNumber !== undefined && episodeNumber !== undefined && episodeNumber !== null
+    seasonNumber !== undefined && episodeNumber !== undefined && episodeNumber !== null
       ? `S${seasonNumber.padStart(2, "0")} E${String(episodeNumber).padStart(2, "0")}`
       : null;
 
