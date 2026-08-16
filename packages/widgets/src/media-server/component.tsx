@@ -304,7 +304,7 @@ export default function MediaServerWidget({
                 >
                   {columnVisibility.user && (
                     <Table.Td>
-                      <Group gap="xs" wrap="nowrap">
+                      <Group gap="xs" wrap="nowrap" w="100%">
                         <Avatar size={28} src={session.user?.profilePictureUrl} />
                         <Stack gap={2} className={classes.cellContent}>
                           <Text size="xs" truncate>
@@ -329,7 +329,7 @@ export default function MediaServerWidget({
                   {columnVisibility.status && (
                     <Table.Td>
                       {currentlyPlaying && (
-                        <Stack gap={4} align="flex-start" className={classes.cellContent}>
+                        <Stack gap={4} align="flex-start" w="100%" className={classes.cellContent}>
                           <Badge size="xs" variant="light" color={playbackStatusColorMap[status]}>
                             {t(`items.${status}` as never)}
                           </Badge>
