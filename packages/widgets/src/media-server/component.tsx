@@ -307,10 +307,10 @@ export default function MediaServerWidget({
                       <Group gap="xs" wrap="nowrap" w="100%">
                         <Avatar size={28} src={session.user?.profilePictureUrl} />
                         <Stack gap={6} className={classes.cellContent}>
-                          <Text size="xs" truncate>
+                          <Text size="xs" truncate style={{ position: "relative", zIndex: 0 }}>
                             {session.user?.username ?? t("items.unknownUser")}
                           </Text>
-                          <Text size="10px" c="dimmed" truncate mt={2}>
+                          <Text size="10px" c="dimmed" truncate mt={2} style={{ position: "relative", zIndex: 1 }}>
                             {session.sessionName}
                           </Text>
                         </Stack>
