@@ -26,6 +26,7 @@
   padding-block: 8px;
   padding-inline: 8px;
   overflow: hidden;
+  vertical-align: top;
 }
 
 .tableViewport :global(th) {
