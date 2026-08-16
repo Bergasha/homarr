@@ -306,7 +306,7 @@ export default function MediaServerWidget({
                     <Table.Td>
                       <Group gap="xs" wrap="nowrap">
                         <Avatar size={28} src={session.user?.profilePictureUrl} />
-                        <Stack gap={0} className={classes.cellContent}>
+                        <Stack gap={2} className={classes.cellContent}>
                           <Text size="xs" truncate>
                             {session.user?.username ?? t("items.unknownUser")}
                           </Text>
@@ -426,7 +426,7 @@ function CurrentlyPlaying({ item }: { item: StreamSession }) {
     positionMs !== null && durationMs !== null ? Math.max(0, Math.round((durationMs - positionMs) / 60_000)) : null;
 
   return (
-    <Stack gap={4} style={{ minWidth: 0 }}>
+    <Stack gap={6} style={{ minWidth: 0 }}>
       <Group gap="xs" align="center" wrap="nowrap" style={{ minWidth: 0 }}>
         <Icon size={16} color={isPaused ? "var(--mantine-color-yellow-6)" : undefined} style={{ flexShrink: 0 }} />
         <Text size="xs" lineClamp={1} style={{ minWidth: 0 }}>

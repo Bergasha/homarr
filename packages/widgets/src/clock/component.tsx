@@ -125,11 +125,11 @@ const ClockWeatherCorner = ({
     >
       <Group gap={4} wrap="nowrap" align="flex-start">
         <Stack gap={2} align="center">
+          <AnimatedWeatherIcon code={weather.current.weathercode} size={48} />
           <Text className="clock-weather-corner-temp" size="xs" c="dimmed">
             {Math.round(temp)}
             {unit}
           </Text>
-          <AnimatedWeatherIcon code={weather.current.weathercode} size={48} />
         </Stack>
         {showDetails && <WeatherDescription weatherOnly weatherCode={weather.current.weathercode} />}
       </Group>
