@@ -394,7 +394,7 @@ export default function DockerWidget({
           wrap="nowrap"
         >
           <Group gap={4} wrap="nowrap">
-            <IconBrandDocker size={20} style={{ flexShrink: 0 }} />
+            <IconBrandDocker size="var(--mantine-font-size-xl)" style={{ flexShrink: 0 }} />
             <Text size="sm" truncate>
               {t("table.footer", { count: containers.length.toString() })}
             </Text>
@@ -490,7 +490,7 @@ function ContainerActionItems({
         {container.name}
       </Menu.Label>
       <Menu.Item
-        leftSection={<IconFileText size={14} />}
+        leftSection={<IconFileText size="var(--mantine-font-size-sm)" />}
         onClick={() => {
           handlers.onOpenLogs(container);
           onClose();
@@ -501,26 +501,26 @@ function ContainerActionItems({
       <Menu.Divider />
       <Menu.Item
         color={stateAction === "start" ? "green" : "red"}
-        leftSection={<StateIcon size={14} />}
+        leftSection={<StateIcon size="var(--mantine-font-size-sm)" />}
         onClick={() => invokeAction(stateAction)}
       >
         {t(`${stateAction}.label`)}
       </Menu.Item>
-      <Menu.Item color="orange" leftSection={<IconRotateClockwise size={14} />} onClick={() => invokeAction("restart")}>
+      <Menu.Item color="orange" leftSection={<IconRotateClockwise size="var(--mantine-font-size-sm)" />} onClick={() => invokeAction("restart")}>
         {t("restart.label")}
       </Menu.Item>
       {!confirmRemove ? (
-        <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => setConfirmRemove(true)}>
+        <Menu.Item color="red" leftSection={<IconTrash size="var(--mantine-font-size-sm)" />} onClick={() => setConfirmRemove(true)}>
           {t("remove.label")}
         </Menu.Item>
       ) : (
-        <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => invokeAction("remove")}>
+        <Menu.Item color="red" leftSection={<IconTrash size="var(--mantine-font-size-sm)" />} onClick={() => invokeAction("remove")}>
           {t("remove.confirm")}
         </Menu.Item>
       )}
       <Menu.Divider />
       <Menu.Item
-        leftSection={<IconCategoryPlus size={14} />}
+        leftSection={<IconCategoryPlus size="var(--mantine-font-size-sm)" />}
         onClick={() => {
           handlers.onAddToHomarr(container);
           onClose();
