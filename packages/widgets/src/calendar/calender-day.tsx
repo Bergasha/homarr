@@ -85,7 +85,16 @@ const NotificationIndicator = ({ events, isSmall }: NotificationIndicatorProps) 
       justify={"center"}
     >
       {notificationEvents.map((notificationEvent) => {
-        return <Box key={notificationEvent} bg={notificationEvent} h={4} w={4} p={0} style={{ borderRadius: 999 }} />;
+        return (
+          <Box
+            key={notificationEvent}
+            bg={notificationEvent}
+            h={isSmall ? 5 : 7}
+            w={isSmall ? 5 : 7}
+            p={0}
+            style={{ borderRadius: 999 }}
+          />
+        );
       })}
     </Flex>
   );
