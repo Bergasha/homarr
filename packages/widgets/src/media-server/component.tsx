@@ -124,7 +124,7 @@ function StreamTableHeader({
           <Text component="span" size="xs" fw={600} truncate>
             {label}
           </Text>
-          <SortIcon size={13} aria-hidden />
+          <SortIcon size={14} aria-hidden />
         </UnstyledButton>
       ) : (
         <Text size="xs" fw={600} truncate>
@@ -336,7 +336,7 @@ export default function MediaServerWidget({
                           {(location ?? bitrateLabel) && (
                             <Group gap={4} align="center" justify="space-between" wrap="nowrap" w="100%">
                               <Group gap={4} align="center" wrap="nowrap">
-                                {location && (location === "lan" ? <IconWifi size={12} /> : <IconWorld size={12} />)}
+                                {location && (location === "lan" ? <IconWifi size={16} /> : <IconWorld size={16} />)}
                                 {location && (
                                   <Text size="xs" c="dimmed" tt="uppercase">
                                     {location}
