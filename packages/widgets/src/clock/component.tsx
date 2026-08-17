@@ -16,6 +16,7 @@ import { WidgetQueryErrorIndicator } from "../common/query-state-indicator";
 import type { WidgetComponentProps } from "../definition";
 import { AnimatedWeatherIcon } from "../weather/animated-icon";
 import { WeatherDescription } from "../weather/icon";
+import { getWeatherHeroIconSize } from "../weather/layout";
 
 dayjs.extend(advancedFormat);
 dayjs.extend(utc);
@@ -45,6 +46,7 @@ export default function ClockWidget({ options, width, height, displayMode }: Wid
           locationName={options.weatherLocation.name}
           isFahrenheit={options.isWeatherFormatFahrenheit}
           showDetails={isAdvanced}
+          iconSize={getWeatherHeroIconSize(width, height)}
         />
       )}
       <Stack className="clock-text-stack" h="100%" align="center" justify="center" gap={sizing}>
@@ -79,6 +81,7 @@ interface ClockWeatherCornerProps {
   locationName: string;
   isFahrenheit: boolean;
   showDetails: boolean;
+  iconSize: number;
 }
 
 const ClockWeatherCorner = ({
@@ -87,6 +90,7 @@ const ClockWeatherCorner = ({
   locationName,
   isFahrenheit,
   showDetails,
+  iconSize,
 }: ClockWeatherCornerProps) => {
   const t = useI18n();
   const tCommon = useScopedI18n("common");
@@ -125,7 +129,7 @@ const ClockWeatherCorner = ({
     >
       <Group gap={4} wrap="nowrap" align="flex-start">
         <Stack gap={2} align="center">
-          <AnimatedWeatherIcon code={weather.current.weathercode} size={48} />
+          <AnimatedWeatherIcon code={weather.current.weathercode} size={iconSize} />
           <Text className="clock-weather-corner-temp" size="xs" c="dimmed">
             {Math.round(temp)}
             {unit}

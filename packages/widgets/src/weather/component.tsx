@@ -27,6 +27,7 @@ import { WidgetQueryErrorIndicator, WidgetQueryLoadingState } from "../common/qu
 import type { WidgetComponentProps } from "../definition";
 import { AnimatedWeatherIcon } from "./animated-icon";
 import { formatWeatherDate, WeatherDescription } from "./icon";
+import { getWeatherHeroIconSize } from "./layout";
 import classes from "./component.module.css";
 
 export default function WeatherWidget({
@@ -47,9 +48,11 @@ export default function WeatherWidget({
   if (isInitialWidgetQueryPending(weatherQuery)) return <WidgetQueryLoadingState />;
   if (!weather) return <WidgetEmptyState />;
 
+  const heroIconSize = getWeatherHeroIconSize(width, height);
+
   const content =
     displayMode === "advanced" ? (
-      <AdvancedWeather weather={weather} options={options} />
+      <AdvancedWeather weather={weather} options={options} heroIconSize={heroIconSize} />
     ) : (
       <Stack
         align="center"
@@ -65,9 +68,10 @@ export default function WeatherWidget({
             options={options}
             isEditMode={isEditMode}
             maxDays={getVisibleForecastDays(options.forecastDayCount, width, height)}
+            heroIconSize={heroIconSize}
           />
         ) : (
-          <DailyWeather weather={weather} options={options} isEditMode={isEditMode} />
+          <DailyWeather weather={weather} options={options} isEditMode={isEditMode} heroIconSize={heroIconSize} />
         )}
       </Stack>
     );
@@ -86,13 +90,14 @@ export default function WeatherWidget({
 
 interface WeatherProps extends Pick<WidgetComponentProps<"weather">, "options"> {
   weather: NonNullable<RouterOutputs["widget"]["weather"]["atLocation"]>;
+  heroIconSize: number;
 }
 
 interface CompactWeatherProps extends WeatherProps {
   isEditMode: boolean;
 }
 
-const AdvancedWeather = ({ options, weather }: WeatherProps) => {
+const AdvancedWeather = ({ options, weather, heroIconSize }: WeatherProps) => {
   const forecastHeadingId = useId();
   const locale = useCurrentIntlLocale();
   const t = useScopedI18n("widget.weather");
@@ -102,7 +107,7 @@ const AdvancedWeather = ({ options, weather }: WeatherProps) => {
     <Stack h="100%" w="100%" gap="sm" p="md" style={{ overflow: "hidden" }}>
       <Group justify="space-between" align="center" gap="sm" wrap="wrap">
         <Group gap="sm" wrap="nowrap">
-          <AnimatedWeatherIcon size={42} code={weather.current.weathercode} />
+          <AnimatedWeatherIcon size={heroIconSize} code={weather.current.weathercode} />
           <Stack gap={0}>
             <Text fz="xl" fw={700} lh={1.1}>
               {getPreferredUnit(
@@ -258,7 +263,7 @@ const AdvancedWeather = ({ options, weather }: WeatherProps) => {
   );
 };
 
-const DailyWeather = ({ options, weather, isEditMode }: CompactWeatherProps) => {
+const DailyWeather = ({ options, weather, isEditMode, heroIconSize }: CompactWeatherProps) => {
   const t = useScopedI18n("widget.weather");
   const tCommon = useScopedI18n("common");
 
@@ -268,7 +273,7 @@ const DailyWeather = ({ options, weather, isEditMode }: CompactWeatherProps) => 
         <Popover position="bottom" withArrow shadow="md">
           <Popover.Target>
             <UnstyledButton className={classes.detailsButton} aria-label={t("details")} disabled={isEditMode}>
-              <AnimatedWeatherIcon size={30} code={weather.current.weathercode} />
+              <AnimatedWeatherIcon size={heroIconSize} code={weather.current.weathercode} />
             </UnstyledButton>
           </Popover.Target>
           <Popover.Dropdown>
