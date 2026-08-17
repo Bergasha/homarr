@@ -15,6 +15,7 @@ import {
 
 import { clientApi } from "@homarr/api/client";
 import { useCurrentIntlLocale, useI18n, useScopedI18n } from "@homarr/translation/client";
+import { iconSizes } from "@homarr/ui";
 
 import { WidgetEmptyState } from "../../common/empty-state";
 import type { WidgetComponentProps } from "../../definition";
@@ -178,7 +179,7 @@ function Carousel({
                 size={40}
                 onClick={() => move(-1)}
               >
-                <IconChevronLeft size="var(--mantine-font-size-lg)" />
+                <IconChevronLeft style={iconSizes.lg} />
               </ActionIcon>
             )}
             <ActionIcon
@@ -189,7 +190,7 @@ function Carousel({
               size={advanced ? 40 : 32}
               onClick={() => setPaused((value) => !value)}
             >
-              {paused ? <IconPlayerPlay size="var(--mantine-font-size-lg)" /> : <IconPlayerPause size="var(--mantine-font-size-lg)" />}
+              {paused ? <IconPlayerPlay style={iconSizes.lg} /> : <IconPlayerPause style={iconSizes.lg} />}
             </ActionIcon>
             {advanced && (
               <ActionIcon
@@ -200,7 +201,7 @@ function Carousel({
                 size={40}
                 onClick={() => move(1)}
               >
-                <IconChevronRight size="var(--mantine-font-size-lg)" />
+                <IconChevronRight style={iconSizes.lg} />
               </ActionIcon>
             )}
           </Group>
@@ -214,7 +215,7 @@ function Carousel({
               </Text>
             )}
             <Group gap="xs">
-              <IconCalendar size="var(--mantine-font-size-md)" />
+              <IconCalendar style={iconSizes.md} />
               <Text size="xs">{new Date(currentAsset.fileModifiedAt).toLocaleDateString(locale)}</Text>
             </Group>
             <Text size="xs" c="dimmed">

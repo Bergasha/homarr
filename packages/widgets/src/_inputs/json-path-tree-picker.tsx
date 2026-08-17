@@ -1,5 +1,6 @@
 "use client";
 
+import { iconSizes } from "@homarr/ui";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Combobox, Group, InputBase, ScrollArea, Text, useCombobox } from "@mantine/core";
 import {
@@ -314,7 +315,7 @@ export function JsonPathTreePicker({
         {hasData && (
           <Combobox.Header>
             <Group gap="xs" px="xs" pt="xs" pb={4}>
-              <Badge size="sm" color="teal" variant="light" leftSection={<IconCircleCheck size="var(--mantine-font-size-xs)" />}>
+              <Badge size="sm" color="teal" variant="light" leftSection={<IconCircleCheck style={iconSizes.xs} />}>
                 {loadedHint}
               </Badge>
               <Text size="xs" c="dimmed">
@@ -353,16 +354,15 @@ function TreeNodeOption({ node, selected, isSearching }: { node: FlatNode; selec
       <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
         {node.hasChildren && (
           <IconChevronDown
-            size="var(--mantine-font-size-sm)"
             style={{
-              flexShrink: 0,
+              ...iconSizes.sm,
               color: "var(--mantine-color-dimmed)",
               transform: node.isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
               transition: "transform 150ms ease",
             }}
           />
         )}
-        <TypeIcon size="var(--mantine-font-size-sm)" style={{ flexShrink: 0, opacity: 0.5 }} />
+        <TypeIcon style={{ ...iconSizes.sm, flexShrink: 0, opacity: 0.5 }} />
         <Text
           size="sm"
           fw={selected ? 600 : 400}

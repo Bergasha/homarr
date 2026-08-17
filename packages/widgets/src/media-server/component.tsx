@@ -35,6 +35,7 @@ import { objectEntries } from "@homarr/common";
 import { getIconUrl } from "@homarr/definitions";
 import type { StreamSession } from "@homarr/integrations";
 import { useI18n, useScopedI18n } from "@homarr/translation/client";
+import { iconSizes } from "@homarr/ui";
 import type { TablerIcon } from "@homarr/ui";
 
 import type { WidgetComponentProps } from "../definition";
@@ -134,7 +135,7 @@ function StreamTableHeader({
           <Text component="span" size="xs" fw={600} truncate>
             {label}
           </Text>
-          <SortIcon size="var(--mantine-font-size-xs)" aria-hidden />
+          <SortIcon style={iconSizes.xs} aria-hidden />
         </UnstyledButton>
       ) : (
         <Text size="xs" fw={600} truncate>
@@ -235,7 +236,7 @@ export default function MediaServerWidget({
               onChange={(event) => setSearch(event.currentTarget.value)}
               placeholder={tGlobal("search.placeholder")}
               aria-label={tGlobal("search.placeholder")}
-              leftSection={<IconSearch size="var(--mantine-font-size-xs)" aria-hidden />}
+              leftSection={<IconSearch style={iconSizes.xs} aria-hidden />}
             />
             <WidgetQueryErrorIndicator error={currentStreamsQuery.error} label={t("name")} />
             <IntegrationErrorIndicator results={currentStreams} />
@@ -348,9 +349,9 @@ export default function MediaServerWidget({
                               <Group gap={4} align="center" wrap="nowrap">
                                 {location &&
                                   (location === "lan" ? (
-                                    <IconWifi size="var(--mantine-font-size-xs)" />
+                                    <IconWifi style={iconSizes.xs} />
                                   ) : (
-                                    <IconWorld size="var(--mantine-font-size-xs)" />
+                                    <IconWorld style={iconSizes.xs} />
                                   ))}
                                 {location && (
                                   <Text size="xs" c="dimmed" tt="uppercase">
@@ -387,7 +388,7 @@ export default function MediaServerWidget({
           }}
         >
           <Group gap={4} wrap="nowrap">
-            <IconVideo size="var(--mantine-font-size-xs)" style={{ flexShrink: 0 }} />
+            <IconVideo style={iconSizes.xs} />
             <Text size="sm" style={{ whiteSpace: "nowrap" }}>
               {(t as unknown as (key: string, params?: { count: number }) => string)("footer.streams", {
                 count: flatSessions.length,
@@ -446,9 +447,8 @@ function CurrentlyPlaying({ item }: { item: StreamSession }) {
     <Stack gap={6} style={{ minWidth: 0 }}>
       <Group gap="xs" align="center" wrap="nowrap" style={{ minWidth: 0 }}>
         <Icon
-          size="var(--mantine-font-size-xs)"
           color={isPaused ? "var(--mantine-color-yellow-6)" : undefined}
-          style={{ flexShrink: 0 }}
+          style={iconSizes.xs}
         />
         <Text size="xs" lineClamp={1} style={{ minWidth: 0 }}>
           {currentlyPlaying.name}

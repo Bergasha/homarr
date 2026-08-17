@@ -3,6 +3,7 @@ import { IconAlertTriangle } from "@tabler/icons-react";
 
 import { clientApi } from "@homarr/api/client";
 import { useCurrentIntlLocale, useScopedI18n } from "@homarr/translation/client";
+import { iconSizes } from "@homarr/ui";
 
 import type { DynamicSelectOption } from "../_inputs/widget-dynamic-select-input";
 import { formatLocalizedTime } from "../common/locale";
@@ -80,9 +81,8 @@ const TimetableWidgetInner = ({ station, baseUrl, itemId, displayMode, width, he
         <Group gap={2} wrap="nowrap">
           <IconAlertTriangle
             aria-hidden
-            size="var(--mantine-font-size-xs)"
             color="var(--mantine-color-orange-light-color)"
-            style={{ flexShrink: 0 }}
+            style={iconSizes.xs}
           />
           <Text component="output" size="xs" c="var(--mantine-color-text)" style={{ whiteSpace: "nowrap" }}>
             {compactStaleWarning}
@@ -90,7 +90,7 @@ const TimetableWidgetInner = ({ station, baseUrl, itemId, displayMode, width, he
         </Group>
       )}
       {staleWarning && displayMode === "advanced" && (
-        <Alert role="presentation" color="orange" icon={<IconAlertTriangle aria-hidden size="var(--mantine-font-size-md)" />} p="xs">
+        <Alert role="presentation" color="orange" icon={<IconAlertTriangle aria-hidden style={iconSizes.md} />} p="xs">
           <output>{staleWarning}</output>
         </Alert>
       )}

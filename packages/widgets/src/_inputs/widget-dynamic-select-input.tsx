@@ -7,6 +7,7 @@ import { IconCheck } from "@tabler/icons-react";
 
 import { translateIfNecessary } from "@homarr/translation";
 import { useI18n, useScopedI18n } from "@homarr/translation/client";
+import { iconSizes } from "@homarr/ui";
 
 import type { CommonWidgetInputProps } from "./common";
 import { useWidgetInputTranslation } from "./common";
@@ -86,10 +87,9 @@ export const WidgetDynamicSelectInput = ({
             {option.label}
             {checked && (
               <IconCheck
-                style={{ marginInlineStart: "auto" }}
+                style={{ ...iconSizes.lg, marginInlineStart: "auto" }}
                 color="currentColor"
                 opacity={0.6}
-                size="var(--mantine-font-size-lg)"
                 stroke={1.5}
               />
             )}
