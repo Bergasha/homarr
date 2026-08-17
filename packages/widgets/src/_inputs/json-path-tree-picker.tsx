@@ -1,6 +1,5 @@
 "use client";
 
-import { iconSizes } from "@homarr/ui";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Combobox, Group, InputBase, ScrollArea, Text, useCombobox } from "@mantine/core";
 import {
@@ -12,6 +11,8 @@ import {
   IconList,
   IconToggleLeft,
 } from "@tabler/icons-react";
+
+import { iconSizes } from "@homarr/ui";
 
 const VALUE_TRUNCATE_LENGTH = 80;
 const LEVEL_OFFSET = 14;
