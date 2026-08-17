@@ -184,7 +184,7 @@ const createColumns = (
   {
     accessor: "actions",
     title: "",
-    width: 44,
+    width: actionIconSize + 28,
     textAlign: "right",
     render: (container) => <ContainerMenuButton container={container} handlers={handlers} iconSize={actionIconSize} />,
   },

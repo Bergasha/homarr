@@ -56,8 +56,13 @@ describe("getDockerActionIconSize", () => {
     expect(getDockerActionIconSize(240)).toBe(18);
   });
 
-  test("grows the icon once the widget has more room", () => {
+  test("grows the icon as the widget has more room", () => {
     expect(getDockerActionIconSize(320)).toBe(22);
     expect(getDockerActionIconSize(600)).toBe(26);
+    expect(getDockerActionIconSize(1000)).toBe(32);
+  });
+
+  test("keeps growing on a very wide widget, e.g. a full-width row on a high-column board", () => {
+    expect(getDockerActionIconSize(2000)).toBe(40);
   });
 });
