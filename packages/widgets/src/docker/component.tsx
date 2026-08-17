@@ -415,14 +415,14 @@ export default function DockerWidget({
             <Tooltip label={t("table.refresh.lastUpdated", { when: relativeTime })}>
               <ActionIcon
                 className={actionTargetClasses.root}
-                size="lg"
+                size="xl"
                 variant="transparent"
                 c="var(--mantine-color-text)"
                 loading={isFetching}
                 onClick={() => void refetch()}
                 aria-label={t("table.refresh.lastUpdated", { when: relativeTime })}
               >
-                <IconRefresh size={22} />
+                <IconRefresh size={28} />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -456,7 +456,7 @@ function ContainerMenuButton({
           aria-label={t("title")}
           onClick={(event) => event.stopPropagation()}
         >
-          <IconDots size={22} />
+          <IconDots size={26} />
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown w={containerMenuWidth} miw={containerMenuWidth} maw={containerMenuWidth}>
