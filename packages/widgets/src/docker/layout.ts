@@ -23,3 +23,9 @@ export const getDockerFooterVisibility = (width: number, isAdvanced: boolean) =>
   cpu: isAdvanced || width >= 360,
   memory: isAdvanced || width >= 480,
 });
+
+export const getDockerActionIconSize = (width: number): number => {
+  if (width < 300) return 18;
+  if (width < 500) return 22;
+  return 26;
+};

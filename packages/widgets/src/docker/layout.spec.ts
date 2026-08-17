@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { getDockerColumnVisibility, getDockerFooterVisibility } from "./layout";
+import { getDockerActionIconSize, getDockerColumnVisibility, getDockerFooterVisibility } from "./layout";
 
 const columns = ["name", "state", "host", "cpuUsage", "memoryUsage", "actions"] as const;
 
@@ -48,5 +48,16 @@ describe("getDockerFooterVisibility", () => {
 
   test("keeps every total in advanced mode", () => {
     expect(getDockerFooterVisibility(240, true)).toEqual({ footer: true, cpu: true, memory: true });
+  });
+});
+
+describe("getDockerActionIconSize", () => {
+  test("shrinks the icon so a dense, many-column board doesn't get oversized buttons", () => {
+    expect(getDockerActionIconSize(240)).toBe(18);
+  });
+
+  test("grows the icon once the widget has more room", () => {
+    expect(getDockerActionIconSize(320)).toBe(22);
+    expect(getDockerActionIconSize(600)).toBe(26);
   });
 });

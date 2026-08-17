@@ -48,7 +48,7 @@ import { getUsableWidgetQueryData } from "../common/query-state";
 import actionTargetClasses from "../common/action-target.module.css";
 import { HomarrDataTable } from "../common/homarr-data-table";
 import { usePersistedTableLayout, useTableLayoutPersistence } from "../common/use-persisted-table-layout";
-import { getDockerColumnVisibility, getDockerFooterVisibility } from "./layout";
+import { getDockerActionIconSize, getDockerColumnVisibility, getDockerFooterVisibility } from "./layout";
 
 type DockerContainer = RouterOutputs["docker"]["getContainers"]["containers"][number];
 type ContainerAction = "start" | "stop" | "restart" | "remove";
@@ -107,6 +107,7 @@ const createColumns = (
   handlers: ContainerActionHandlers,
   sortingEnabled: boolean,
   inlineState: boolean,
+  actionIconSize: number,
 ): DataTableColumn<DockerContainer>[] => [
   {
     accessor: "name",
@@ -185,7 +186,7 @@ const createColumns = (
     title: "",
     width: 44,
     textAlign: "right",
-    render: (container) => <ContainerMenuButton container={container} handlers={handlers} />,
+    render: (container) => <ContainerMenuButton container={container} handlers={handlers} iconSize={actionIconSize} />,
   },
 ];
 
@@ -329,12 +330,13 @@ export default function DockerWidget({
   );
   const inlineState =
     !isAdvanced && width < 340 && options.columns.includes("name") && options.columns.includes("state");
+  const actionIconSize = getDockerActionIconSize(width);
   const columns = useMemo(() => {
     const sortingEnabled = (isAdvanced || options.enableRowSorting) && !isEditMode;
-    return createColumns(t, actionHandlers, sortingEnabled, inlineState).filter(
+    return createColumns(t, actionHandlers, sortingEnabled, inlineState, actionIconSize).filter(
       ({ accessor }) => columnVisibility[String(accessor) as keyof typeof columnVisibility],
     );
-  }, [actionHandlers, columnVisibility, inlineState, isAdvanced, isEditMode, options.enableRowSorting, t]);
+  }, [actionHandlers, actionIconSize, columnVisibility, inlineState, isAdvanced, isEditMode, options.enableRowSorting, t]);
   const { effectiveColumns, storeKey } = usePersistedTableLayout({
     columns,
     columnAccessors,
@@ -415,14 +417,14 @@ export default function DockerWidget({
             <Tooltip label={t("table.refresh.lastUpdated", { when: relativeTime })}>
               <ActionIcon
                 className={actionTargetClasses.root}
-                size="xl"
+                size={actionIconSize + 12}
                 variant="transparent"
                 c="var(--mantine-color-text)"
                 loading={isFetching}
                 onClick={() => void refetch()}
                 aria-label={t("table.refresh.lastUpdated", { when: relativeTime })}
               >
-                <IconRefresh size={28} />
+                <IconRefresh size={actionIconSize} />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -437,9 +439,11 @@ export default function DockerWidget({
 function ContainerMenuButton({
   container,
   handlers,
+  iconSize,
 }: {
   container: DockerContainer;
   handlers: ContainerActionHandlers;
+  iconSize: number;
 }) {
   const t = useScopedI18n("docker.action");
   const [opened, setOpened] = useState(false);
@@ -452,11 +456,11 @@ function ContainerMenuButton({
           className={actionTargetClasses.root}
           variant="subtle"
           color="gray"
-          size="lg"
+          size={iconSize + 12}
           aria-label={t("title")}
           onClick={(event) => event.stopPropagation()}
         >
-          <IconDots size={26} />
+          <IconDots size={iconSize} />
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown w={containerMenuWidth} miw={containerMenuWidth} maw={containerMenuWidth}>
