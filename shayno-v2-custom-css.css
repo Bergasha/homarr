@@ -1,0 +1,213 @@
+/* ══════════════════════════════════════════════════
+   Shayno's Homarr — Red/Black Liquid Glass, v3 (ported to v2)
+   ══════════════════════════════════════════════════ */
+
+:root {
+  /* Refined Glass Surface - High Saturation, Deep Contrast */
+  --glass-blur: blur(20px) saturate(160%) brightness(0.65);
+  --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(0, 0, 0, 0.3) 100%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --glass-border-top: 1px solid rgba(255, 255, 255, 0.3);
+  --glass-border-left: 1px solid rgba(255, 255, 255, 0.15);
+
+  --glass-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+
+  --glass-shadow-hover:
+    0 12px 36px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 15px rgba(180, 20, 44, 0.2);
+
+  --accent-red: #b4142c;
+  --accent-red-bright: #ff2d4d;
+  --ease-glass: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+body {
+  overflow-x: hidden;
+}
+
+header a h2 {
+  background: linear-gradient(
+    180deg,
+    #e8e8e8 0%,
+    #b8b8b8 50%,
+    #8a8a8a 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: text-shadow 0.4s ease, filter 0.4s ease;
+}
+
+header a:hover h2 {
+  filter: drop-shadow(0 0 8px rgba(255, 45, 77, 0.4)) brightness(1.1);
+}
+
+header {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2)) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+aside {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2)) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border: var(--glass-border);
+  border-top: var(--glass-border-top);
+  box-shadow: var(--glass-shadow);
+}
+
+/* v1's `.grid-stack-item-content` and `[data-dnd-draggable]` are gone in v2 —
+   the widget surface is now the Card rendered with the `board-grid-item-content` class. */
+.board-grid-item-content {
+  position: relative;
+  /* Mantine's dimmed/secondary text (c="dimmed") reads via this variable inline,
+     so overriding it here (rather than fighting `color` directly) fixes legibility
+     for every widget's secondary text against the blurred glass background. */
+  --mantine-color-dimmed: rgba(230, 230, 230, 0.75);
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border) !important;
+  border-top: var(--glass-border-top) !important;
+  border-left: var(--glass-border-left) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--glass-shadow) !important;
+  transition: box-shadow 0.3s var(--ease-glass), border-color 0.3s var(--ease-glass);
+}
+
+.board-grid-item-content :where(p, span, div) {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.board-grid-item-content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 90% 90%, rgba(180, 20, 44, 0.05), transparent 45%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.board-grid-item-content::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 8%; right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.board-grid-item-content:hover {
+  box-shadow: var(--glass-shadow-hover) !important;
+  border-color: rgba(255, 45, 77, 0.2) !important;
+}
+
+.board-grid-item-content:active {
+  transform: translateY(0);
+}
+
+.board-grid-item-content a:hover {
+  filter: drop-shadow(0 0 6px rgba(255, 45, 77, 0.5));
+  transition: filter 0.2s var(--ease-glass);
+}
+
+[data-active="true"] {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 45, 77, 0.3) !important;
+  box-shadow: 0 0 12px rgba(180, 20, 44, 0.2);
+}
+
+.board-grid-item-content *:not([style*="background-color"]) {
+  background-color: transparent !important;
+  color: inherit;
+}
+
+.board-grid-item-content .homarr-data-table th {
+  background-color: transparent !important;
+}
+
+.board-grid-item-content .mantine-Flex-root div[style*="background: var(--mantine-color-blue-filled)"] {
+  background: var(--mantine-color-blue-filled) !important;
+  width: 28px !important;
+  height: 12px !important;
+  border-radius: 6px !important;
+  margin: 0 2px !important;
+}
+.board-grid-item-content .mantine-Flex-root div[style*="background: var(--mantine-color-yellow-filled)"] {
+  background: var(--mantine-color-yellow-filled) !important;
+  width: 28px !important;
+  height: 12px !important;
+  border-radius: 6px !important;
+  margin: 0 2px !important;
+}
+.board-grid-item-content .mantine-Progress-root {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+.board-grid-item-content .mantine-Progress-section {
+  background-color: var(--progress-section-color) !important;
+}
+.board-grid-item-content .mantine-Badge-root {
+  background-color: var(--badge-bg) !important;
+}
+
+button.mantine-Input-input.mantine-TextInput-input {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2)) !important;
+  border: var(--glass-border) !important;
+  border-top: var(--glass-border-top) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(12px) !important;
+  border-radius: 24px !important;
+  transition: all 0.25s var(--ease-glass);
+}
+button.mantine-Input-input.mantine-TextInput-input:focus-within {
+  border-color: rgba(255, 45, 77, 0.3) !important;
+  box-shadow: 0 0 14px rgba(180, 20, 44, 0.2) !important;
+}
+
+main {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-red), black);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-red-bright);
+  background-clip: padding-box;
+}
+.mantine-Popover-dropdown,
+.mantine-HoverCard-dropdown {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border: var(--glass-border) !important;
+  border-top: var(--glass-border-top) !important;
+  border-left: var(--glass-border-left) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+.mantine-Popover-dropdown :where(p, span, div),
+.mantine-HoverCard-dropdown :where(p, span, div) {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(0, 0, 0, 0.6);
+}
