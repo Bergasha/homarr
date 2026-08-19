@@ -53,16 +53,19 @@ describe("getDockerFooterVisibility", () => {
 
 describe("getDockerActionIconSize", () => {
   test("shrinks the icon so a dense, many-column board doesn't get oversized buttons", () => {
-    expect(getDockerActionIconSize(240)).toBe(18);
+    expect(getDockerActionIconSize(240)).toBe(16);
   });
 
   test("grows the icon as the widget has more room", () => {
-    expect(getDockerActionIconSize(320)).toBe(22);
-    expect(getDockerActionIconSize(600)).toBe(26);
-    expect(getDockerActionIconSize(1000)).toBe(32);
+    expect(getDockerActionIconSize(320)).toBe(18);
+    expect(getDockerActionIconSize(600)).toBe(20);
   });
 
-  test("keeps growing on a very wide widget, e.g. a full-width row on a high-column board", () => {
-    expect(getDockerActionIconSize(2000)).toBe(40);
+  test("caps out on a wide widget instead of growing indefinitely", () => {
+    // The icon size sets a floor on row height (row height = tallest cell), so an
+    // uncapped size would force every row to grow just because there's horizontal
+    // room to spare on a wide widget.
+    expect(getDockerActionIconSize(1000)).toBe(22);
+    expect(getDockerActionIconSize(2000)).toBe(22);
   });
 });
