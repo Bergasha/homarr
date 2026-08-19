@@ -92,3 +92,7 @@ homarr-backup*.zip
 *.sqlite-wal
 *.sqlite-shm
 /scripts/benchmarks/
+
+# personal, local-only files - not part of the app
+/shayno-v2-custom-css.css
+/run-beta.sh
