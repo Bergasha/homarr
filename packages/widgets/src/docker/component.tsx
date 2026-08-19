@@ -79,7 +79,7 @@ const ContainerStateBadge = ({ state }: { state: ContainerState }) => {
   const t = useScopedI18n("docker.field.state.option");
 
   return (
-    <Badge size="xs" radius="sm" variant="light" color={containerStateColorMap[state]}>
+    <Badge size="xs" radius="sm" variant="light" color={containerStateColorMap[state]} styles={{ label: { lineHeight: 1.2 } }}>
       {t(state)}
     </Badge>
   );
@@ -124,14 +124,14 @@ const createColumns = (
         {inlineState && <ContainerStateDot state={container.state} />}
         <Avatar
           radius="xl"
-          size={28}
+          size={24}
           styles={{ image: { objectFit: "contain" } }}
           src={container.iconUrl}
           style={{ flexShrink: 0 }}
         >
           {container.name.at(0)?.toUpperCase()}
         </Avatar>
-        <Text size="sm" truncate>
+        <Text size="sm" lh={1.2} truncate>
           {container.name}
         </Text>
       </Group>
