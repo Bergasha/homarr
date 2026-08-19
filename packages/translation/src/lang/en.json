@@ -4135,6 +4135,10 @@
         "paused": "Paused",
         "remaining": "{minutes} min left",
         "seasonEpisode": "S{season} E{episode}",
+        "location": {
+          "lan": "LAN",
+          "wan": "WAN"
+        },
         "metadata": {
           "title": "Stats for nerds",
           "video": {

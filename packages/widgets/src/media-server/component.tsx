@@ -216,7 +216,7 @@ export default function MediaServerWidget({
     );
 
   const uniqueIntegrations = currentStreams
-    .filter((stream) => stream.sessions.length > 0)
+    .filter((stream) => stream.sessions.some((session) => Boolean(session.currentlyPlaying)))
     .map((stream) => ({
       integrationId: stream.integrationId,
       integrationKind: stream.integrationKind,
@@ -371,18 +371,23 @@ export default function MediaServerWidget({
                       {currentlyPlaying && (
                         <Stack gap={4} align="flex-start" w="100%" className={classes.cellContent}>
                           <Group gap={4} align="center" justify="space-between" wrap="nowrap" w="100%">
-                            <Badge size="xs" variant="light" color={playbackStatusColorMap[status]}>
+                            <Badge
+                              size="xs"
+                              variant="light"
+                              color={playbackStatusColorMap[status]}
+                              style={{ flexShrink: 0 }}
+                            >
                               {t(`items.${status}` as never)}
                             </Badge>
                             {location && (
-                              <Group gap={4} align="center" wrap="nowrap">
+                              <Group gap={4} align="center" wrap="nowrap" style={{ flexShrink: 0 }}>
                                 {location === "lan" ? (
                                   <IconWifi style={iconSizes.xs} />
                                 ) : (
                                   <IconWorld style={iconSizes.xs} />
                                 )}
                                 <Text size="xs" c="dimmed" tt="uppercase">
-                                  {location}
+                                  {t(`items.location.${location}` as never)}
                                 </Text>
                               </Group>
                             )}
