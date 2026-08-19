@@ -48,7 +48,7 @@ import { getUsableWidgetQueryData } from "../common/query-state";
 import actionTargetClasses from "../common/action-target.module.css";
 import { HomarrDataTable } from "../common/homarr-data-table";
 import { usePersistedTableLayout, useTableLayoutPersistence } from "../common/use-persisted-table-layout";
-import { getDockerActionIconSize, getDockerColumnVisibility, getDockerFooterVisibility } from "./layout";
+import { getDockerColumnVisibility, getDockerFooterVisibility } from "./layout";
 
 type DockerContainer = RouterOutputs["docker"]["getContainers"]["containers"][number];
 type DockerEndpoint = RouterOutputs["docker"]["getContainers"]["endpoints"][number];
@@ -69,6 +69,15 @@ interface ContainerActionHandlers {
 
 const columnAccessors = ["name", "state", "host", "cpuUsage", "memoryUsage", "actions"] as const;
 const containerMenuWidth = 240;
+
+// These stay fixed regardless of widget width - row height is set by the tallest cell,
+// so scaling a per-row icon up on wide widgets (as this used to) forces every row taller
+// and tanks how many containers fit on screen. Header/footer icons appear once, not once
+// per row, so they're free to be a bit more generous.
+const rowActionIconSize = 18;
+const rowActionButtonSize = 26;
+const footerRefreshIconSize = 20;
+const footerRefreshButtonSize = 30;
 
 const createContainerLogsPath = (container: Pick<DockerContainer, "endpointId" | "id" | "name">) =>
   `/manage/tools/docker/logs/${container.id}?name=${encodeURIComponent(container.name)}&endpointId=${encodeURIComponent(container.endpointId)}`;
@@ -111,7 +120,6 @@ const createColumns = (
   handlers: ContainerActionHandlers,
   sortingEnabled: boolean,
   inlineState: boolean,
-  actionIconSize: number,
 ): DataTableColumn<DockerContainer>[] => [
   {
     accessor: "name",
@@ -187,9 +195,9 @@ const createColumns = (
   {
     accessor: "actions",
     title: "",
-    width: actionIconSize + 28,
+    width: rowActionButtonSize + 18,
     textAlign: "right",
-    render: (container) => <ContainerMenuButton container={container} handlers={handlers} iconSize={actionIconSize} />,
+    render: (container) => <ContainerMenuButton container={container} handlers={handlers} />,
   },
 ];
 
@@ -357,13 +365,12 @@ export default function DockerWidget({
   );
   const inlineState =
     !isAdvanced && width < 340 && options.columns.includes("name") && options.columns.includes("state");
-  const actionIconSize = getDockerActionIconSize(width);
   const columns = useMemo(() => {
     const sortingEnabled = (isAdvanced || options.enableRowSorting) && !isEditMode;
-    return createColumns(t, actionHandlers, sortingEnabled, inlineState, actionIconSize).filter(
+    return createColumns(t, actionHandlers, sortingEnabled, inlineState).filter(
       ({ accessor }) => columnVisibility[String(accessor) as keyof typeof columnVisibility],
     );
-  }, [actionHandlers, actionIconSize, columnVisibility, inlineState, isAdvanced, isEditMode, options.enableRowSorting, t]);
+  }, [actionHandlers, columnVisibility, inlineState, isAdvanced, isEditMode, options.enableRowSorting, t]);
   const { effectiveColumns, storeKey } = usePersistedTableLayout({
     columns,
     columnAccessors,
@@ -453,14 +460,14 @@ export default function DockerWidget({
             <Tooltip label={t("table.refresh.lastUpdated", { when: relativeTime })}>
               <ActionIcon
                 className={actionTargetClasses.root}
-                size={actionIconSize + 10}
+                size={footerRefreshButtonSize}
                 variant="transparent"
                 c="var(--mantine-color-text)"
                 loading={isFetching || refreshInventory.isPending}
                 onClick={() => refreshInventory.mutate()}
                 aria-label={t("table.refresh.lastUpdated", { when: relativeTime })}
               >
-                <IconRefresh size={actionIconSize} />
+                <IconRefresh size={footerRefreshIconSize} />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -475,11 +482,9 @@ export default function DockerWidget({
 function ContainerMenuButton({
   container,
   handlers,
-  iconSize,
 }: {
   container: DockerContainer;
   handlers: ContainerActionHandlers;
-  iconSize: number;
 }) {
   const t = useScopedI18n("docker.action");
   const [opened, setOpened] = useState(false);
@@ -492,11 +497,11 @@ function ContainerMenuButton({
           className={actionTargetClasses.root}
           variant="subtle"
           color="gray"
-          size={iconSize + 12}
+          size={rowActionButtonSize}
           aria-label={t("title")}
           onClick={(event) => event.stopPropagation()}
         >
-          <IconDots size={iconSize} />
+          <IconDots size={rowActionIconSize} />
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown w={containerMenuWidth} miw={containerMenuWidth} maw={containerMenuWidth}>
