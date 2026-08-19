@@ -123,9 +123,8 @@ const createColumns = (
       <Group gap="xs" wrap="nowrap" style={{ overflow: "hidden" }}>
         {inlineState && <ContainerStateDot state={container.state} />}
         <Avatar
-          variant="outline"
-          radius="sm"
-          size={20}
+          radius="xl"
+          size={28}
           styles={{ image: { objectFit: "contain" } }}
           src={container.iconUrl}
           style={{ flexShrink: 0 }}
@@ -405,7 +404,7 @@ export default function DockerWidget({
       <Box style={{ flex: 1, minHeight: 0 }}>
         <HomarrDataTable
           isEditMode={isEditMode}
-          cellPadding={width < 400 ? "2px 8px" : "4px 8px"}
+          cellPadding="2px 8px"
           rowCursor="default"
           fetching={isFetching && containers.length === 0}
           fz={width < 400 ? "xs" : "sm"}
@@ -454,14 +453,14 @@ export default function DockerWidget({
             <Tooltip label={t("table.refresh.lastUpdated", { when: relativeTime })}>
               <ActionIcon
                 className={actionTargetClasses.root}
-                size={Math.min(actionIconSize + 6, 28)}
+                size={actionIconSize + 10}
                 variant="transparent"
                 c="var(--mantine-color-text)"
                 loading={isFetching || refreshInventory.isPending}
                 onClick={() => refreshInventory.mutate()}
                 aria-label={t("table.refresh.lastUpdated", { when: relativeTime })}
               >
-                <IconRefresh size={Math.min(actionIconSize, 18)} />
+                <IconRefresh size={actionIconSize} />
               </ActionIcon>
             </Tooltip>
           </Group>
