@@ -429,38 +429,39 @@ export default function DockerWidget({
           style={{
             borderTop: "0.0625rem solid var(--border-color)",
           }}
-          p={4}
+          py={2}
+          px={8}
           wrap="nowrap"
         >
           <Group gap={4} wrap="nowrap">
-            <IconBrandDocker style={{ ...iconSizes.xl, flexShrink: 0 }} />
-            <Text size="sm" truncate>
+            <IconBrandDocker style={{ ...iconSizes.md, flexShrink: 0 }} />
+            <Text size="xs" truncate>
               {t("table.footer", { count: containers.length.toString() })}
             </Text>
           </Group>
 
           <Group gap="sm" wrap="nowrap" justify="flex-end" style={{ minWidth: 0 }}>
             {footerVisibility.cpu && (
-              <Text size="sm" style={{ whiteSpace: "nowrap" }}>
+              <Text size="xs" style={{ whiteSpace: "nowrap" }}>
                 {t("table.totalCpu", { cpu: totals.cpu.toFixed(2) })}
               </Text>
             )}
             {footerVisibility.memory && (
-              <Text size="sm" style={{ whiteSpace: "nowrap" }}>
+              <Text size="xs" style={{ whiteSpace: "nowrap" }}>
                 {t("table.totalMemory", { memory: formatBytes(totals.memory) })}
               </Text>
             )}
             <Tooltip label={t("table.refresh.lastUpdated", { when: relativeTime })}>
               <ActionIcon
                 className={actionTargetClasses.root}
-                size={actionIconSize + 12}
+                size={Math.min(actionIconSize + 6, 28)}
                 variant="transparent"
                 c="var(--mantine-color-text)"
                 loading={isFetching || refreshInventory.isPending}
                 onClick={() => refreshInventory.mutate()}
                 aria-label={t("table.refresh.lastUpdated", { when: relativeTime })}
               >
-                <IconRefresh size={actionIconSize} />
+                <IconRefresh size={Math.min(actionIconSize, 18)} />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -518,6 +519,7 @@ function ContainerActionItems({
   const t = useScopedI18n("docker.action");
   const stateAction = container.state === "running" ? "stop" : "start";
   const StateIcon = stateAction === "stop" ? IconPlayerStop : IconPlayerPlay;
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   const invokeAction = (action: ContainerAction) => {
     handlers.onAction(action, container);
