@@ -70,14 +70,17 @@ interface ContainerActionHandlers {
 const columnAccessors = ["name", "state", "host", "cpuUsage", "memoryUsage", "actions"] as const;
 const containerMenuWidth = 240;
 
-// These stay fixed regardless of widget width - row height is set by the tallest cell,
-// so scaling a per-row icon up on wide widgets (as this used to) forces every row taller
-// and tanks how many containers fit on screen. Header/footer icons appear once, not once
-// per row, so they're free to be a bit more generous.
-const rowActionIconSize = 24;
-const rowActionButtonSize = 32;
-const footerRefreshIconSize = 26;
-const footerRefreshButtonSize = 36;
+// The *button* sizes stay small and fixed - row height is set by the tallest cell, and the
+// actions button is repeated once per row, so any growth here multiplies across every row and
+// tanks how many containers fit on screen. The *icon* sizes are rendered larger than their
+// button via absolute positioning (see ContainerMenuButton/footer refresh below) - an
+// absolutely-positioned element is removed from normal flow, so it doesn't count toward its
+// ancestor's height even though it visually overflows the button. This lets the icon look
+// properly sized without the button (and therefore the row) growing to match.
+const rowActionButtonSize = 22;
+const rowActionIconVisualSize = 32;
+const footerRefreshButtonSize = 24;
+const footerRefreshIconVisualSize = 30;
 
 const createContainerLogsPath = (container: Pick<DockerContainer, "endpointId" | "id" | "name">) =>
   `/manage/tools/docker/logs/${container.id}?name=${encodeURIComponent(container.name)}&endpointId=${encodeURIComponent(container.endpointId)}`;
@@ -197,6 +200,10 @@ const createColumns = (
     title: "",
     width: rowActionButtonSize + 18,
     textAlign: "right",
+    // The default `.homarr-data-table td { overflow: hidden }` (needed for name/host ellipsis
+    // truncation) would clip the actions icon's intentional visual overflow - opt this one
+    // cell out of it.
+    cellsClassName: "docker-actions-cell",
     render: (container) => <ContainerMenuButton container={container} handlers={handlers} />,
   },
 ];
@@ -466,8 +473,12 @@ export default function DockerWidget({
                 loading={isFetching || refreshInventory.isPending}
                 onClick={() => refreshInventory.mutate()}
                 aria-label={t("table.refresh.lastUpdated", { when: relativeTime })}
+                style={{ position: "relative", overflow: "visible" }}
               >
-                <IconRefresh size={footerRefreshIconSize} />
+                <IconRefresh
+                  size={footerRefreshIconVisualSize}
+                  style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+                />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -500,8 +511,15 @@ function ContainerMenuButton({
           size={rowActionButtonSize}
           aria-label={t("title")}
           onClick={(event) => event.stopPropagation()}
+          style={{ position: "relative", overflow: "visible" }}
         >
-          <IconDots size={rowActionIconSize} />
+          {/* Rendered larger than the button and pulled out of flow via absolute positioning,
+              so it looks properly sized without the button - and therefore the row - growing
+              to match (row height is set by the tallest cell, and this button repeats per row). */}
+          <IconDots
+            size={rowActionIconVisualSize}
+            style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+          />
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown w={containerMenuWidth} miw={containerMenuWidth} maw={containerMenuWidth}>

@@ -33,6 +33,13 @@
   text-overflow: ellipsis;
 }
 
+/* Lets a cell's content (e.g. an oversized action icon) visually overflow its own box without
+   growing it - used to make a per-row icon look bigger without inflating row height, since the
+   icon is pulled out of flow via absolute positioning rather than actually being a bigger cell. */
+.homarr-data-table td.docker-actions-cell {
+  overflow: visible;
+}
+
 .homarr-data-table td .mantine-Text-root,
 .homarr-data-table td .mantine-Group-root {
   white-space: nowrap;
