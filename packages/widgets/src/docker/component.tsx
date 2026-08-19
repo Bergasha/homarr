@@ -74,10 +74,10 @@ const containerMenuWidth = 240;
 // so scaling a per-row icon up on wide widgets (as this used to) forces every row taller
 // and tanks how many containers fit on screen. Header/footer icons appear once, not once
 // per row, so they're free to be a bit more generous.
-const rowActionIconSize = 18;
-const rowActionButtonSize = 26;
-const footerRefreshIconSize = 20;
-const footerRefreshButtonSize = 30;
+const rowActionIconSize = 24;
+const rowActionButtonSize = 32;
+const footerRefreshIconSize = 26;
+const footerRefreshButtonSize = 36;
 
 const createContainerLogsPath = (container: Pick<DockerContainer, "endpointId" | "id" | "name">) =>
   `/manage/tools/docker/logs/${container.id}?name=${encodeURIComponent(container.name)}&endpointId=${encodeURIComponent(container.endpointId)}`;
