@@ -14,7 +14,6 @@ import {
   Stack,
   Text,
   Tooltip,
-  VisuallyHidden,
 } from "@mantine/core";
 import {
   IconBrandDocker,
@@ -97,32 +96,10 @@ const ContainerStateBadge = ({ state }: { state: ContainerState }) => {
   );
 };
 
-const ContainerStateDot = ({ state }: { state: ContainerState }) => {
-  const t = useScopedI18n("docker.field.state.option");
-  const label = t(state);
-
-  return (
-    <Tooltip label={label} withArrow>
-      <Box component="span" style={{ display: "inline-flex", flexShrink: 0 }}>
-        <Box
-          component="span"
-          aria-hidden="true"
-          w={8}
-          h={8}
-          bg={`${containerStateColorMap[state]}.6`}
-          style={{ borderRadius: "50%" }}
-        />
-        <VisuallyHidden>{label}</VisuallyHidden>
-      </Box>
-    </Tooltip>
-  );
-};
-
 const createColumns = (
   t: ReturnType<typeof useScopedI18n<"docker">>,
   handlers: ContainerActionHandlers,
   sortingEnabled: boolean,
-  inlineState: boolean,
 ): DataTableColumn<DockerContainer>[] => [
   {
     accessor: "name",
@@ -132,7 +109,6 @@ const createColumns = (
     sortable: sortingEnabled,
     render: (container) => (
       <Group gap="xs" wrap="nowrap" style={{ overflow: "hidden" }}>
-        {inlineState && <ContainerStateDot state={container.state} />}
         <Avatar
           radius="xl"
           size={24}
@@ -367,17 +343,15 @@ export default function DockerWidget({
   );
 
   const columnVisibility = useMemo(
-    () => getDockerColumnVisibility(options.columns, width, isAdvanced),
-    [isAdvanced, options.columns, width],
+    () => getDockerColumnVisibility(options.columns, isAdvanced),
+    [isAdvanced, options.columns],
   );
-  const inlineState =
-    !isAdvanced && width < 340 && options.columns.includes("name") && options.columns.includes("state");
   const columns = useMemo(() => {
     const sortingEnabled = (isAdvanced || options.enableRowSorting) && !isEditMode;
-    return createColumns(t, actionHandlers, sortingEnabled, inlineState).filter(
+    return createColumns(t, actionHandlers, sortingEnabled).filter(
       ({ accessor }) => columnVisibility[String(accessor) as keyof typeof columnVisibility],
     );
-  }, [actionHandlers, columnVisibility, inlineState, isAdvanced, isEditMode, options.enableRowSorting, t]);
+  }, [actionHandlers, columnVisibility, isAdvanced, isEditMode, options.enableRowSorting, t]);
   const { effectiveColumns, storeKey } = usePersistedTableLayout({
     columns,
     columnAccessors,

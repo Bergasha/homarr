@@ -5,31 +5,30 @@ import { getDockerColumnVisibility, getDockerFooterVisibility } from "./layout";
 const columns = ["name", "state", "host", "cpuUsage", "memoryUsage", "actions"] as const;
 
 describe("getDockerColumnVisibility", () => {
-  test("keeps only essential columns in a narrow compact widget", () => {
-    expect(getDockerColumnVisibility(columns, 240, false)).toEqual({
+  test("shows exactly the configured columns, regardless of widget width", () => {
+    // Column visibility used to also depend on the widget's width, which meant columns could
+    // appear/disappear mid-drag while resizing the widget - fighting with the column-width
+    // persistence and glitching the layout. It's purely the user's configured selection now.
+    expect(getDockerColumnVisibility(columns, false)).toEqual({
       name: true,
-      state: false,
+      state: true,
+      host: true,
+      cpuUsage: true,
+      memoryUsage: true,
+      actions: true,
+    });
+    expect(getDockerColumnVisibility(["state"], false)).toEqual({
+      name: false,
+      state: true,
       host: false,
       cpuUsage: false,
       memoryUsage: false,
-      actions: true,
+      actions: false,
     });
-  });
-
-  test("reveals compact metrics as width becomes available", () => {
-    expect(getDockerColumnVisibility(columns, 440, false)).toMatchObject({
-      host: false,
-      cpuUsage: true,
-      memoryUsage: false,
-    });
-  });
-
-  test("keeps a configured state column when there is no name column for the inline dot", () => {
-    expect(getDockerColumnVisibility(["state"], 240, false).state).toBe(true);
   });
 
   test("uses every expert column in advanced mode", () => {
-    expect(getDockerColumnVisibility([], 240, true)).toEqual({
+    expect(getDockerColumnVisibility([], true)).toEqual({
       name: true,
       state: true,
       host: true,
