@@ -46,6 +46,10 @@
   min-width: 0;
 }
 
+.statusCell {
+  padding-right: 16px;
+}
+
 .sessionRow {
   cursor: pointer;
 

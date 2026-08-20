@@ -52,9 +52,9 @@ type SortState = { column: SortColumn; descending: boolean } | null;
 
 export const getMediaServerColumnVisibility = (width: number, isAdvanced: boolean) => ({
   user: isAdvanced || width >= 300,
-  // The user (240px) and status (230px) columns together need a floor here, otherwise the
+  // The user (240px) and status (200px) columns together need a floor here, otherwise the
   // currentlyPlaying column - the primary content - gets squeezed to almost nothing.
-  status: isAdvanced || width >= 620,
+  status: isAdvanced || width >= 590,
 });
 
 function getPlaybackStatus(transcoding: TranscodingDecision | undefined): PlaybackStatus {
@@ -136,6 +136,7 @@ function StreamTableHeader({
   sort,
   onSort,
   width,
+  className,
 }: {
   column: SortColumn;
   label: string;
@@ -143,12 +144,13 @@ function StreamTableHeader({
   sort: SortState;
   onSort: (column: SortColumn) => void;
   width?: number;
+  className?: string;
 }) {
   const active = sort?.column === column;
   const SortIcon = !active ? IconArrowsSort : sort.descending ? IconChevronDown : IconChevronUp;
 
   return (
-    <Table.Th w={width} aria-sort={active ? (sort.descending ? "descending" : "ascending") : "none"}>
+    <Table.Th w={width} className={className} aria-sort={active ? (sort.descending ? "descending" : "ascending") : "none"}>
       {sortable ? (
         <UnstyledButton className={classes.sortButton} onClick={() => onSort(column)}>
           <Text component="span" size="xs" fw={600} c="dimmed" style={{ letterSpacing: "0.02em" }} truncate>
@@ -302,7 +304,8 @@ export default function MediaServerWidget({
                   sortable={isAdvanced}
                   sort={sort}
                   onSort={toggleSort}
-                  width={230}
+                  width={200}
+                  className={classes.statusCell}
                 />
               )}
             </Table.Tr>
@@ -367,7 +370,7 @@ export default function MediaServerWidget({
                     </SessionDetailsPopover>
                   </Table.Td>
                   {columnVisibility.status && (
-                    <Table.Td>
+                    <Table.Td className={classes.statusCell}>
                       {currentlyPlaying && (
                         <Stack gap={4} align="flex-start" w="100%" className={classes.cellContent}>
                           <Group gap={4} align="center" justify="space-between" wrap="nowrap" w="100%">
