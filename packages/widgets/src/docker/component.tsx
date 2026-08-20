@@ -1,20 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  ActionIcon,
-  Avatar,
-  Badge,
-  Box,
-  Center,
-  getDefaultZIndex,
-  Group,
-  Menu,
-  Portal,
-  Stack,
-  Text,
-  Tooltip,
-} from "@mantine/core";
+import { ActionIcon, Avatar, Badge, Box, Center, Group, Menu, Portal, Stack, Text, Tooltip } from "@mantine/core";
 import {
   IconBrandDocker,
   IconCategoryPlus,
@@ -34,23 +21,18 @@ import { useSession } from "@homarr/auth/client";
 import { constructBoardPermissions } from "@homarr/auth/shared";
 import { useOptionalBoard } from "@homarr/boards/context";
 import { formatBytes, useTimeAgo } from "@homarr/common";
-import type { ContainerState, DockerEndpointCapability } from "@homarr/docker";
+import type { ContainerState } from "@homarr/docker";
 import { containerStateColorMap, cpuUsageColor, memoryUsageColor, safeValue } from "@homarr/docker/shared";
 import { useModalAction } from "@homarr/modals";
-import { AddDockerAppToHomarr, useDockerContainerRemovalConfirmation } from "@homarr/modals-collection";
+import { AddDockerAppToHomarr } from "@homarr/modals-collection";
 import { showErrorNotification, showSuccessNotification } from "@homarr/notifications";
 import { useScopedI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 import type { WidgetComponentProps } from "../definition";
-import { getUsableWidgetQueryData } from "../common/query-state";
-import actionTargetClasses from "../common/action-target.module.css";
 import { HomarrDataTable } from "../common/homarr-data-table";
 import { usePersistedTableLayout, useTableLayoutPersistence } from "../common/use-persisted-table-layout";
-import { getDockerColumnVisibility, getDockerFooterVisibility } from "./layout";
 
 type DockerContainer = RouterOutputs["docker"]["getContainers"]["containers"][number];
-type DockerEndpoint = RouterOutputs["docker"]["getContainers"]["endpoints"][number];
 type ContainerAction = "start" | "stop" | "restart" | "remove";
 
 interface ContextMenuState {
@@ -60,7 +42,6 @@ interface ContextMenuState {
 }
 
 interface ContainerActionHandlers {
-  canUse: (container: DockerContainer, capability: DockerEndpointCapability) => boolean;
   onAction: (action: ContainerAction, container: DockerContainer) => void;
   onAddToHomarr: (container: DockerContainer) => void;
   onOpenLogs: (container: DockerContainer) => void;
@@ -69,28 +50,14 @@ interface ContainerActionHandlers {
 const columnAccessors = ["name", "state", "host", "cpuUsage", "memoryUsage", "actions"] as const;
 const containerMenuWidth = 240;
 
-// The *button* sizes stay small and fixed - row height is set by the tallest cell, and the
-// actions button is repeated once per row, so any growth here multiplies across every row and
-// tanks how many containers fit on screen. The *icon* sizes are rendered larger than their
-// button via absolute positioning (see ContainerMenuButton/footer refresh below) - an
-// absolutely-positioned element is removed from normal flow, so it doesn't count toward its
-// ancestor's height even though it visually overflows the button. This lets the icon look
-// properly sized without the button (and therefore the row) growing to match.
-const rowActionButtonSize = 22;
-const rowActionIconVisualSize = 32;
-const footerRefreshButtonSize = 24;
-const footerRefreshIconVisualSize = 30;
-
-const createContainerLogsPath = (container: Pick<DockerContainer, "endpointId" | "id" | "name">) =>
-  `/manage/tools/docker/logs/${container.id}?name=${encodeURIComponent(container.name)}&endpointId=${encodeURIComponent(container.endpointId)}`;
-
-const getContainerTarget = ({ endpointId, id }: DockerContainer) => ({ endpointId, id });
+const createContainerLogsPath = (container: Pick<DockerContainer, "id" | "name">) =>
+  `/manage/tools/docker/logs/${container.id}?name=${encodeURIComponent(container.name)}`;
 
 const ContainerStateBadge = ({ state }: { state: ContainerState }) => {
   const t = useScopedI18n("docker.field.state.option");
 
   return (
-    <Badge size="xs" radius="sm" variant="light" color={containerStateColorMap[state]} styles={{ label: { lineHeight: 1.2 } }}>
+    <Badge size="xs" radius="sm" variant="light" color={containerStateColorMap[state]}>
       {t(state)}
     </Badge>
   );
@@ -110,15 +77,16 @@ const createColumns = (
     render: (container) => (
       <Group gap="xs" wrap="nowrap" style={{ overflow: "hidden" }}>
         <Avatar
-          radius="xl"
-          size={24}
+          variant="outline"
+          radius="sm"
+          size={20}
           styles={{ image: { objectFit: "contain" } }}
           src={container.iconUrl}
           style={{ flexShrink: 0 }}
         >
           {container.name.at(0)?.toUpperCase()}
         </Avatar>
-        <Text size="sm" lh={1.2} truncate>
+        <Text size="sm" truncate>
           {container.name}
         </Text>
       </Group>
@@ -174,12 +142,8 @@ const createColumns = (
   {
     accessor: "actions",
     title: "",
-    width: rowActionButtonSize + 18,
+    width: 44,
     textAlign: "right",
-    // The default `.homarr-data-table td { overflow: hidden }` (needed for name/host ellipsis
-    // truncation) would clip the actions icon's intentional visual overflow - opt this one
-    // cell out of it.
-    cellsClassName: "docker-actions-cell",
     render: (container) => <ContainerMenuButton container={container} handlers={handlers} />,
   },
 ];
@@ -205,11 +169,10 @@ const useContainerAction = (action: ContainerAction) => {
     async onSettled() {
       await utils.docker.getContainers.invalidate();
     },
-    onSuccess(results) {
-      const failed = results.some((result) => !result.success);
-      (failed ? showErrorNotification : showSuccessNotification)({
-        title: t(`${action}.notification.${failed ? "error" : "success"}.title`),
-        message: t(`${action}.notification.${failed ? "error" : "success"}.message`),
+    onSuccess() {
+      showSuccessNotification({
+        title: t(`${action}.notification.success.title`),
+        message: t(`${action}.notification.success.message`),
       });
     },
     onError() {
@@ -225,7 +188,6 @@ export default function DockerWidget({
   options,
   width,
   isEditMode,
-  displayMode,
   boardId,
   itemId,
   setOptions,
@@ -233,31 +195,12 @@ export default function DockerWidget({
   const t = useScopedI18n("docker");
   const tWidget = useScopedI18n("widget.dockerContainers");
   const { openModal } = useModalAction(AddDockerAppToHomarr);
-  const confirmRemoval = useDockerContainerRemovalConfirmation();
   const board = useOptionalBoard();
   const { data: session } = useSession();
   const hasChangeAccess = board ? constructBoardPermissions(board, session).hasChangeAccess : false;
-  const isAdvanced = displayMode === "advanced";
+  const isTiny = width <= 256;
 
-  const utils = clientApi.useUtils();
-  const containersQuery = clientApi.docker.getContainers.useQuery();
-  const data = getUsableWidgetQueryData(containersQuery);
-  const { isFetching } = containersQuery;
-  const refreshInventory = clientApi.docker.refreshInventory.useMutation({
-    async onSuccess() {
-      await Promise.all([
-        utils.docker.getContainers.invalidate(),
-        utils.docker.reconcileServices.invalidate(),
-        utils.docker.getServiceHealth.invalidate(),
-      ]);
-    },
-    onError() {
-      showErrorNotification({
-        title: t("action.refresh.notification.error.title"),
-        message: t("action.refresh.notification.error.message"),
-      });
-    },
-  });
+  const { data, refetch, isFetching } = clientApi.docker.getContainers.useQuery();
   const containers = useMemo(() => data?.containers ?? [], [data?.containers]);
   const timestamp = useMemo(() => data?.timestamp ?? new Date(), [data?.timestamp]);
   const relativeTime = useTimeAgo(timestamp);
@@ -268,13 +211,13 @@ export default function DockerWidget({
   const { mutate: removeContainer } = useContainerAction("remove");
   const handleContainerAction = useCallback(
     (action: ContainerAction, container: DockerContainer) => {
-      const target = { targets: [getContainerTarget(container)] };
+      const target = { targets: [{ endpointId: container.endpointId, id: container.id }] };
       if (action === "start") startContainer(target);
       else if (action === "stop") stopContainer(target);
       else if (action === "restart") restartContainer(target);
-      else confirmRemoval([container], () => removeContainer(target));
+      else removeContainer(target);
     },
-    [confirmRemoval, removeContainer, restartContainer, startContainer, stopContainer],
+    [removeContainer, restartContainer, startContainer, stopContainer],
   );
   const handleOpenLogs = useCallback(
     (container: DockerContainer) => window.location.assign(createContainerLogsPath(container)),
@@ -286,16 +229,11 @@ export default function DockerWidget({
   );
   const actionHandlers = useMemo<ContainerActionHandlers>(
     () => ({
-      canUse: (container, capability) =>
-        endpointHasCapability(
-          data?.endpoints.find(({ id }) => id === container.endpointId),
-          capability,
-        ),
       onAction: handleContainerAction,
       onAddToHomarr: handleAddToHomarr,
       onOpenLogs: handleOpenLogs,
     }),
-    [data?.endpoints, handleAddToHomarr, handleContainerAction, handleOpenLogs],
+    [handleAddToHomarr, handleContainerAction, handleOpenLogs],
   );
 
   const { mutate: saveItemOptions } = clientApi.widget.options.saveItemOptions.useMutation({
@@ -342,16 +280,13 @@ export default function DockerWidget({
     [containers],
   );
 
-  const columnVisibility = useMemo(
-    () => getDockerColumnVisibility(options.columns, isAdvanced),
-    [isAdvanced, options.columns],
-  );
+  const selectedColumns = useMemo(() => new Set<string>(options.columns), [options.columns]);
   const columns = useMemo(() => {
-    const sortingEnabled = (isAdvanced || options.enableRowSorting) && !isEditMode;
-    return createColumns(t, actionHandlers, sortingEnabled).filter(
-      ({ accessor }) => columnVisibility[String(accessor) as keyof typeof columnVisibility],
+    const sortingEnabled = options.enableRowSorting && !isEditMode;
+    return createColumns(t, actionHandlers, sortingEnabled).filter(({ accessor }) =>
+      selectedColumns.has(String(accessor)),
     );
-  }, [actionHandlers, columnVisibility, isAdvanced, isEditMode, options.enableRowSorting, t]);
+  }, [actionHandlers, isEditMode, options.enableRowSorting, selectedColumns, t]);
   const { effectiveColumns, storeKey } = usePersistedTableLayout({
     columns,
     columnAccessors,
@@ -369,7 +304,7 @@ export default function DockerWidget({
     setContextMenu({ x: event.clientX, y: event.clientY, container: record });
   }, []);
 
-  if (!isAdvanced && options.columns.length === 0) {
+  if (options.columns.length === 0) {
     return (
       <Center h="100%">
         <Text>{t("error.noColumns")}</Text>
@@ -377,22 +312,12 @@ export default function DockerWidget({
     );
   }
 
-  if (containers.length === 0 && data?.endpoints.some(({ status }) => status === "unavailable")) {
-    return (
-      <Center h="100%">
-        <Text>{tWidget("error.endpointsUnavailable")}</Text>
-      </Center>
-    );
-  }
-
-  const footerVisibility = getDockerFooterVisibility(width, isAdvanced);
-
   return (
     <Stack gap={0} h="100%" style={{ overflow: "hidden" }}>
       <Box style={{ flex: 1, minHeight: 0 }}>
         <HomarrDataTable
           isEditMode={isEditMode}
-          cellPadding="2px 8px"
+          cellPadding={width < 400 ? "2px 8px" : "4px 8px"}
           rowCursor="default"
           fetching={isFetching && containers.length === 0}
           fz={width < 400 ? "xs" : "sm"}
@@ -401,8 +326,8 @@ export default function DockerWidget({
           columns={effectiveColumns}
           storeColumnsKey={storeKey}
           sortStatus={sortStatus}
-          onSortStatusChange={(isAdvanced || options.enableRowSorting) && !isEditMode ? setSortStatus : undefined}
-          idAccessor="resourceId"
+          onSortStatusChange={options.enableRowSorting && !isEditMode ? setSortStatus : undefined}
+          idAccessor="id"
           onRowContextMenu={isEditMode ? undefined : handleContextMenu}
           onScroll={() => {
             if (contextMenu) closeContextMenu();
@@ -410,49 +335,32 @@ export default function DockerWidget({
         />
       </Box>
 
-      {footerVisibility.footer && (
-        <Group
-          justify="space-between"
-          style={{
-            borderTop: "0.0625rem solid var(--border-color)",
-          }}
-          py={2}
-          px={8}
-          wrap="nowrap"
-        >
+      {!isTiny && (
+        <Group justify="space-between" style={{ borderTop: "0.0625rem solid var(--border-color)" }} p={4} wrap="nowrap">
           <Group gap={4} wrap="nowrap">
-            <IconBrandDocker style={{ ...iconSizes.md, flexShrink: 0 }} />
-            <Text size="xs" truncate>
+            <IconBrandDocker size={20} style={{ flexShrink: 0 }} />
+            <Text size="sm" truncate>
               {t("table.footer", { count: containers.length.toString() })}
             </Text>
           </Group>
 
           <Group gap="sm" wrap="nowrap" justify="flex-end" style={{ minWidth: 0 }}>
-            {footerVisibility.cpu && (
-              <Text size="xs" style={{ whiteSpace: "nowrap" }}>
-                {t("table.totalCpu", { cpu: totals.cpu.toFixed(2) })}
-              </Text>
-            )}
-            {footerVisibility.memory && (
-              <Text size="xs" style={{ whiteSpace: "nowrap" }}>
-                {t("table.totalMemory", { memory: formatBytes(totals.memory) })}
-              </Text>
-            )}
+            <Text size="sm" style={{ whiteSpace: "nowrap" }}>
+              {t("table.totalCpu", { cpu: totals.cpu.toFixed(2) })}
+            </Text>
+            <Text size="sm" style={{ whiteSpace: "nowrap" }}>
+              {t("table.totalMemory", { memory: formatBytes(totals.memory) })}
+            </Text>
             <Tooltip label={t("table.refresh.lastUpdated", { when: relativeTime })}>
               <ActionIcon
-                className={actionTargetClasses.root}
-                size={footerRefreshButtonSize}
+                size="sm"
                 variant="transparent"
                 c="var(--mantine-color-text)"
-                loading={isFetching || refreshInventory.isPending}
-                onClick={() => refreshInventory.mutate()}
+                loading={isFetching}
+                onClick={() => void refetch()}
                 aria-label={t("table.refresh.lastUpdated", { when: relativeTime })}
-                style={{ position: "relative", overflow: "visible" }}
               >
-                <IconRefresh
-                  size={footerRefreshIconVisualSize}
-                  style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-                />
+                <IconRefresh size={16} />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -479,21 +387,13 @@ function ContainerMenuButton({
     <Menu opened={opened} onChange={setOpened} closeOnItemClick={false} withinPortal position="bottom-end" shadow="sm">
       <Menu.Target>
         <ActionIcon
-          className={actionTargetClasses.root}
           variant="subtle"
           color="gray"
-          size={rowActionButtonSize}
+          size="sm"
           aria-label={t("title")}
           onClick={(event) => event.stopPropagation()}
-          style={{ position: "relative", overflow: "visible" }}
         >
-          {/* Rendered larger than the button and pulled out of flow via absolute positioning,
-              so it looks properly sized without the button - and therefore the row - growing
-              to match (row height is set by the tallest cell, and this button repeats per row). */}
-          <IconDots
-            size={rowActionIconVisualSize}
-            style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-          />
+          <IconDots size={16} />
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown w={containerMenuWidth} miw={containerMenuWidth} maw={containerMenuWidth}>
@@ -513,9 +413,9 @@ function ContainerActionItems({
   onClose: () => void;
 }) {
   const t = useScopedI18n("docker.action");
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const stateAction = container.state === "running" ? "stop" : "start";
   const StateIcon = stateAction === "stop" ? IconPlayerStop : IconPlayerPlay;
-  const [confirmRemove, setConfirmRemove] = useState(false);
 
   const invokeAction = (action: ContainerAction) => {
     handlers.onAction(action, container);
@@ -528,8 +428,7 @@ function ContainerActionItems({
         {container.name}
       </Menu.Label>
       <Menu.Item
-        leftSection={<IconFileText style={iconSizes.sm} />}
-        disabled={!handlers.canUse(container, "logs")}
+        leftSection={<IconFileText size={14} />}
         onClick={() => {
           handlers.onOpenLogs(container);
           onClose();
@@ -540,42 +439,26 @@ function ContainerActionItems({
       <Menu.Divider />
       <Menu.Item
         color={stateAction === "start" ? "green" : "red"}
-        leftSection={<StateIcon style={iconSizes.sm} />}
-        disabled={!handlers.canUse(container, "lifecycle")}
+        leftSection={<StateIcon size={14} />}
         onClick={() => invokeAction(stateAction)}
       >
         {t(`${stateAction}.label`)}
       </Menu.Item>
-      <Menu.Item
-        color="orange"
-        leftSection={<IconRotateClockwise style={iconSizes.sm} />}
-        disabled={!handlers.canUse(container, "lifecycle")}
-        onClick={() => invokeAction("restart")}
-      >
+      <Menu.Item color="orange" leftSection={<IconRotateClockwise size={14} />} onClick={() => invokeAction("restart")}>
         {t("restart.label")}
       </Menu.Item>
       {!confirmRemove ? (
-        <Menu.Item
-          color="red"
-          leftSection={<IconTrash style={iconSizes.sm} />}
-          disabled={!handlers.canUse(container, "remove")}
-          onClick={() => setConfirmRemove(true)}
-        >
+        <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => setConfirmRemove(true)}>
           {t("remove.label")}
         </Menu.Item>
       ) : (
-        <Menu.Item
-          color="red"
-          leftSection={<IconTrash style={iconSizes.sm} />}
-          disabled={!handlers.canUse(container, "remove")}
-          onClick={() => invokeAction("remove")}
-        >
+        <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => invokeAction("remove")}>
           {t("remove.confirm")}
         </Menu.Item>
       )}
       <Menu.Divider />
       <Menu.Item
-        leftSection={<IconCategoryPlus style={iconSizes.sm} />}
+        leftSection={<IconCategoryPlus size={14} />}
         onClick={() => {
           handlers.onAddToHomarr(container);
           onClose();
@@ -586,9 +469,6 @@ function ContainerActionItems({
     </>
   );
 }
-
-const endpointHasCapability = (endpoint: DockerEndpoint | undefined, capability: DockerEndpointCapability) =>
-  endpoint && "capabilities" in endpoint ? endpoint.capabilities.includes(capability) : true;
 
 function ContainerContextMenu({
   state,
@@ -607,7 +487,7 @@ function ContainerContextMenu({
         left={0}
         w="100vw"
         h="100vh"
-        style={{ zIndex: getDefaultZIndex("popover") }}
+        style={{ zIndex: 1000 }}
         onClick={onClose}
         onContextMenu={(event) => {
           event.preventDefault();
