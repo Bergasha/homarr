@@ -46,8 +46,9 @@
   min-width: 0;
 }
 
-.statusCell {
-  padding-right: 16px;
+.tableViewport :global(td).statusCell,
+.tableViewport :global(th).statusCell {
+  padding-right: 24px;
 }
 
 .sessionRow {
