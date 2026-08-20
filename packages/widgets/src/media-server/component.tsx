@@ -52,9 +52,9 @@ type SortState = { column: SortColumn; descending: boolean } | null;
 
 export const getMediaServerColumnVisibility = (width: number, isAdvanced: boolean) => ({
   user: isAdvanced || width >= 300,
-  // The user (200px) and status (190px) columns together need a floor here, otherwise the
+  // The user (240px) and status (230px) columns together need a floor here, otherwise the
   // currentlyPlaying column - the primary content - gets squeezed to almost nothing.
-  status: isAdvanced || width >= 540,
+  status: isAdvanced || width >= 620,
 });
 
 function getPlaybackStatus(transcoding: TranscodingDecision | undefined): PlaybackStatus {
@@ -285,7 +285,7 @@ export default function MediaServerWidget({
                   sortable={isAdvanced}
                   sort={sort}
                   onSort={toggleSort}
-                  width={200}
+                  width={240}
                 />
               )}
               <StreamTableHeader
@@ -302,7 +302,7 @@ export default function MediaServerWidget({
                   sortable={isAdvanced}
                   sort={sort}
                   onSort={toggleSort}
-                  width={190}
+                  width={230}
                 />
               )}
             </Table.Tr>

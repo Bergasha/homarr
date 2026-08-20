@@ -110,7 +110,7 @@ describe("getMediaServerColumnVisibility", () => {
     expect(getMediaServerColumnVisibility(0, false)).toEqual({ user: false, status: false });
     expect(getMediaServerColumnVisibility(300, false)).toEqual({ user: true, status: false });
     expect(getMediaServerColumnVisibility(420, false)).toEqual({ user: true, status: false });
-    expect(getMediaServerColumnVisibility(540, false)).toEqual({ user: true, status: true });
+    expect(getMediaServerColumnVisibility(620, false)).toEqual({ user: true, status: true });
     expect(getMediaServerColumnVisibility(0, true)).toEqual({ user: true, status: true });
   });
 });
