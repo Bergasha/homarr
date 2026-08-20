@@ -20,11 +20,6 @@
   white-space: nowrap;
   background-color: color-mix(in srgb, var(--mantine-color-body) 60%, transparent) !important;
   backdrop-filter: blur(8px);
-  /* mantine-datatable's cellsStyle prop only reaches body <td> cells, so the header row
-     falls back to Mantine Table's own default vertical spacing, which is noticeably taller
-     than the tight per-widget row padding - force it down to match. */
-  padding-block: 4px !important;
-  padding-inline: 8px !important;
 }
 
 .homarr-data-table td {
