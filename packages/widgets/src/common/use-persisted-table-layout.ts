@@ -50,12 +50,17 @@ export const useTableLayoutPersistence = ({
     [boardId, hasChangeAccess, itemId, saveItemOptions, setOptions],
   );
 
+// A column resized (or persisted) down to just a few px is never intentional - it's a sign
+// something glitched. Reject widths below this floor rather than applying them, so a corrupted
+// stored value can't wedge a column open at a near-unusable size forever.
+const minColumnWidth = 24;
+
 const toPixelWidth = (width: string | number): number | undefined => {
-  if (typeof width === "number" && Number.isFinite(width) && width > 0) return width;
+  if (typeof width === "number" && Number.isFinite(width) && width >= minColumnWidth) return width;
   if (typeof width !== "string" || !width.endsWith("px")) return undefined;
 
   const parsedWidth = Number.parseInt(width, 10);
-  return Number.isFinite(parsedWidth) && parsedWidth > 0 ? parsedWidth : undefined;
+  return Number.isFinite(parsedWidth) && parsedWidth >= minColumnWidth ? parsedWidth : undefined;
 };
 
 const getColumnWidthMap = (
@@ -99,7 +104,7 @@ export const parseColumnWidths = (value: string, columnAccessors: readonly strin
     return Object.fromEntries(
       Object.entries(parsed).filter(
         (entry): entry is [string, number] =>
-          allowed.has(entry[0]) && typeof entry[1] === "number" && Number.isFinite(entry[1]) && entry[1] > 0,
+          allowed.has(entry[0]) && typeof entry[1] === "number" && Number.isFinite(entry[1]) && entry[1] >= minColumnWidth,
       ),
     );
   } catch {

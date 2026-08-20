@@ -30,4 +30,8 @@ describe("Docker table column layout options", () => {
       ),
     ).toEqual({ name: 180 });
   });
+
+  test("rejects a stored width too small to be a real column - a sign of a stale glitch, not intent", () => {
+    expect(parseColumnWidths(JSON.stringify({ name: 5, state: 100 }), columnAccessors)).toEqual({ state: 100 });
+  });
 });
