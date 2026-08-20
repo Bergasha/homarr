@@ -697,7 +697,6 @@ export default function DownloadClientsWidget({
     itemId,
     storeKeyPrefix: "downloads",
     onLayoutChange: persistOption,
-    isEditMode,
   });
 
   const handleContextMenu = useCallback(
