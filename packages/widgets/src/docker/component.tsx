@@ -27,13 +27,28 @@ import { useModalAction } from "@homarr/modals";
 import { AddDockerAppToHomarr } from "@homarr/modals-collection";
 import { showErrorNotification, showSuccessNotification } from "@homarr/notifications";
 import { useScopedI18n } from "@homarr/translation/client";
+import { iconSizes } from "@homarr/ui";
 
 import type { WidgetComponentProps } from "../definition";
+import actionTargetClasses from "../common/action-target.module.css";
 import { HomarrDataTable } from "../common/homarr-data-table";
 import { usePersistedTableLayout, useTableLayoutPersistence } from "../common/use-persisted-table-layout";
+import { getDockerColumnVisibility, getDockerFooterVisibility } from "./layout";
 
 type DockerContainer = RouterOutputs["docker"]["getContainers"]["containers"][number];
 type ContainerAction = "start" | "stop" | "restart" | "remove";
+
+// The *button* sizes stay small and fixed - row height is set by the tallest cell, and the
+// actions button is repeated once per row, so any growth here multiplies across every row and
+// tanks how many containers fit on screen. The *icon* sizes are rendered larger than their
+// button via absolute positioning (see ContainerMenuButton/footer refresh below) - an
+// absolutely-positioned element is removed from normal flow, so it doesn't count toward its
+// ancestor's height even though it visually overflows the button. This lets the icon look
+// properly sized without the button (and therefore the row) growing to match.
+const rowActionButtonSize = 22;
+const rowActionIconVisualSize = 32;
+const footerRefreshButtonSize = 24;
+const footerRefreshIconVisualSize = 30;
 
 interface ContextMenuState {
   x: number;
@@ -57,7 +72,13 @@ const ContainerStateBadge = ({ state }: { state: ContainerState }) => {
   const t = useScopedI18n("docker.field.state.option");
 
   return (
-    <Badge size="xs" radius="sm" variant="light" color={containerStateColorMap[state]}>
+    <Badge
+      size="xs"
+      radius="sm"
+      variant="light"
+      color={containerStateColorMap[state]}
+      styles={{ label: { lineHeight: 1.2 } }}
+    >
       {t(state)}
     </Badge>
   );
@@ -77,16 +98,15 @@ const createColumns = (
     render: (container) => (
       <Group gap="xs" wrap="nowrap" style={{ overflow: "hidden" }}>
         <Avatar
-          variant="outline"
-          radius="sm"
-          size={20}
+          radius="xl"
+          size={24}
           styles={{ image: { objectFit: "contain" } }}
           src={container.iconUrl}
           style={{ flexShrink: 0 }}
         >
           {container.name.at(0)?.toUpperCase()}
         </Avatar>
-        <Text size="sm" truncate>
+        <Text size="sm" lh={1.2} truncate>
           {container.name}
         </Text>
       </Group>
@@ -142,8 +162,12 @@ const createColumns = (
   {
     accessor: "actions",
     title: "",
-    width: 44,
+    width: rowActionButtonSize + 18,
     textAlign: "right",
+    // The default `.homarr-data-table td { overflow: hidden }` (needed for name/host ellipsis
+    // truncation) would clip the actions icon's intentional visual overflow - opt this one
+    // cell out of it.
+    cellsClassName: "docker-actions-cell",
     render: (container) => <ContainerMenuButton container={container} handlers={handlers} />,
   },
 ];
@@ -188,6 +212,7 @@ export default function DockerWidget({
   options,
   width,
   isEditMode,
+  displayMode,
   boardId,
   itemId,
   setOptions,
@@ -198,7 +223,7 @@ export default function DockerWidget({
   const board = useOptionalBoard();
   const { data: session } = useSession();
   const hasChangeAccess = board ? constructBoardPermissions(board, session).hasChangeAccess : false;
-  const isTiny = width <= 256;
+  const isAdvanced = displayMode === "advanced";
 
   const { data, refetch, isFetching } = clientApi.docker.getContainers.useQuery();
   const containers = useMemo(() => data?.containers ?? [], [data?.containers]);
@@ -280,13 +305,16 @@ export default function DockerWidget({
     [containers],
   );
 
-  const selectedColumns = useMemo(() => new Set<string>(options.columns), [options.columns]);
+  const columnVisibility = useMemo(
+    () => getDockerColumnVisibility(options.columns, isAdvanced),
+    [isAdvanced, options.columns],
+  );
   const columns = useMemo(() => {
-    const sortingEnabled = options.enableRowSorting && !isEditMode;
-    return createColumns(t, actionHandlers, sortingEnabled).filter(({ accessor }) =>
-      selectedColumns.has(String(accessor)),
+    const sortingEnabled = (isAdvanced || options.enableRowSorting) && !isEditMode;
+    return createColumns(t, actionHandlers, sortingEnabled).filter(
+      ({ accessor }) => columnVisibility[String(accessor) as keyof typeof columnVisibility],
     );
-  }, [actionHandlers, isEditMode, options.enableRowSorting, selectedColumns, t]);
+  }, [actionHandlers, columnVisibility, isAdvanced, isEditMode, options.enableRowSorting, t]);
   const { effectiveColumns, storeKey } = usePersistedTableLayout({
     columns,
     columnAccessors,
@@ -305,7 +333,7 @@ export default function DockerWidget({
     setContextMenu({ x: event.clientX, y: event.clientY, container: record });
   }, []);
 
-  if (options.columns.length === 0) {
+  if (!isAdvanced && options.columns.length === 0) {
     return (
       <Center h="100%">
         <Text>{t("error.noColumns")}</Text>
@@ -313,12 +341,14 @@ export default function DockerWidget({
     );
   }
 
+  const footerVisibility = getDockerFooterVisibility(width, isAdvanced);
+
   return (
     <Stack gap={0} h="100%" style={{ overflow: "hidden" }}>
       <Box style={{ flex: 1, minHeight: 0 }}>
         <HomarrDataTable
           isEditMode={isEditMode}
-          cellPadding={width < 400 ? "2px 8px" : "4px 8px"}
+          cellPadding="2px 8px"
           rowCursor="default"
           fetching={isFetching && containers.length === 0}
           fz={width < 400 ? "xs" : "sm"}
@@ -327,7 +357,7 @@ export default function DockerWidget({
           columns={effectiveColumns}
           storeColumnsKey={storeKey}
           sortStatus={sortStatus}
-          onSortStatusChange={options.enableRowSorting && !isEditMode ? setSortStatus : undefined}
+          onSortStatusChange={(isAdvanced || options.enableRowSorting) && !isEditMode ? setSortStatus : undefined}
           idAccessor="id"
           onRowContextMenu={isEditMode ? undefined : handleContextMenu}
           onScroll={() => {
@@ -336,32 +366,41 @@ export default function DockerWidget({
         />
       </Box>
 
-      {!isTiny && (
-        <Group justify="space-between" style={{ borderTop: "0.0625rem solid var(--border-color)" }} p={4} wrap="nowrap">
+      {footerVisibility.footer && (
+        <Group justify="space-between" style={{ borderTop: "0.0625rem solid var(--border-color)" }} py={2} px={8} wrap="nowrap">
           <Group gap={4} wrap="nowrap">
-            <IconBrandDocker size={20} style={{ flexShrink: 0 }} />
-            <Text size="sm" truncate>
+            <IconBrandDocker style={{ ...iconSizes.md, flexShrink: 0 }} />
+            <Text size="xs" truncate>
               {t("table.footer", { count: containers.length.toString() })}
             </Text>
           </Group>
 
           <Group gap="sm" wrap="nowrap" justify="flex-end" style={{ minWidth: 0 }}>
-            <Text size="sm" style={{ whiteSpace: "nowrap" }}>
-              {t("table.totalCpu", { cpu: totals.cpu.toFixed(2) })}
-            </Text>
-            <Text size="sm" style={{ whiteSpace: "nowrap" }}>
-              {t("table.totalMemory", { memory: formatBytes(totals.memory) })}
-            </Text>
+            {footerVisibility.cpu && (
+              <Text size="xs" style={{ whiteSpace: "nowrap" }}>
+                {t("table.totalCpu", { cpu: totals.cpu.toFixed(2) })}
+              </Text>
+            )}
+            {footerVisibility.memory && (
+              <Text size="xs" style={{ whiteSpace: "nowrap" }}>
+                {t("table.totalMemory", { memory: formatBytes(totals.memory) })}
+              </Text>
+            )}
             <Tooltip label={t("table.refresh.lastUpdated", { when: relativeTime })}>
               <ActionIcon
-                size="sm"
+                className={actionTargetClasses.root}
+                size={footerRefreshButtonSize}
                 variant="transparent"
                 c="var(--mantine-color-text)"
                 loading={isFetching}
                 onClick={() => void refetch()}
                 aria-label={t("table.refresh.lastUpdated", { when: relativeTime })}
+                style={{ position: "relative", overflow: "visible" }}
               >
-                <IconRefresh size={16} />
+                <IconRefresh
+                  size={footerRefreshIconVisualSize}
+                  style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+                />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -388,13 +427,21 @@ function ContainerMenuButton({
     <Menu opened={opened} onChange={setOpened} closeOnItemClick={false} withinPortal position="bottom-end" shadow="sm">
       <Menu.Target>
         <ActionIcon
+          className={actionTargetClasses.root}
           variant="subtle"
           color="gray"
-          size="sm"
+          size={rowActionButtonSize}
           aria-label={t("title")}
           onClick={(event) => event.stopPropagation()}
+          style={{ position: "relative", overflow: "visible" }}
         >
-          <IconDots size={16} />
+          {/* Rendered larger than the button and pulled out of flow via absolute positioning,
+              so it looks properly sized without the button - and therefore the row - growing
+              to match (row height is set by the tallest cell, and this button repeats per row). */}
+          <IconDots
+            size={rowActionIconVisualSize}
+            style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+          />
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown w={containerMenuWidth} miw={containerMenuWidth} maw={containerMenuWidth}>
@@ -429,7 +476,7 @@ function ContainerActionItems({
         {container.name}
       </Menu.Label>
       <Menu.Item
-        leftSection={<IconFileText size={14} />}
+        leftSection={<IconFileText style={iconSizes.sm} />}
         onClick={() => {
           handlers.onOpenLogs(container);
           onClose();
@@ -440,26 +487,26 @@ function ContainerActionItems({
       <Menu.Divider />
       <Menu.Item
         color={stateAction === "start" ? "green" : "red"}
-        leftSection={<StateIcon size={14} />}
+        leftSection={<StateIcon style={iconSizes.sm} />}
         onClick={() => invokeAction(stateAction)}
       >
         {t(`${stateAction}.label`)}
       </Menu.Item>
-      <Menu.Item color="orange" leftSection={<IconRotateClockwise size={14} />} onClick={() => invokeAction("restart")}>
+      <Menu.Item color="orange" leftSection={<IconRotateClockwise style={iconSizes.sm} />} onClick={() => invokeAction("restart")}>
         {t("restart.label")}
       </Menu.Item>
       {!confirmRemove ? (
-        <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => setConfirmRemove(true)}>
+        <Menu.Item color="red" leftSection={<IconTrash style={iconSizes.sm} />} onClick={() => setConfirmRemove(true)}>
           {t("remove.label")}
         </Menu.Item>
       ) : (
-        <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => invokeAction("remove")}>
+        <Menu.Item color="red" leftSection={<IconTrash style={iconSizes.sm} />} onClick={() => invokeAction("remove")}>
           {t("remove.confirm")}
         </Menu.Item>
       )}
       <Menu.Divider />
       <Menu.Item
-        leftSection={<IconCategoryPlus size={14} />}
+        leftSection={<IconCategoryPlus style={iconSizes.sm} />}
         onClick={() => {
           handlers.onAddToHomarr(container);
           onClose();
