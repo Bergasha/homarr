@@ -128,7 +128,7 @@ export default function BookmarksWidget({
   ));
 
   return (
-    <Stack h="100%" mih={0} gap={height < 120 ? 6 : "sm"} p={height < 120 ? 10 : "md"}>
+    <Stack h="100%" mih={0} gap={height < 120 ? 6 : "sm"} p={height < 120 ? 6 : "sm"}>
       {options.title.length > 0 ? (
         <Text fz={11} fw={600} px={2} lh={1.2} lineClamp={1}>
           {options.title}
