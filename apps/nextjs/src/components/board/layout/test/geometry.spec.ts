@@ -3,24 +3,28 @@ import { describe, expect, test } from "vitest";
 import {
   getGridRowCountForVisualHeight,
   getLayoutRowCount,
+  getLogicalGridSize,
   getLogicalItemStyle,
   getLogicalTrackSize,
   normalizeGridPlacement,
 } from "../index";
 
 describe("fixed dashboard geometry", () => {
-  test("keeps a 1x1 item exactly 200px with a fixed 24px gap", () => {
+  test("separates content track sizes from complete grid footprints", () => {
     expect(getLogicalTrackSize(1)).toBe(200);
-    expect(getLogicalTrackSize(0.5)).toBe(88);
-    expect(getLogicalTrackSize(2)).toBe(424);
-    expect(getLogicalTrackSize(3)).toBe(648);
+    expect(getLogicalTrackSize(0.5)).toBe(94);
+    expect(getLogicalTrackSize(2)).toBe(412);
+    expect(getLogicalTrackSize(3)).toBe(624);
+    expect(getLogicalGridSize(1)).toBe(212);
+    expect(getLogicalGridSize(2)).toBe(424);
+    expect(getLogicalGridSize(3)).toBe(636);
 
     expect(getLogicalItemStyle({ x: 1, y: 2, w: 2, h: 3 })).toEqual({
       position: "absolute",
-      left: 224,
-      top: 448,
+      left: 212,
+      top: 424,
       width: 424,
-      height: 648,
+      height: 636,
     });
   });
 
@@ -35,7 +39,7 @@ describe("fixed dashboard geometry", () => {
     expect(getGridRowCountForVisualHeight(1200, 1)).toBe(6);
     expect(getLogicalTrackSize(getGridRowCountForVisualHeight(1200, 1))).toBeGreaterThanOrEqual(1200);
 
-    expect(getGridRowCountForVisualHeight(1200, 0.5)).toBe(11);
+    expect(getGridRowCountForVisualHeight(1200, 0.5)).toBe(12);
     expect(getLogicalTrackSize(getGridRowCountForVisualHeight(1200, 0.5)) * 0.5).toBeGreaterThanOrEqual(1200);
   });
 });

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Center, Group, Loader, ScrollArea, SimpleGrid, Stack, Text } from "@mantine/core";
 
 import { clientApi } from "@homarr/api/client";
-import { useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 
 import { WidgetEmptyState } from "../common/empty-state";
 import { IntegrationErrorIndicator } from "../common/integration-error-indicator";
@@ -84,7 +84,7 @@ export default function SystemResources({
   height,
   displayMode,
 }: WidgetComponentProps<"systemResources">) {
-  const t = useScopedI18n("widget.systemResources");
+  const t = useI18n("widget.systemResources");
   const healthQuery = clientApi.widget.healthMonitoring.getSystemHealthStatus.useQuery({ integrationIds });
   const results = getUsableWidgetQueryData(healthQuery) ?? [];
   const data = results.filter(
@@ -230,18 +230,19 @@ const SystemCharts = ({
   const labelDisplayMode = isAdvanced ? "textWithIcon" : options.labelDisplayMode;
   const chartCount = visibleCharts.length;
   const chartColumns = isAdvanced && width >= 560 ? 2 : 1;
+  const compactChartGap = 8;
   const chartHeight = isAdvanced
     ? 180
-    : `calc((100% - ${Math.max(0, chartCount - 1) * 10}px) / ${Math.max(1, chartCount)})`;
+    : `calc((100% - ${Math.max(0, chartCount - 1) * compactChartGap}px) / ${Math.max(1, chartCount)})`;
 
   return (
-    <Stack gap="xs" h={isAdvanced ? "auto" : height} miw={0}>
+    <Stack gap={isAdvanced ? "xs" : compactChartGap} h={isAdvanced ? "auto" : height} miw={0}>
       {showTitle && (
         <Text size="sm" fw={600} truncate="end">
           {integrationName}
         </Text>
       )}
-      <SimpleGrid cols={chartColumns} spacing="xs" style={{ flex: 1, minHeight: 0 }}>
+      <SimpleGrid cols={chartColumns} spacing={isAdvanced ? "xs" : compactChartGap} style={{ flex: 1, minHeight: 0 }}>
         {chartCount === 0 && (
           <Center h="100%">
             <Text size="sm" c="dimmed">

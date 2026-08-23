@@ -16,7 +16,7 @@ import {
 } from "@tabler/icons-react";
 import { metricToImperial } from "@homarr/common";
 import type { TranslationObject } from "@homarr/translation";
-import { useCurrentIntlLocale, useScopedI18n } from "@homarr/translation/client";
+import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 import type { TablerIcon } from "@homarr/ui";
 
@@ -24,6 +24,7 @@ import type { WidgetProps } from "../definition";
 
 interface WeatherIconProps {
   code: number;
+  isDay?: boolean;
   size?: string | number;
 }
 
@@ -33,11 +34,15 @@ interface WeatherIconProps {
  * @param size size of the icon, accepts relative sizes too
  * @returns Icon corresponding to the weather code
  */
-export const WeatherIcon = ({ code, size = 50 }: WeatherIconProps) => {
+export const WeatherIcon = ({ code, isDay = true, size = 50 }: WeatherIconProps) => {
+  if (code === 0 && !isDay) return <IconMoon style={{ float: "left" }} size={size} />;
   const { icon: Icon } = weatherDefinitions.find((definition) => definition.codes.includes(code)) ?? unknownWeather;
 
   return <Icon style={{ float: "left" }} size={size} />;
 };
+
+export const getWeatherKind = (code: number) =>
+  (weatherDefinitions.find((definition) => definition.codes.includes(code)) ?? unknownWeather).name;
 
 interface WeatherDescriptionProps {
   weatherOnly?: boolean;
@@ -81,20 +86,20 @@ export const WeatherDescription = ({
   maxWindGusts,
   humidity,
 }: WeatherDescriptionProps) => {
-  const t = useScopedI18n("widget.weather");
-  const tCommon = useScopedI18n("common");
+  const t = useI18n("widget.weather");
+  const tCommon = useI18n("common");
   const locale = useCurrentIntlLocale();
 
-  const { name } = weatherDefinitions.find((definition) => definition.codes.includes(weatherCode)) ?? unknownWeather;
+  const name = getWeatherKind(weatherCode);
 
   if (weatherOnly) {
-    return <Text fz="16px">{t(`kind.${name}`)}</Text>;
+    return <Text fz="md">{t(`kind.${name}`)}</Text>;
   }
 
   return (
     <Stack align="center" gap="0">
-      <Text fz="24px">{formatWeatherDate(time, locale, dateFormat)}</Text>
-      <Text fz="16px">{t(`kind.${name}`)}</Text>
+      <Text fz="xl">{formatWeatherDate(time, locale, dateFormat)}</Text>
+      <Text fz="md">{t(`kind.${name}`)}</Text>
       <List>
         <List.Item icon={<IconTemperaturePlus style={iconSizes.sm} />}>{`${tCommon("information.max")}: ${maxTemp}`}</List.Item>
         <List.Item icon={<IconTemperatureMinus style={iconSizes.sm} />}>{`${tCommon("information.min")}: ${minTemp}`}</List.Item>

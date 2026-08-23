@@ -13,12 +13,15 @@ import {
 
 import type { RouterOutputs } from "@homarr/api";
 import { useRequiredBoard } from "@homarr/boards/context";
-import { useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
 import { getStatusColor, RUNNING_STATUS } from "./helpers";
 
 export type VpnInfo = RouterOutputs["widget"]["vpn"]["getSummaries"][number]["summary"];
+
+const neutralBorderColor =
+  "rgb(from var(--mantine-color-default-border) r g b / calc(var(--opacity, 1) * 0.45))";
 
 export function VpnIntegrationCard({
   vpn,
@@ -54,7 +57,14 @@ export function VpnIntegrationCard({
 
   if (compact) {
     return (
-      <Card withBorder radius={board.itemRadius} p={dense ? 6 : "xs"} w="100%">
+      <Card
+        withBorder
+        radius={board.itemRadius}
+        p={dense ? 6 : "xs"}
+        w="100%"
+        bg="transparent"
+        style={{ borderColor: neutralBorderColor }}
+      >
         {content}
       </Card>
     );
@@ -72,7 +82,7 @@ function VpnUnavailableContent({
   dense: boolean;
   integrationName?: string;
 }) {
-  const t = useScopedI18n("widget.vpn");
+  const t = useI18n("widget.vpn");
 
   return (
     <Flex direction="row" w="100%" align="center" gap="xs">
@@ -103,7 +113,7 @@ function VpnStatusColumn({
   compact: boolean;
   dense: boolean;
 }) {
-  const t = useScopedI18n("widget.vpn");
+  const t = useI18n("widget.vpn");
   // Connected shows a shield with a check; anything else (stopped or unavailable) shows a shield with a cross.
   const ShieldIcon = vpnStatus === RUNNING_STATUS ? IconShieldCheck : IconShieldX;
   const statusLabel = t(
@@ -186,7 +196,7 @@ function VpnProviderDetails({ provider, protocol }: { provider: string; protocol
 }
 
 function DnsStatusBadge({ status }: { status: string }) {
-  const t = useScopedI18n("widget.vpn");
+  const t = useI18n("widget.vpn");
   const StatusIcon = status === RUNNING_STATUS ? IconCircleCheckFilled : IconCircleXFilled;
   const statusLabel = t(
     status === RUNNING_STATUS ? "status.running" : status ? "status.notRunning" : "status.unavailable",

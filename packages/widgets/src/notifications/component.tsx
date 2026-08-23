@@ -14,6 +14,7 @@ import { getUsableWidgetQueryData } from "../common/query-state";
 import { WidgetQueryErrorIndicator } from "../common/query-state-indicator";
 import type { WidgetComponentProps } from "../definition";
 import { getNotificationDisplay } from "./display";
+import classes from "./component.module.css";
 
 export default function NotificationsWidget({
   options,
@@ -30,7 +31,8 @@ export default function NotificationsWidget({
   const notificationIntegrations = useMemo(() => notificationData ?? [], [notificationData]);
   const { isPending } = notificationsQuery;
 
-  const t = useI18n();
+  const t = useI18n("widget.notifications");
+  const tCommon = useI18n("common");
 
   const board = useRequiredBoard();
 
@@ -67,14 +69,14 @@ export default function NotificationsWidget({
       <Stack w="100%" gap="xs">
         {notificationsQuery.error && (
           <Group justify="flex-end">
-            <WidgetQueryErrorIndicator error={notificationsQuery.error} label={t("widget.notifications.name")} />
+            <WidgetQueryErrorIndicator error={notificationsQuery.error} label={t("name")} />
           </Group>
         )}
         {failedIntegrations.length > 0 && (
           <Group gap={4} wrap="wrap">
             {failedIntegrations.map((integration) => (
               <Badge key={integration.integration.id} color="red" variant="light" size="xs">
-                {integration.integration.name}: {t("common.error")}
+                {integration.integration.name}: {tCommon("error")}
               </Badge>
             ))}
           </Group>
@@ -82,7 +84,7 @@ export default function NotificationsWidget({
         {isPending ? (
           <Flex justify="center" align="center" mih={96} p="sm">
             <Text size="sm" c="dimmed" ta="center">
-              {t("common.action.loading")}
+              {tCommon("action.loading")}
             </Text>
           </Flex>
         ) : sortedNotifications.length > 0 ? (
@@ -96,17 +98,13 @@ export default function NotificationsWidget({
                   href={href}
                   target={href ? "_blank" : undefined}
                   rel={href ? SAFE_NEW_TAB_REL : undefined}
+                  className={columns > 1 ? classes.card : classes.row}
                   radius={board.itemRadius}
                   w="100%"
                   p={isRoomy ? "sm" : isDense ? 6 : "xs"}
-                  bg={columns > 1 ? undefined : "transparent"}
                   style={{
                     color: "inherit",
                     textDecoration: "none",
-                    borderBottom:
-                      columns > 1
-                        ? undefined
-                        : "1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4))",
                   }}
                 >
                   <Flex gap={isDense ? "xs" : "sm"} align="flex-start" w="100%">
@@ -152,7 +150,7 @@ export default function NotificationsWidget({
         ) : (
           <Flex justify="center" align="center" mih={96} p="sm">
             <Text size="sm" c="dimmed" ta="center">
-              {t("widget.notifications.noItems")}
+              {t("noItems")}
             </Text>
           </Flex>
         )}

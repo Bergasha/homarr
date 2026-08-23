@@ -25,7 +25,7 @@ import { normalizeCustomWidgetOptions, validateCustomWidgetOptions } from "@homa
 import { CustomWidgetCodeEditor } from "@homarr/custom-widgets/workbench";
 import type { CustomWidgetEditorMessages } from "@homarr/custom-widgets/workbench";
 import { IconPicker } from "@homarr/forms-collection";
-import { useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
 import type { CommonWidgetInputProps } from "./common";
@@ -35,7 +35,7 @@ export const WidgetCustomWidgetConfigurationInput = ({
   property,
 }: CommonWidgetInputProps<"customWidgetConfiguration">) => {
   const form = useFormContext();
-  const labels = useScopedI18n("widget.customApi.configuration");
+  const labels = useI18n("widget.customApi.configuration");
   const board = useOptionalBoard();
   const definitionId = typeof form.values.options.definitionId === "string" ? form.values.options.definitionId : "";
   const configurationValue = form.values.options[property];

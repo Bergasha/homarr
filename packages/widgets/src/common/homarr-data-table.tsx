@@ -6,6 +6,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DataTableColumn, DataTableProps } from "mantine-datatable";
 import { DataTable } from "mantine-datatable";
 
+import { scrollAreaDefaultProps } from "@homarr/ui";
+
 const fallbackColumnWidth = 60;
 
 const getColumnWidth = (width: string | number | undefined): number => {
@@ -135,14 +137,13 @@ export function HomarrDataTable<T>({
       withTableBorder={false}
       borderRadius={0}
       highlightOnHover
-      striped="odd"
-      stripedColor={{ dark: "dark.7", light: "gray.0" }}
       highlightOnHoverColor={{ dark: "dark.5", light: "gray.1" }}
       verticalAlign="center"
       loaderBackgroundBlur={2}
       textSelectionDisabled
       height="100%"
       {...props}
+      striped={false}
       columns={fittedColumns}
       onMouseDownCapture={handleMouseDownCapture}
       className={mergedClassName}
@@ -154,7 +155,7 @@ export function HomarrDataTable<T>({
         resizable: !isEditMode,
         cellsStyle: defaultColumnProps?.cellsStyle ?? (() => ({ padding: cellPadding })),
       }}
-      scrollAreaProps={{ type: "auto", scrollbarSize: 6, ...scrollAreaProps }}
+      scrollAreaProps={{ ...scrollAreaDefaultProps, ...scrollAreaProps }}
     />
   );
 }

@@ -8,7 +8,6 @@ import {
   CloseButton,
   Combobox,
   Group,
-  Input,
   Pill,
   PillsInput,
   Stack,
@@ -33,16 +32,21 @@ interface WidgetIntegrationSelectProps {
   canSelectMultiple?: boolean;
   data: IntegrationSelectOption[];
   withAsterisk?: boolean;
+  onOpenNewIntegration?: () => void;
 }
 export const WidgetIntegrationSelect = ({
   data,
   onChange,
   value: valueProp,
+  label,
   canSelectMultiple = true,
   withAsterisk = false,
+  onOpenNewIntegration,
   ...props
 }: WidgetIntegrationSelectProps) => {
-  const t = useI18n();
+  const tItem = useI18n("item.edit.field.integrations");
+  const tIntegration = useI18n("widget.common.integration");
+  const tCommon = useI18n("common");
   const multiSelectValues = valueProp ?? [];
 
   const combobox = useCombobox({
@@ -79,6 +83,7 @@ export const WidgetIntegrationSelect = ({
         option={option}
         onRemove={() => handleValueRemove(item)}
         showRemoveButton={canSelectMultiple}
+        removeLabel={tItem("removeLabel", { name: option.name })}
       />
     );
   });
@@ -108,27 +113,35 @@ export const WidgetIntegrationSelect = ({
         <PillsInput
           inputWrapperOrder={["label", "input", "description", "error"]}
           description={
-            <Text size="xs" span>
-              {t.rich("widget.common.integration.description", {
-                here: () => (
-                  <Anchor size="xs" component={Link} target="_blank" href="/manage/integrations">
-                    {t("common.here")}
-                  </Anchor>
-                ),
-              })}
-            </Text>
+            onOpenNewIntegration ? (
+              <Text size="xs" span>
+                <Anchor size="xs" component="button" type="button" onClick={onOpenNewIntegration}>
+                  {tCommon("action.create")}
+                </Anchor>
+              </Text>
+            ) : (
+              <Text size="xs" span>
+                <Anchor size="xs" component={Link} target="_blank" href="/manage/integrations">
+                  {tIntegration("manage")}
+                </Anchor>
+              </Text>
+            )
           }
           pointer
           onClick={() => combobox.toggleDropdown()}
+          label={label}
           withAsterisk={withAsterisk}
           {...props}
         >
           <Pill.Group>
-            {values.length > 0 ? values : <Input.Placeholder>{t("common.multiSelect.placeholder")}</Input.Placeholder>}
+            {values}
 
             <Combobox.EventsTarget>
               <PillsInput.Field
-                type="hidden"
+                readOnly
+                aria-label={label}
+                placeholder={values.length === 0 ? tCommon("multiSelect.placeholder") : undefined}
+                onFocus={() => combobox.openDropdown()}
                 onBlur={() => combobox.closeDropdown()}
                 onKeyDown={(event) => {
                   if (event.key !== "Backspace") return;
@@ -149,7 +162,7 @@ export const WidgetIntegrationSelect = ({
             options
           ) : (
             <Text p={4} size="sm" ta="center" c="var(--mantine-color-dimmed)">
-              {t("widget.common.integration.noData")}
+              {tIntegration("noData")}
             </Text>
           )}
         </Combobox.Options>
@@ -163,22 +176,38 @@ export interface IntegrationSelectOption {
   name: string;
   url: string;
   kind: IntegrationKind;
+  permissions?: {
+    hasUseAccess: boolean;
+    hasInteractAccess: boolean;
+    hasFullAccess: boolean;
+  };
 }
 
 interface IntegrationPillProps {
   option: IntegrationSelectOption;
   onRemove: () => void;
   showRemoveButton: boolean;
+  removeLabel: string;
 }
 
-const IntegrationPill = ({ option, onRemove, showRemoveButton }: IntegrationPillProps) => (
+const IntegrationPill = ({ option, onRemove, showRemoveButton, removeLabel }: IntegrationPillProps) => (
   <Group align="center" wrap="nowrap" gap={0} className={classes.pill} mih={24} pr={!showRemoveButton ? 10 : undefined}>
     <Avatar src={getIconUrl(option.kind)} size={14} mr={6} />
     <Text span size="xs" lh={1} fw={500}>
       {option.name}
     </Text>
     {showRemoveButton && (
-      <CloseButton onMouseDown={onRemove} variant="transparent" color="gray" size={22} iconSize={14} tabIndex={-1} />
+      <CloseButton
+        onClick={(event) => {
+          event.stopPropagation();
+          onRemove();
+        }}
+        aria-label={removeLabel}
+        variant="transparent"
+        color="gray"
+        size={24}
+        iconSize={14}
+      />
     )}
   </Group>
 );

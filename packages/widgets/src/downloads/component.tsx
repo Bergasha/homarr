@@ -50,7 +50,7 @@ import { formatByteRate, formatBytes, useIntegrationConnected } from "@homarr/co
 import { getIconUrl, getIntegrationKindsByCategory } from "@homarr/definitions";
 import type { ExtendedClientStatus, ExtendedDownloadClientItem } from "@homarr/integrations";
 import { showErrorNotification } from "@homarr/notifications";
-import { useCurrentIntlLocale, useScopedI18n } from "@homarr/translation/client";
+import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
 import type { WidgetComponentProps } from "../definition";
@@ -70,7 +70,7 @@ import {
 
 dayjs.extend(relativeTime);
 
-type DownloadsT = ReturnType<typeof useScopedI18n<"widget.downloads">>;
+type DownloadsT = ReturnType<typeof useI18n<"widget.downloads">>;
 type DownloadState = ExtendedDownloadClientItem["state"];
 
 interface SizeConfig {
@@ -142,11 +142,6 @@ const stateColorMap: Record<DownloadState, string> = {
   stalled: "orange",
   failed: "red",
   unknown: "gray",
-};
-
-const rowBgAlpha: Partial<Record<DownloadState, string>> = {
-  failed: "var(--mantine-color-red-light)",
-  paused: "var(--mantine-color-yellow-light)",
 };
 
 const columnVisibilityChecks: Partial<Record<string, (ctx: ColumnContext) => boolean>> = {
@@ -316,7 +311,7 @@ export default function DownloadClientsWidget({
   const availableItems = useMemo(() => currentItems?.filter((item) => item.data !== null) ?? [], [currentItems]);
   const { isFetching } = downloadsQuery;
 
-  const t = useScopedI18n("widget.downloads");
+  const t = useI18n("widget.downloads");
   const queryIndicators = (
     <Group gap={0}>
       <IntegrationErrorIndicator results={currentItems ?? []} />
@@ -607,7 +602,7 @@ export default function DownloadClientsWidget({
         title: t("items.state.columnTitle"),
         width: 90,
         render: (record) => (
-          <Badge size="xs" variant="light" color={stateColorMap[record.state]}>
+          <Badge size="xs" variant="dot" color={stateColorMap[record.state]}>
             {t(`states.${record.state}`)}
           </Badge>
         ),
@@ -785,7 +780,6 @@ export default function DownloadClientsWidget({
           className="downloads-table"
           customRowAttributes={(_, index) => ({ "data-row-index": index })}
           onRowContextMenu={rowContextMenuHandler}
-          rowBackgroundColor={(record) => rowBgAlpha[record.state]}
           rowExpansion={{
             trigger: "click",
             allowMultiple: true,
@@ -872,14 +866,8 @@ function buildHoverTooltip(record: ExtendedDownloadClientItem, t: DownloadsT): R
   );
 }
 
-function ExpandedRow({
-  item,
-  collapse,
-}: {
-  item: ExtendedDownloadClientItem;
-  collapse: () => void;
-}) {
-  const t = useScopedI18n("widget.downloads");
+function ExpandedRow({ item, collapse }: { item: ExtendedDownloadClientItem; collapse: () => void }) {
+  const t = useI18n("widget.downloads");
   const locale = useCurrentIntlLocale();
   const progressPercent = Math.floor(item.progress * 100);
   const categoryDisplay = formatCategoryDisplay(item.category);
@@ -909,7 +897,7 @@ function ExpandedRow({
             <Text size="sm" fw={600} truncate style={{ minWidth: 0 }}>
               {item.name}
             </Text>
-            <Badge size="xs" variant="light" color={stateColorMap[item.state]} ml="auto" style={{ flexShrink: 0 }}>
+            <Badge size="xs" variant="dot" color={stateColorMap[item.state]} ml="auto" style={{ flexShrink: 0 }}>
               {t(`states.${item.state}`)}
             </Badge>
           </Group>
@@ -995,7 +983,7 @@ function GlobalStatsBar({
   hasTorrents: boolean;
   clients: ExtendedClientStatus[];
 }) {
-  const t = useScopedI18n("widget.downloads");
+  const t = useI18n("widget.downloads");
 
   let overallProgress = 0;
   if (queueStats.totalSize > 0) overallProgress = queueStats.completedSize / queueStats.totalSize;
@@ -1215,7 +1203,7 @@ function WidgetFooter({
   showStats,
   toggleStats,
 }: WidgetFooterProps) {
-  const t = useScopedI18n("widget.downloads");
+  const t = useI18n("widget.downloads");
   const [filterOpen, { toggle: toggleFilter }] = useDisclosure(false);
   const someInteract = clients.some(({ interact }) => interact);
   const hasActiveFilter = clientFilter.length > 0 || statusFilter.length > 0;
@@ -1410,7 +1398,7 @@ function ClientIndicator({ integration }: { integration: ExtendedClientStatus["i
   const isConnected = useIntegrationConnected(integration.updatedAt, { timeout: 30000 });
 
   let tooltipLabel = integration.name;
-  const t = useScopedI18n("widget.downloads");
+  const t = useI18n("widget.downloads");
   if (!isConnected) tooltipLabel = `${integration.name} ${t("disconnected")}`;
 
   let avatarFilter: string | undefined;

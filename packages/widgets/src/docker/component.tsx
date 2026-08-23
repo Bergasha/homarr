@@ -1,5 +1,7 @@
 "use client";
 
+import "./styles.css";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionIcon, Avatar, Badge, Box, Center, Group, Menu, Portal, Stack, Text, Tooltip } from "@mantine/core";
 import {
@@ -17,6 +19,7 @@ import type { DataTableColumn, DataTableSortStatus } from "mantine-datatable";
 
 import type { RouterOutputs } from "@homarr/api";
 import { clientApi } from "@homarr/api/client";
+import { invariantTechnicalLabels } from "@homarr/definitions";
 import { useSession } from "@homarr/auth/client";
 import { constructBoardPermissions } from "@homarr/auth/shared";
 import { useOptionalBoard } from "@homarr/boards/context";
@@ -26,7 +29,7 @@ import { containerStateColorMap, cpuUsageColor, memoryUsageColor, safeValue } fr
 import { useModalAction } from "@homarr/modals";
 import { AddDockerAppToHomarr } from "@homarr/modals-collection";
 import { showErrorNotification, showSuccessNotification } from "@homarr/notifications";
-import { useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
 import type { WidgetComponentProps } from "../definition";
@@ -69,7 +72,7 @@ const createContainerLogsPath = (container: Pick<DockerContainer, "id" | "name">
   `/manage/tools/docker/logs/${container.id}?name=${encodeURIComponent(container.name)}`;
 
 const ContainerStateBadge = ({ state }: { state: ContainerState }) => {
-  const t = useScopedI18n("docker.field.state.option");
+  const t = useI18n("docker.field.state.option");
 
   return (
     <Badge
@@ -85,13 +88,14 @@ const ContainerStateBadge = ({ state }: { state: ContainerState }) => {
 };
 
 const createColumns = (
-  t: ReturnType<typeof useScopedI18n<"docker">>,
+  t: ReturnType<typeof useI18n<"docker">>,
+  tCommon: ReturnType<typeof useI18n<"common">>,
   handlers: ContainerActionHandlers,
   sortingEnabled: boolean,
 ): DataTableColumn<DockerContainer>[] => [
   {
     accessor: "name",
-    title: t("field.name.label"),
+    title: tCommon("field.name"),
     width: 180,
     ellipsis: true,
     sortable: sortingEnabled,
@@ -133,7 +137,7 @@ const createColumns = (
   },
   {
     accessor: "cpuUsage",
-    title: t("field.stats.cpu.label"),
+    title: invariantTechnicalLabels.cpu,
     width: 80,
     sortable: sortingEnabled,
     render: (container) => {
@@ -186,7 +190,7 @@ const compareContainers = (
 };
 
 const useContainerAction = (action: ContainerAction) => {
-  const t = useScopedI18n("docker.action");
+  const t = useI18n("docker.action");
   const utils = clientApi.useUtils();
 
   return clientApi.docker[`${action}All`].useMutation({
@@ -217,8 +221,9 @@ export default function DockerWidget({
   itemId,
   setOptions,
 }: WidgetComponentProps<"dockerContainers">) {
-  const t = useScopedI18n("docker");
-  const tWidget = useScopedI18n("widget.dockerContainers");
+  const t = useI18n("docker");
+  const tCommon = useI18n("common");
+  const tWidget = useI18n("widget.dockerContainers");
   const { openModal } = useModalAction(AddDockerAppToHomarr);
   const board = useOptionalBoard();
   const { data: session } = useSession();
@@ -311,10 +316,10 @@ export default function DockerWidget({
   );
   const columns = useMemo(() => {
     const sortingEnabled = (isAdvanced || options.enableRowSorting) && !isEditMode;
-    return createColumns(t, actionHandlers, sortingEnabled).filter(
+    return createColumns(t, tCommon, actionHandlers, sortingEnabled).filter(
       ({ accessor }) => columnVisibility[String(accessor) as keyof typeof columnVisibility],
     );
-  }, [actionHandlers, columnVisibility, isAdvanced, isEditMode, options.enableRowSorting, t]);
+  }, [actionHandlers, columnVisibility, isAdvanced, isEditMode, options.enableRowSorting, t, tCommon]);
   const { effectiveColumns, storeKey } = usePersistedTableLayout({
     columns,
     columnAccessors,
@@ -348,6 +353,7 @@ export default function DockerWidget({
         <HomarrDataTable
           isEditMode={isEditMode}
           cellPadding="2px 8px"
+          className="docker-table"
           rowCursor="default"
           fetching={isFetching && containers.length === 0}
           fz={width < 400 ? "xs" : "sm"}
@@ -418,7 +424,7 @@ function ContainerMenuButton({
   container: DockerContainer;
   handlers: ContainerActionHandlers;
 }) {
-  const t = useScopedI18n("docker.action");
+  const t = useI18n("docker.action");
   const [opened, setOpened] = useState(false);
   const close = () => setOpened(false);
 
@@ -459,7 +465,8 @@ function ContainerActionItems({
   handlers: ContainerActionHandlers;
   onClose: () => void;
 }) {
-  const t = useScopedI18n("docker.action");
+  const t = useI18n("docker.action");
+  const tCommon = useI18n("common");
   const [confirmRemove, setConfirmRemove] = useState(false);
   const stateAction = container.state === "running" ? "stop" : "start";
   const StateIcon = stateAction === "stop" ? IconPlayerStop : IconPlayerPlay;
@@ -496,7 +503,7 @@ function ContainerActionItems({
       </Menu.Item>
       {!confirmRemove ? (
         <Menu.Item color="red" leftSection={<IconTrash style={iconSizes.sm} />} onClick={() => setConfirmRemove(true)}>
-          {t("remove.label")}
+          {tCommon("action.remove")}
         </Menu.Item>
       ) : (
         <Menu.Item color="red" leftSection={<IconTrash style={iconSizes.sm} />} onClick={() => invokeAction("remove")}>

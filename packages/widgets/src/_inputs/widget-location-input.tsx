@@ -21,7 +21,7 @@ import { IconClick, IconListSearch } from "@tabler/icons-react";
 import type { RouterOutputs } from "@homarr/api";
 import { clientApi } from "@homarr/api/client";
 import { createModal, useModalAction } from "@homarr/modals";
-import { useCurrentIntlLocale, useScopedI18n } from "@homarr/translation/client";
+import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
 import { formatLocalizedCompactNumber } from "../common/locale";
@@ -32,7 +32,7 @@ import { useFormContext } from "./form";
 
 export const WidgetLocationInput = ({ property, kind, options }: CommonWidgetInputProps<"location">) => {
   const t = useWidgetInputTranslation(kind, property);
-  const tLocation = useScopedI18n("widget.common.location");
+  const tLocation = useI18n("widget.common.location");
   const form = useFormContext();
   const { openModal } = useModalAction(LocationSearchModal);
   const fieldPath = `options.${property}`;
@@ -150,8 +150,8 @@ interface LocationSearchInnerProps {
 }
 
 const LocationSearchModal = createModal<LocationSearchInnerProps>(({ actions, innerProps }) => {
-  const t = useScopedI18n("widget.common.location.table");
-  const tCommon = useScopedI18n("common");
+  const t = useI18n("widget.common.location.table");
+  const tCommon = useI18n("common");
   const { data, isPending, error } = clientApi.location.searchCity.useQuery({
     query: innerProps.query,
   });
@@ -217,7 +217,7 @@ interface LocationSearchTableRowProps {
 }
 
 const LocationSelectTableRow = ({ city, onLocationSelect, closeModal }: LocationSearchTableRowProps) => {
-  const t = useScopedI18n("widget.common.location.table");
+  const t = useI18n("widget.common.location.table");
   const locale = useCurrentIntlLocale();
   const onSelect = useCallback(() => {
     onLocationSelect({

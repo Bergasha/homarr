@@ -16,6 +16,7 @@ interface HealthCheckStatusProps {
 export function HealthCheckStatus(props: HealthCheckStatusProps) {
   const colorScheme = useColorScheme();
   const t = useI18n("widget.mediaTranscoding.healthCheck");
+  const tCommon = useI18n("widget.mediaTranscoding.panel.common");
 
   const indicatorColor = props.statistics.failedHealthCheckCount
     ? "red"
@@ -26,7 +27,7 @@ export function HealthCheckStatus(props: HealthCheckStatusProps) {
   return (
     <Popover position="bottom" width={250} shadow="sm" withArrow>
       <Popover.Target>
-        <ActionIcon className={actionTargetClasses.root} variant="subtle" size="sm" aria-label={t("title")}>
+        <ActionIcon className={actionTargetClasses.root} variant="subtle" size="sm" aria-label={tCommon("healthCheck")}>
           <Indicator color={textColor(indicatorColor, colorScheme)} size={6} display="flex">
             <IconHeartbeat style={iconSizes.md} />
           </Indicator>
@@ -40,7 +41,7 @@ export function HealthCheckStatus(props: HealthCheckStatusProps) {
         <Stack gap="sm" align="center">
           <Group gap="xs">
             <IconHeartbeat style={iconSizes.lg} />
-            <Text size="sm">{t("title")}</Text>
+            <Text size="sm">{tCommon("healthCheck")}</Text>
           </Group>
           <Divider
             style={{

@@ -34,12 +34,15 @@ export interface SortableItemListInput<TItem, TOptionValue extends UniqueIdentif
 > {
   AddButton: (props: {
     addItem: (item: TItem) => void;
+    migrateItems: (items: TItem[], optionsPatch: Record<string, unknown>) => void;
     removeItem: (value: TOptionValue) => void;
     values: TOptionValue[];
+    initialOptions: Record<string, unknown>;
   }) => React.ReactNode;
   ItemComponent: (props: {
     item: TItem;
     removeItem: () => void;
+    removeLabel: string;
     rootAttributes: DraggableAttributes;
     handle: React.ReactNode;
   }) => React.ReactNode;
@@ -52,6 +55,7 @@ interface SelectInput<TOptions extends readonly SelectOption[]> extends CommonIn
 > {
   options: TOptions;
   searchable?: boolean;
+  withPlaceholder?: boolean;
 }
 
 interface DynamicSelectInput extends CommonInput<DynamicSelectOption | null> {
@@ -66,6 +70,15 @@ interface DynamicSelectInput extends CommonInput<DynamicSelectOption | null> {
     isPending: boolean;
     isError?: boolean;
     options: DynamicSelectOption[];
+  };
+}
+
+interface DynamicMultiSelectInput extends CommonInput<string[]> {
+  maxValues?: number;
+  useOptions: () => {
+    data: DynamicSelectOption[];
+    isPending: boolean;
+    isError: boolean;
   };
 }
 
@@ -96,6 +109,34 @@ interface NumberInput extends CommonInput<number> {
 interface SliderInput extends CommonInput<number> {
   validate: z.ZodNumber;
   step?: number;
+}
+
+export interface OptionTimezone {
+  id: string;
+  label: string;
+  timeZone: string;
+}
+
+interface TimezoneListInput extends CommonInput<OptionTimezone[]> {
+  maxValues?: number;
+  presets?: readonly OptionTimezone[];
+  timeZoneOptions: readonly { value: string; label: string }[];
+}
+
+export type DateTimeEventRecurrence = "none" | "yearly";
+
+export interface OptionDateTimeEvent {
+  id: string;
+  label: string;
+  targetUtc: string;
+  timeZone: string;
+  startUtc?: string;
+  recurrence: DateTimeEventRecurrence;
+}
+
+interface DateTimeEventListInput extends CommonInput<OptionDateTimeEvent[]> {
+  maxValues?: number;
+  timeZoneOptions: readonly { value: string; label: string }[];
 }
 
 export interface OptionLocation {
@@ -141,12 +182,20 @@ const optionsFactory = {
     useOptions: input.useOptions,
     withDescription: input.withDescription ?? false,
   }),
+  dynamicMultiSelect: (input: DynamicMultiSelectInput) => ({
+    type: "dynamicMultiSelect" as const,
+    defaultValue: input.defaultValue ?? [],
+    maxValues: input.maxValues,
+    useOptions: input.useOptions,
+    withDescription: input.withDescription ?? false,
+  }),
   select: <const TOptions extends SelectOption[]>(input: SelectInput<TOptions>) => ({
     type: "select" as const,
     defaultValue: (input.defaultValue ?? input.options[0]) as inferSelectOptionValue<TOptions[number]>,
     options: input.options,
     searchable: input.searchable ?? false,
     withDescription: input.withDescription ?? false,
+    withPlaceholder: input.withPlaceholder ?? false,
   }),
   number: (input: NumberInput) => ({
     type: "number" as const,
@@ -176,6 +225,72 @@ const optionsFactory = {
       longitude: z.number(),
     }),
   }),
+  timezoneList: (input: TimezoneListInput) => {
+    const maxValues = input.maxValues ?? 6;
+    return {
+      type: "timezoneList" as const,
+      defaultValue: input.defaultValue ?? [],
+      maxValues,
+      presets: input.presets ?? [],
+      timeZoneOptions: input.timeZoneOptions,
+      withDescription: input.withDescription ?? false,
+      validate: z
+        .array(
+          z.object({
+            id: z.string().min(1),
+            label: z.string().trim().min(1).max(64),
+            timeZone: z.string().min(1),
+          }),
+        )
+        .max(maxValues)
+        .superRefine((values, ctx) => {
+          const ids = new Set<string>();
+          const timeZones = new Set<string>();
+
+          values.forEach((value, index) => {
+            if (ids.has(value.id)) {
+              ctx.addIssue({ code: "custom", path: [index, "id"], message: "Duplicate identifier" });
+            }
+            if (timeZones.has(value.timeZone)) {
+              ctx.addIssue({ code: "custom", path: [index, "timeZone"], message: "Duplicate timezone" });
+            }
+            ids.add(value.id);
+            timeZones.add(value.timeZone);
+          });
+        }),
+    };
+  },
+  dateTimeEventList: (input: DateTimeEventListInput) => {
+    const maxValues = input.maxValues ?? 20;
+    const dateTimeEventSchema = z.object({
+      id: z.string().min(1),
+      label: z.string().trim().min(1).max(64),
+      targetUtc: z.iso.datetime(),
+      timeZone: z.string().min(1),
+      startUtc: z.iso.datetime().optional(),
+      recurrence: z.enum(["none", "yearly"]),
+    });
+
+    return {
+      type: "dateTimeEventList" as const,
+      defaultValue: input.defaultValue ?? [],
+      maxValues,
+      timeZoneOptions: input.timeZoneOptions,
+      withDescription: input.withDescription ?? false,
+      validate: z
+        .array(dateTimeEventSchema)
+        .max(maxValues)
+        .superRefine((values, ctx) => {
+          const ids = new Set<string>();
+          values.forEach((value, index) => {
+            if (ids.has(value.id)) {
+              ctx.addIssue({ code: "custom", path: [index, "id"], message: "Duplicate identifier" });
+            }
+            ids.add(value.id);
+          });
+        }),
+    };
+  },
   multiText: (input?: CommonInput<string[]> & { validate?: ZodType }) => ({
     type: "multiText" as const,
     defaultValue: input?.defaultValue ?? [],

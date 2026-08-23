@@ -1,9 +1,8 @@
-import type { ComponentType, CSSProperties, MutableRefObject } from "react";
+import type { ComponentType, CSSProperties, MutableRefObject, PropsWithChildren } from "react";
 import { memo, Suspense, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
-import type { CardProps } from "@mantine/core";
-import { Badge, Box, Button, Card, Center, Loader, Portal } from "@mantine/core";
+import { Box, Button, Center, Loader, Portal } from "@mantine/core";
 import { useElementSize, useIsomorphicEffect } from "@mantine/hooks";
 import { QueryErrorResetBoundary, useQueryClient } from "@tanstack/react-query";
 import combineClasses from "clsx";
@@ -13,6 +12,7 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import { useRequiredBoard } from "@homarr/boards/context";
 import { useEditMode } from "@homarr/boards/edit-mode";
+import { getWidgetName } from "@homarr/definitions";
 import { useSettings } from "@homarr/settings";
 import { useI18n } from "@homarr/translation/client";
 import { WidgetError } from "@homarr/widgets/errors";
@@ -23,15 +23,18 @@ import {
 } from "@homarr/widgets/definition";
 import type { WidgetComponentProps, WidgetDefinition, WidgetRuntimeRef } from "@homarr/widgets/definition";
 import { loadWidgetResources, reduceWidgetOptionsWithDefinition } from "@homarr/widgets/manifest";
+import { WidgetCardShell, WidgetTitleBadge } from "@homarr/widgets/widget-card-shell";
 
 import type { SectionItem } from "~/app/[locale]/boards/_types";
+import { getLogicalTrackSize } from "~/components/board/layout";
+import { useBoardCanvasScale } from "~/components/board/layout/scaled-board-canvas";
 import advancedFocusClasses from "../advanced-focus/advanced-focus.module.css";
 import { useAdvancedFocus } from "../advanced-focus/context";
 import { startAdvancedFocusEntrance } from "../advanced-focus/entrance";
 import { getAdvancedFocusClosePosition, getAdvancedFocusRect } from "../advanced-focus/geometry";
 import { AdvancedFocusManualSurface } from "../advanced-focus/manual-surface";
 import { redirectShiftWheel } from "../advanced-focus/wheel";
-import classes from "../sections/item.module.css";
+import { useBoardGridPortalHost } from "../sections/grid/grid-portal-host";
 import { useItemActions } from "./item-actions";
 import itemContentClasses from "./item-content.module.css";
 import { WidgetContextMenu } from "./widget-context-menu";
@@ -45,47 +48,28 @@ interface BoardItemContentProps {
   item: SectionItem;
 }
 
-const getOverflowFromKind = (kind: SectionItem["kind"], hasCustomCssClasses: boolean) => {
-  if (kind === "systemResources") return { overflowX: "visible", overflowY: "visible" } as const;
-  if (kind === "iframe" || kind === "assistant") return { overflowX: "hidden", overflowY: "hidden" } as const;
-  if (hasCustomCssClasses) return {};
-  return { overflowX: "hidden", overflowY: "auto" } as const;
-};
-
-type BoardItemCardProps = CardProps & {
+type BoardItemCardProps = PropsWithChildren<{
   item: SectionItem;
   innerRef: (element: HTMLDivElement | null) => void;
-};
+}>;
 
-const BoardItemCard = ({ item, innerRef, children, ...cardProps }: BoardItemCardProps) => {
+const BoardItemCard = ({ item, innerRef, children }: BoardItemCardProps) => {
   const board = useRequiredBoard();
 
   return (
-    <Card
-      {...cardProps}
-      ref={innerRef}
+    <WidgetCardShell
+      innerRef={innerRef}
+      kind={item.kind}
+      advancedOptions={item.advancedOptions}
+      opacity={board.opacity / 100}
       w="100%"
       h="100%"
       data-grid-item-content
-      className={combineClasses(
-        classes.itemCard,
-        `${item.kind}-wrapper`,
-        "board-grid-item-content",
-        item.advancedOptions.customCssClasses.join(" "),
-      )}
       radius={board.itemRadius}
-      styles={{
-        root: {
-          "--opacity": board.opacity / 100,
-          containerType: "size",
-          ...getOverflowFromKind(item.kind, item.advancedOptions.customCssClasses.length > 0),
-          "--border-color": item.advancedOptions.borderColor !== "" ? item.advancedOptions.borderColor : undefined,
-        },
-      }}
       p={0}
     >
       {children}
-    </Card>
+    </WidgetCardShell>
   );
 };
 
@@ -103,9 +87,11 @@ const WidgetDefinitionLoadError = ({
 );
 
 export const BoardItemContent = ({ item }: BoardItemContentProps) => {
-  const { ref, width, height } = useElementSize<HTMLDivElement>();
-  const widgetStateRef = useRef<Record<string, unknown> | null>(null);
-  const widgetRuntimeRef = useRef(createWidgetRuntimeState());
+  const { ref, width: measuredWidth, height: measuredHeight } = useElementSize<HTMLDivElement>();
+  const { getEntryRuntime } = useBoardGridPortalHost();
+  const { widgetStateRef, widgetRuntimeRef } = getEntryRuntime(item.id, createBoardItemRuntime);
+  const width = measuredWidth || getLogicalTrackSize(item.width);
+  const height = measuredHeight || getLogicalTrackSize(item.height);
 
   return (
     <ErrorBoundary
@@ -134,6 +120,11 @@ export const BoardItemContent = ({ item }: BoardItemContentProps) => {
   );
 };
 
+const createBoardItemRuntime = () => ({
+  widgetStateRef: { current: null } as MutableRefObject<Record<string, unknown> | null>,
+  widgetRuntimeRef: { current: createWidgetRuntimeState() } as WidgetRuntimeRef,
+});
+
 interface LoadedBoardItemContentProps {
   item: SectionItem;
   width: number;
@@ -157,6 +148,7 @@ const LoadedBoardItemContent = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const previewEntranceFrameRef = useRef<number | null>(null);
   const board = useRequiredBoard();
+  const boardCanvasScale = useBoardCanvasScale();
   const t = useI18n();
   const [isEditMode] = useEditMode();
   const settings = useSettings();
@@ -169,7 +161,11 @@ const LoadedBoardItemContent = ({
   const { active, viewportSize, open, close, dismiss, hover, leave } = useAdvancedFocus();
   const { width: viewportWidth, height: viewportHeight } = viewportSize;
   const supportsAdvancedFocus = definitionSupportsAdvancedFocus(definition);
-  const widgetName = t(`widget.${item.kind}.name`);
+  const widgetName = getWidgetName(item.kind, t);
+  const previewDimensions = useMemo(
+    () => ({ width, height, scale: boardCanvasScale }),
+    [boardCanvasScale, height, width],
+  );
   const advancedViewLabel = t("item.advancedFocus.label", { widget: widgetName });
   const advancedViewId = `advanced-focus-${item.id}`;
   const activeFocus = supportsAdvancedFocus && active?.itemId === item.id ? active : null;
@@ -227,7 +223,9 @@ const LoadedBoardItemContent = ({
     (host: HTMLDivElement | null) => {
       if (!host || !surfacePortalTarget || isAdvanced) return;
       cancelPreviewEntrance();
-      host.append(surfacePortalTarget);
+      if (host.childNodes.length !== 1 || host.firstChild !== surfacePortalTarget) {
+        host.replaceChildren(surfacePortalTarget);
+      }
     },
     [cancelPreviewEntrance, isAdvanced, surfacePortalTarget],
   );
@@ -279,8 +277,11 @@ const LoadedBoardItemContent = ({
       : undefined;
 
   const widgetCard = (
-    <Card
-      ref={cardRef}
+    <WidgetCardShell
+      innerRef={cardRef}
+      kind={item.kind}
+      advancedOptions={item.advancedOptions}
+      opacity={isAdvanced ? 0.98 : board.opacity / 100}
       id={isPreview ? advancedViewId : undefined}
       role={isPreview ? "region" : undefined}
       aria-label={isPreview ? advancedViewLabel : undefined}
@@ -291,21 +292,9 @@ const LoadedBoardItemContent = ({
       h={isManual ? "100%" : isAdvanced ? undefined : "100%"}
       w={isManual ? "100%" : isAdvanced ? undefined : "100%"}
       className={combineClasses(
-        classes.itemCard,
-        `${item.kind}-wrapper`,
-        "board-grid-item-content",
         isPreview && advancedFocusClasses.surface,
         activeFocus?.phase === "closing" && isPreview && advancedFocusClasses.surfaceClosing,
-        item.advancedOptions.customCssClasses.join(" "),
       )}
-      styles={{
-        root: {
-          "--opacity": isAdvanced ? 0.98 : board.opacity / 100,
-          containerType: "size",
-          ...getOverflowFromKind(item.kind, item.advancedOptions.customCssClasses.length > 0),
-          "--border-color": item.advancedOptions.borderColor !== "" ? item.advancedOptions.borderColor : undefined,
-        },
-      }}
       style={previewStyle}
     >
       <Box ref={contentRef} w="100%" h="100%" mih={0}>
@@ -333,15 +322,16 @@ const LoadedBoardItemContent = ({
           />
         </ErrorBoundary>
       </Box>
-    </Card>
+    </WidgetCardShell>
   );
 
   return (
     <>
-      {isEditMode && <BoardItemMenu item={menuItem} definition={definition} />}
+      {isEditMode && <BoardItemMenu item={menuItem} definition={definition} previewDimensions={previewDimensions} />}
       <WidgetContextMenu
         item={item}
         definition={definition}
+        previewDimensions={previewDimensions}
         widgetStateRef={widgetStateRef}
         widgetRuntimeRef={widgetRuntimeRef}
         sourceRef={sourceRef}
@@ -371,7 +361,7 @@ const LoadedBoardItemContent = ({
               className={itemContentClasses.advancedFocusTrigger}
               aria-expanded={isAdvanced}
               aria-controls={isAdvanced ? advancedViewId : undefined}
-              aria-keyshortcuts="Shift+Enter"
+              aria-keyshortcuts="Shift+Control Shift+Meta"
               data-advanced-focus-trigger
               onClick={openAdvancedView}
             >
@@ -406,25 +396,12 @@ const LoadedBoardItemContent = ({
           )}
         </Box>
       </WidgetContextMenu>
-      {!isAdvanced && item.advancedOptions.title?.trim() && (
-        <Badge
-          pos="absolute"
-          style={{ zIndex: "var(--mantine-z-index-app)" }}
-          top={2}
-          left={16}
-          size="xs"
+      {!isAdvanced && (
+        <WidgetTitleBadge
+          advancedOptions={item.advancedOptions}
+          opacity={board.opacity / 100}
           radius={board.itemRadius}
-          styles={{
-            root: {
-              "--border-color": item.advancedOptions.borderColor !== "" ? item.advancedOptions.borderColor : undefined,
-              "--opacity": board.opacity / 100,
-            },
-          }}
-          className={itemContentClasses.badge}
-          c="var(--mantine-color-text)"
-        >
-          {item.advancedOptions.title}
-        </Badge>
+        />
       )}
     </>
   );

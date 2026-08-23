@@ -11,7 +11,7 @@ import { toValidDate } from "@homarr/common";
 import type { MediaRequestStatus } from "@homarr/integrations/types";
 import { mediaAvailabilityConfiguration, mediaRequestStatusConfiguration } from "@homarr/integrations/types";
 import { openMediaRequestSearch } from "@homarr/spotlight";
-import { useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
 import { WidgetEmptyState } from "../../common/empty-state";
@@ -62,7 +62,6 @@ export default function MediaServerWidget({
       )}
       <ScrollArea
         className="mediaRequests-list-scrollArea"
-        scrollbarSize="md"
         style={{ flex: 1, minHeight: 0, pointerEvents: isEditMode ? "none" : undefined }}
       >
         <Stack className="mediaRequests-list-list" gap="xs" p="sm">
@@ -84,7 +83,7 @@ export default function MediaServerWidget({
 }
 
 const MediaRequestSearchButton = ({ integrationIds }: { integrationIds: string[] }) => {
-  const t = useScopedI18n("search.mode.media");
+  const t = useI18n("search.mode.media");
 
   return (
     <Tooltip label={t("action.search.label")}>
@@ -119,7 +118,7 @@ const MediaRequestCard = ({
   options,
 }: MediaRequestCardProps) => {
   const board = useRequiredBoard();
-  const t = useScopedI18n("widget.mediaRequests-requestList");
+  const t = useI18n("widget.mediaRequests-requestList");
   const requestHref = getSafeApplicationUrl(request.href);
   const requestedByHref = getSafeApplicationUrl(request.requestedBy?.link);
 
@@ -150,7 +149,7 @@ const MediaRequestCard = ({
             <Image
               className="mediaRequests-list-item-poster"
               src={request.posterImagePath}
-              h={isDense ? 36 : 44}
+              h={isDense ? 32 : 40}
               w="auto"
               radius="sm"
               alt=""
@@ -158,7 +157,7 @@ const MediaRequestCard = ({
             />
           )}
 
-          <Stack gap={2} w="100%" miw={0}>
+          <Stack gap={0} w="100%" miw={0}>
             <Group gap="xs" justify="space-between" wrap="nowrap" className="mediaRequests-list-item-top-group">
               <Anchor
                 className="mediaRequests-list-item-info-second-line mediaRequests-list-item-media-title"
@@ -253,7 +252,7 @@ const DecisionButtons = ({ requestId, integrationId, canInteract, alwaysVisible 
   } = clientApi.widget.mediaRequests.answerRequest.useMutation({
     onSettled: () => void utils.widget.mediaRequests.invalidate(),
   });
-  const t = useScopedI18n("widget.mediaRequests-requestList");
+  const t = useI18n("widget.mediaRequests-requestList");
   const handleDecision = (answer: RouterInputs["widget"]["mediaRequests"]["answerRequest"]["answer"]) => {
     if (!canInteract || isPending) return;
     mutateRequestAnswer({
@@ -275,7 +274,7 @@ const DecisionButtons = ({ requestId, integrationId, canInteract, alwaysVisible 
           className={`mediaRequests-list-item-pending-button-approve ${actionTargetClasses.root}`}
           variant="light"
           color="green"
-          size="sm"
+          size="xs"
           disabled={!canInteract || isPending}
           aria-label={t("pending.approve")}
           onClick={() => {
@@ -290,7 +289,7 @@ const DecisionButtons = ({ requestId, integrationId, canInteract, alwaysVisible 
           className={`mediaRequests-list-item-pending-button-decline ${actionTargetClasses.root}`}
           variant="light"
           color="red"
-          size="sm"
+          size="xs"
           disabled={!canInteract || isPending}
           aria-label={t("pending.decline")}
           onClick={() => {
@@ -309,7 +308,7 @@ interface StatusBadgeProps {
 }
 
 const StatusBadge = ({ status }: StatusBadgeProps) => {
-  const tStatus = useScopedI18n("widget.mediaRequests-requestList.status");
+  const tStatus = useI18n("widget.mediaRequests-requestList.status");
 
   return (
     <Badge size="xs" color={mediaRequestStatusConfiguration[status].color} variant="light">

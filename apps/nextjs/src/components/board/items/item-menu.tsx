@@ -4,9 +4,10 @@ import { IconCopy, IconDotsVertical, IconLayoutKanban, IconPencil } from "@table
 
 import { useSession } from "@homarr/auth/client";
 import { useEditMode } from "@homarr/boards/edit-mode";
+import { getWidgetName } from "@homarr/definitions";
 import { useModalAction } from "@homarr/modals";
 import { useSettings } from "@homarr/settings";
-import { useI18n, useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 import type { WidgetDefinition } from "@homarr/widgets/definition";
 
 import type { SectionItem } from "~/app/[locale]/boards/_types";
@@ -14,11 +15,13 @@ import { BoardRemoveConfirmationMenuItem } from "../remove-confirmation-menu-ite
 import { useSectionContext } from "../sections/section-context";
 import { useItemActions } from "./item-actions";
 import { useOpenItemMoveModal } from "./item-move-modal";
+import itemContentClasses from "./item-content.module.css";
 import { LazyWidgetEditModal, preloadWidgetEditModal } from "./lazy-widget-edit-modal";
 
 interface BoardItemMenuProps {
   item: SectionItem;
   definition: WidgetDefinition;
+  previewDimensions: { width: number; height: number; scale?: number };
   resetErrorBoundary?: () => void;
 }
 
@@ -29,11 +32,11 @@ export const BoardItemMenu = (props: BoardItemMenuProps) => {
 
   return <BoardItemMenuInner {...props} />;
 };
-const BoardItemMenuInner = ({ item, definition, resetErrorBoundary }: BoardItemMenuProps) => {
+const BoardItemMenuInner = ({ item, definition, previewDimensions, resetErrorBoundary }: BoardItemMenuProps) => {
   const { data: session } = useSession();
   const canDuplicate = item.kind !== "customApi" || (session?.user.permissions.includes("admin") ?? false);
   const refResetErrorBoundaryOnNextRender = useRef(false);
-  const tItem = useScopedI18n("item");
+  const tItem = useI18n("item");
   const t = useI18n();
   const { openModal } = useModalAction(LazyWidgetEditModal);
   const openMoveModal = useOpenItemMoveModal();
@@ -42,7 +45,7 @@ const BoardItemMenuInner = ({ item, definition, resetErrorBoundary }: BoardItemM
     useItemActions();
   const { integrations: integrationData, section } = useSectionContext();
   const settings = useSettings();
-  const label = item.advancedOptions.title?.trim() || t(`widget.${item.kind}.name`);
+  const label = item.advancedOptions.title?.trim() || getWidgetName(item.kind, t);
 
   // Reset error boundary on next render if item has been edited
   useEffect(() => {
@@ -87,11 +90,12 @@ const BoardItemMenuInner = ({ item, definition, resetErrorBoundary }: BoardItemM
         integrationSupport: "supportedIntegrations" in definition,
         settings,
         itemId: item.id,
+        previewDimensions,
         appId: item.kind === "app" ? (item.options.appId as string | undefined) : undefined,
       },
       {
         title(translate) {
-          return `${translate("item.edit.title")} - ${translate(`widget.${item.kind}.name`)}`;
+          return `${translate("item.edit.title")} - ${getWidgetName(item.kind, translate)}`;
         },
       },
     );
@@ -105,9 +109,11 @@ const BoardItemMenuInner = ({ item, definition, resetErrorBoundary }: BoardItemM
           size={24}
           radius="sm"
           pos="absolute"
-          top={12}
-          right={8}
+          top={4}
+          right={4}
           style={{ zIndex: 30 }}
+          className={itemContentClasses.settingsButton}
+          data-menu-open={isMenuOpen || undefined}
           data-board-widget-settings
           aria-label={tItem("menu.label.settingsFor", { name: label })}
         >

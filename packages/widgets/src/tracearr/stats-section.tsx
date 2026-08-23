@@ -2,7 +2,7 @@ import { Group, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
 import { IconDevices, IconNetwork, IconUsers, IconVideo } from "@tabler/icons-react";
 
 import type { TracearrDashboardData } from "@homarr/integrations/types";
-import { useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
 export function StatsBar({
@@ -14,7 +14,7 @@ export function StatsBar({
   summary: TracearrDashboardData["streams"]["summary"];
   width: number;
 }) {
-  const t = useScopedI18n("widget.tracearr");
+  const t = useI18n("widget.tracearr");
   const cols = width > 400 ? 4 : width > 250 ? 2 : 1;
 
   return (
@@ -33,7 +33,7 @@ export function StatsBar({
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
   return (
-    <Paper p="xs" radius="lg">
+    <Paper p="xs" radius="lg" bg="transparent">
       <Group gap={4} wrap="nowrap">
         {icon}
         <Stack gap={0} style={{ overflow: "hidden" }}>

@@ -25,6 +25,8 @@ packages/db/migrations/*/migrate.cjs
 
 # production
 build
+tools/homarr-dev/homarr
+tools/homarr-dev/homarr-dev
 
 # misc
 .DS_Store
@@ -96,3 +98,6 @@ homarr-backup*.zip
 # personal, local-only files - not part of the app
 /shayno-v2-custom-css.css
 /run-beta.sh
+
+# PR description screenshots belong on the pull request, not in the repository
+.screenshots/

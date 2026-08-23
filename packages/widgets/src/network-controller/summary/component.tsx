@@ -10,7 +10,7 @@ import objectSupport from "dayjs/plugin/objectSupport";
 import relativeTime from "dayjs/plugin/relativeTime";
 
 import { clientApi } from "@homarr/api/client";
-import type { TranslationFunction } from "@homarr/translation";
+import type { ScopedTranslationFunction } from "@homarr/translation";
 import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
@@ -42,12 +42,15 @@ export default function NetworkControllerSummaryWidget({
   );
   const { isPending } = summaryQuery;
 
-  const t = useI18n();
+  const t = useI18n("widget.networkControllerSummary");
+  const tDns = useI18n("widget.dnsHoleSummary");
+  const tCommon = useI18n("common");
+  const tWidgetCommon = useI18n("widget.common");
   const locale = useCurrentIntlLocale();
   const statusLabels = {
-    enabled: t("widget.dnsHoleSummary.status.enabled"),
-    disabled: t("widget.dnsHoleSummary.status.disabled"),
-    unknown: t("widget.dnsHoleSummary.status.unknown"),
+    enabled: tDns("status.enabled"),
+    disabled: tDns("status.disabled"),
+    unknown: tDns("status.unknown"),
   };
 
   const isDense = height < 160;
@@ -57,7 +60,7 @@ export default function NetworkControllerSummaryWidget({
   const queryIndicators = (
     <Group gap={0} justify="flex-end">
       <IntegrationErrorIndicator results={results} />
-      <WidgetQueryErrorIndicator error={summaryQuery.error} label={t("widget.networkControllerSummary.name")} />
+      <WidgetQueryErrorIndicator error={summaryQuery.error} label={t("name")} />
     </Group>
   );
 
@@ -67,9 +70,7 @@ export default function NetworkControllerSummaryWidget({
         {queryIndicators}
         <Center p="sm" style={{ flex: 1 }}>
           <Text c="dimmed" size="sm" ta="center">
-            {isPending
-              ? t("common.action.loading")
-              : t("widget.networkControllerSummary.error.integrationsDisconnected")}
+            {isPending ? tCommon("action.loading") : tWidgetCommon("integrationDisconnected")}
           </Text>
         </Center>
       </Stack>
@@ -85,7 +86,13 @@ export default function NetworkControllerSummaryWidget({
         {queryIndicators}
         <SimpleGrid cols={controllerColumns} spacing="sm">
           {summaries.map(({ integration, summary, updatedAt }) => (
-            <Card key={integration.id} p="sm" withBorder>
+            <Card
+              key={integration.id}
+              p="sm"
+              withBorder
+              bg="transparent"
+              style={{ borderColor: neutralSurfaceBorder }}
+            >
               <Stack gap="sm">
                 <Group justify="space-between" align="flex-start" wrap="nowrap">
                   <Stack gap={0} style={{ minWidth: 0 }}>
@@ -98,7 +105,7 @@ export default function NetworkControllerSummaryWidget({
                   </Stack>
                   <Stack gap={0} align="flex-end" style={{ flexShrink: 0 }}>
                     <Text size="10px" c="dimmed">
-                      {t("widget.networkControllerSummary.advanced.updated")}
+                      {t("advanced.updated")}
                     </Text>
                     <Text size="xs" c="dimmed" ta="right">
                       {new Date(updatedAt).toLocaleString(locale)}
@@ -107,7 +114,13 @@ export default function NetworkControllerSummaryWidget({
                 </Group>
                 <SimpleGrid cols={matrixColumns} spacing="xs">
                   {getNetworkControllerMatrix(summary).map((section) => (
-                    <Card key={section.key} p="xs" withBorder>
+                    <Card
+                      key={section.key}
+                      p="xs"
+                      withBorder
+                      bg="transparent"
+                      style={{ borderColor: neutralSurfaceBorder }}
+                    >
                       <Stack gap="xs">
                         <Group justify="space-between" wrap="nowrap">
                           <Group gap={6} wrap="nowrap">
@@ -151,12 +164,18 @@ export default function NetworkControllerSummaryWidget({
   }
 
   return (
-    <ScrollArea h="100%" p={isDense ? "xs" : "sm"}>
+    <Stack h="100%" p={isDense ? "xs" : "sm"} gap={0} style={{ overflow: "hidden" }}>
       {queryIndicators}
-      <SimpleGrid cols={columns} spacing="sm">
+      <SimpleGrid cols={columns} spacing="sm" style={{ flex: 1, minHeight: 0, alignContent: "center" }}>
         {summaries.map(({ integration, summary }) => (
-          <Card key={integration.id} p={isDense ? "xs" : "sm"} withBorder={summaries.length > 1}>
-            <Stack gap="xs">
+          <Card
+            key={integration.id}
+            p={isDense ? "xs" : "sm"}
+            withBorder={summaries.length > 1}
+            bg="transparent"
+            style={{ borderColor: neutralSurfaceBorder }}
+          >
+            <Stack h="100%" gap={isDense ? 4 : 8} justify="center" align="center">
               {summaries.length > 1 && (
                 <Group justify="space-between" wrap="nowrap">
                   <Text fw={600} size="sm" truncate="end">
@@ -167,7 +186,7 @@ export default function NetworkControllerSummaryWidget({
                   </Badge>
                 </Group>
               )}
-              <List spacing={isDense ? 2 : "xs"} center size={isDense ? "sm" : undefined}>
+              <List spacing={isDense ? 2 : 4} center size={isDense ? "xs" : "sm"} w="fit-content" mx="auto">
                 <List.Item
                   icon={
                     <StatusIcon
@@ -177,7 +196,7 @@ export default function NetworkControllerSummaryWidget({
                     />
                   }
                 >
-                  {t("widget.networkControllerSummary.card.wan")}
+                  {t("card.wan")}
                 </List.Item>
                 <List.Item
                   icon={
@@ -189,7 +208,7 @@ export default function NetworkControllerSummaryWidget({
                   }
                 >
                   <Text>
-                    {t("widget.networkControllerSummary.card.web")}
+                    {t("card.web")}
                     <Text c="dimmed" size="sm" ms="xs" span>
                       {summary.www.latency}ms{showDetails ? ` · ${summary.www.ping}ms` : ""}
                     </Text>
@@ -204,7 +223,7 @@ export default function NetworkControllerSummaryWidget({
                     />
                   }
                 >
-                  {t("widget.networkControllerSummary.card.wifi")}
+                  {t("card.wifi")}
                   {showDetails ? ` · ${summary.wifi.users + summary.wifi.guests}` : ""}
                 </List.Item>
                 {showDetails && (
@@ -213,11 +232,11 @@ export default function NetworkControllerSummaryWidget({
                       <StatusIcon
                         status={summary.lan.status}
                         label={statusLabels[getBinaryStatusKey(summary.lan.status)]}
-                        style={iconSizes.xl}
+                        size={isDense ? 16 : 20}
                       />
                     }
                   >
-                    {t("widget.networkControllerSummary.card.lan")} · {summary.lan.users + summary.lan.guests}
+                    {t("card.lan")} · {summary.lan.users + summary.lan.guests}
                   </List.Item>
                 )}
                 <List.Item
@@ -230,9 +249,9 @@ export default function NetworkControllerSummaryWidget({
                   }
                 >
                   <Text>
-                    {t("widget.networkControllerSummary.card.vpn.label")}
+                    {t("card.vpn.label")}
                     <Text c="dimmed" size="sm" ms="xs" span>
-                      {t("widget.networkControllerSummary.card.vpn.countConnected", { count: summary.vpn.users })}
+                      {t("card.vpn.countConnected", { count: summary.vpn.users })}
                     </Text>
                   </Text>
                 </List.Item>
@@ -241,12 +260,14 @@ export default function NetworkControllerSummaryWidget({
           </Card>
         ))}
       </SimpleGrid>
-    </ScrollArea>
+    </Stack>
   );
 }
 
-const getMatrixMetricLabel = (key: NetworkControllerMatrixMetricKey, t: TranslationFunction) =>
-  t(`widget.networkControllerSummary.advanced.metric.${key}`);
+const getMatrixMetricLabel = (
+  key: NetworkControllerMatrixMetricKey,
+  t: ScopedTranslationFunction<"widget.networkControllerSummary">,
+) => t(`advanced.metric.${key}` as never);
 
 const formatMatrixMetric = (key: NetworkControllerMatrixMetricKey, value: number) => {
   if (key === "latency" || key === "ping") return `${value}ms`;
@@ -254,10 +275,16 @@ const formatMatrixMetric = (key: NetworkControllerMatrixMetricKey, value: number
   return String(value);
 };
 
-const getMatrixSectionLabel = (key: NetworkControllerMatrixSectionKey, t: TranslationFunction) => {
-  if (key === "vpn") return t("widget.networkControllerSummary.card.vpn.label");
-  return t(`widget.networkControllerSummary.card.${key}`);
+const getMatrixSectionLabel = (
+  key: NetworkControllerMatrixSectionKey,
+  t: ScopedTranslationFunction<"widget.networkControllerSummary">,
+) => {
+  if (key === "vpn") return t("card.vpn.label");
+  return t(`card.${key}` as never);
 };
+
+const neutralSurfaceBorder =
+  "rgb(from var(--mantine-color-default-border) r g b / calc(var(--opacity, 1) * 0.45))";
 
 const StatusIcon = ({
   status,

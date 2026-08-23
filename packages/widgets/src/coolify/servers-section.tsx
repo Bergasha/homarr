@@ -11,7 +11,7 @@ import {
 } from "@tabler/icons-react";
 
 import type { CoolifyServer } from "@homarr/integrations/types";
-import { useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
 import actionTargetClasses from "../common/action-target.module.css";
@@ -37,8 +37,8 @@ export function ServersSection({
   showIp,
   onToggleIp,
 }: ServersSectionProps) {
-  const t = useScopedI18n("widget.coolify");
-  const tCommon = useScopedI18n("common");
+  const t = useI18n("widget.coolify");
+  const tCommon = useI18n("common");
   const onlineServers = servers.filter(isCoolifyServerOnline).length;
 
   return (
@@ -102,7 +102,7 @@ interface ServerRowProps {
 }
 
 function ServerRow({ server, counts, baseUrl, isTiny, isAdvanced, showIp }: ServerRowProps) {
-  const t = useScopedI18n("widget.coolify");
+  const t = useI18n("widget.coolify");
   const isBuildServer = server.settings?.is_build_server === true;
   const reachability = getCoolifyServerState(server, "is_reachable");
   const usability = getCoolifyServerState(server, "is_usable");
@@ -159,7 +159,7 @@ function ServerRow({ server, counts, baseUrl, isTiny, isAdvanced, showIp }: Serv
 }
 
 const ServerStateBadge = ({ field, value }: { field: "reachability" | "usability"; value: boolean | undefined }) => {
-  const t = useScopedI18n("widget.coolify");
+  const t = useI18n("widget.coolify");
   const status =
     value === undefined
       ? t("status.unknown")

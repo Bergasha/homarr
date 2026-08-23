@@ -34,7 +34,7 @@ import { clientApi } from "@homarr/api/client";
 import { objectEntries } from "@homarr/common";
 import { getIconUrl } from "@homarr/definitions";
 import type { StreamSession } from "@homarr/integrations";
-import { useI18n, useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 import type { TablerIcon } from "@homarr/ui";
 
@@ -182,8 +182,8 @@ export default function MediaServerWidget({
   const currentStreamsData = getUsableWidgetQueryData(currentStreamsQuery);
   const currentStreams = useMemo(() => currentStreamsData ?? [], [currentStreamsData]);
 
-  const t = useScopedI18n("widget.mediaServer");
-  const tGlobal = useI18n();
+  const t = useI18n("widget.mediaServer");
+  const tSearch = useI18n("search");
   const isAdvanced = displayMode === "advanced";
   const showLocation = isAdvanced || options.showLocation;
   const showBitrate = isAdvanced || options.showBitrate;
@@ -257,8 +257,8 @@ export default function MediaServerWidget({
               size="xs"
               value={search}
               onChange={(event) => setSearch(event.currentTarget.value)}
-              placeholder={tGlobal("search.placeholder")}
-              aria-label={tGlobal("search.placeholder")}
+              placeholder={tSearch("placeholder")}
+              aria-label={tSearch("placeholder")}
               leftSection={<IconSearch style={iconSizes.xs} aria-hidden />}
             />
             <WidgetQueryErrorIndicator error={currentStreamsQuery.error} label={t("name")} />
@@ -479,7 +479,7 @@ export default function MediaServerWidget({
 }
 
 function CurrentlyPlaying({ item }: { item: StreamSession }) {
-  const t = useScopedI18n("widget.mediaServer");
+  const t = useI18n("widget.mediaServer");
   const currentlyPlaying = item.currentlyPlaying;
   if (!currentlyPlaying) {
     return (
@@ -584,7 +584,7 @@ export function SessionDetailsPopover({
 }
 
 function SessionDetails({ item }: { item: StreamSession }) {
-  const t = useScopedI18n("widget.mediaServer.items");
+  const t = useI18n("widget.mediaServer.items");
   const Icon = item.currentlyPlaying ? mediaTypeIconMap[item.currentlyPlaying.type] : null;
 
   const metadata = item.currentlyPlaying?.metadata ? constructMetadata(item.currentlyPlaying.metadata) : null;

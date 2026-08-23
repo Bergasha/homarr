@@ -16,7 +16,8 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
 import { clientApi } from "@homarr/api/client";
-import { useScopedI18n } from "@homarr/translation/client";
+import { getIntegrationName } from "@homarr/definitions";
+import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 import type { TablerIcon } from "@homarr/ui";
 
@@ -74,7 +75,7 @@ export default function PatchMonWidget({
   height,
   displayMode,
 }: WidgetComponentProps<"patchmon">) {
-  const t = useScopedI18n("widget.patchmon");
+  const t = useI18n("widget.patchmon");
   const integrationId = integrationIds[0] ?? "";
   const statsQuery = clientApi.widget.patchmon.getStats.useQuery({ integrationId }, { staleTime: 60 * 1000 });
   const stats = getUsableWidgetQueryData(statsQuery);
@@ -279,7 +280,7 @@ export default function PatchMonWidget({
   return (
     <div className={classes.root}>
       <div className={classes.queryIndicator}>
-        <WidgetQueryErrorIndicator error={statsQuery.error} label={t("name")} />
+        <WidgetQueryErrorIndicator error={statsQuery.error} label={getIntegrationName("patchmon")} />
       </div>
       {showHero && (
         <ComplianceHero

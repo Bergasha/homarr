@@ -50,7 +50,8 @@ export default function IndexerManagerWidget({
   widgetRuntimeRef,
   displayMode,
 }: WidgetComponentProps<"indexerManager">) {
-  const t = useI18n();
+  const t = useI18n("widget.indexerManager");
+  const tCommon = useI18n("common");
   const indexersQuery = clientApi.widget.indexerManager.getIndexersStatus.useQuery({ integrationIds });
   const isInitialPending = isInitialWidgetQueryPending(indexersQuery);
   const indexersData = getUsableWidgetQueryData(indexersQuery) ?? [];
@@ -93,8 +94,8 @@ export default function IndexerManagerWidget({
       p={isDense ? "xs" : "sm"}
     >
       <Group className="indexer-manager-title" align="center" gap="xs" wrap="nowrap" w="100%">
-        {testAllError && <VisuallyHidden role="alert">{t("common.error")}</VisuallyHidden>}
-        <Tooltip label={t("widget.indexerManager.title")} disabled={!hasSmallWidth}>
+        {testAllError && <VisuallyHidden role="alert">{tCommon("error")}</VisuallyHidden>}
+        <Tooltip label={t("title")} disabled={!hasSmallWidth}>
           <IconReportSearch
             className="indexer-manager-title-icon"
             size={hasSmallWidth ? 16 : 20}
@@ -103,7 +104,7 @@ export default function IndexerManagerWidget({
         </Tooltip>
         {!hasSmallWidth && (
           <Text size={isDense ? "xs" : "sm"} fw={600} truncate="end">
-            {t("widget.indexerManager.title")}
+            {t("title")}
           </Text>
         )}
         {showHealthCounts && (
@@ -118,8 +119,8 @@ export default function IndexerManagerWidget({
             )}
           </Group>
         )}
-        <WidgetQueryErrorIndicator error={indexersQuery.error} label={t("widget.indexerManager.title")} />
-        <Tooltip label={testAllError ? t("common.error") : t("widget.indexerManager.testAll")}>
+        <WidgetQueryErrorIndicator error={indexersQuery.error} label={t("title")} />
+        <Tooltip label={testAllError ? tCommon("error") : t("testAll")}>
           <ActionIcon
             className={combineClasses("indexer-manager-test-action-icon", classes.testAction, actionTargetClasses.root)}
             size="sm"
@@ -132,7 +133,7 @@ export default function IndexerManagerWidget({
             onClick={() => {
               testAllIndexers();
             }}
-            aria-label={t("widget.indexerManager.testAll")}
+            aria-label={t("testAll")}
           >
             <IconTestPipe style={iconSizes.sm} />
           </ActionIcon>
@@ -162,7 +163,7 @@ export default function IndexerManagerWidget({
                     </Text>
                     {error && (
                       <Badge size="xs" color="red" variant="light">
-                        {t("common.error")}
+                        {tCommon("error")}
                       </Badge>
                     )}
                   </Group>
@@ -198,7 +199,7 @@ export default function IndexerManagerWidget({
                       </Anchor>
                       {isAdvanced ? (
                         <Badge size="xs" color={presentation.color} variant="light">
-                          {t(`widget.indexerManager.status.${displayStatus}`)}
+                          {t(`status.${displayStatus}` as never)}
                         </Badge>
                       ) : displayStatus === "healthy" ? (
                         <IconCircleCheck

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Badge, Card, Center, Group, ScrollArea, SimpleGrid, Stack, Text } from "@mantine/core";
 
 import { clientApi } from "@homarr/api/client";
-import { useCurrentIntlLocale, useScopedI18n } from "@homarr/translation/client";
+import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
 
 import type { WidgetComponentProps } from "../../definition";
 import { IntegrationErrorIndicator } from "../../common/integration-error-indicator";
@@ -13,6 +13,9 @@ import { WidgetQueryErrorIndicator } from "../../common/query-state-indicator";
 import { getNetworkControllerStatusLayout } from "./layout";
 import { WifiVariant } from "./variants/wifi-variant";
 import { WiredVariant } from "./variants/wired-variant";
+
+const neutralBorderColor =
+  "rgb(from var(--mantine-color-default-border) r g b / calc(var(--opacity, 1) * 0.45))";
 
 export default function NetworkControllerNetworkStatusWidget({
   options,
@@ -32,8 +35,9 @@ export default function NetworkControllerNetworkStatusWidget({
       ),
     [results],
   );
-  const t = useScopedI18n("widget.networkControllerStatus");
-  const tCommon = useScopedI18n("common");
+  const t = useI18n("widget.networkControllerStatus");
+  const tWidgetCommon = useI18n("widget.common");
+  const tCommon = useI18n("common");
   const locale = useCurrentIntlLocale();
 
   const countWifiGuests = summaries.reduce((sum, { summary }) => sum + summary.wifi.guests, 0);
@@ -55,7 +59,7 @@ export default function NetworkControllerNetworkStatusWidget({
         {queryIndicators}
         <Center p="sm" style={{ flex: 1 }}>
           <Text c="dimmed" size="sm" ta="center">
-            {summaryQuery.isPending ? tCommon("action.loading") : t("error.integrationsDisconnected")}
+            {summaryQuery.isPending ? tCommon("action.loading") : tWidgetCommon("integrationDisconnected")}
           </Text>
         </Center>
       </Stack>
@@ -68,7 +72,7 @@ export default function NetworkControllerNetworkStatusWidget({
         {queryIndicators}
         <SimpleGrid cols={summaries.length > 1 ? layout.sourceColumns : 1} spacing="sm">
           {summaries.map(({ integration, summary, updatedAt }) => (
-            <Card key={integration.id} withBorder p="sm">
+            <Card key={integration.id} withBorder p="sm" bg="transparent" style={{ borderColor: neutralBorderColor }}>
               <Stack gap="sm">
                 <Group justify="space-between" wrap="nowrap">
                   <Stack gap={0} miw={0}>
@@ -77,7 +81,7 @@ export default function NetworkControllerNetworkStatusWidget({
                     </Text>
                     {updatedAt && (
                       <Text size="xs" c="dimmed">
-                        {t("advanced.updatedAt", { date: new Date(updatedAt).toLocaleString(locale) })}
+                        {tWidgetCommon("updatedAt", { date: new Date(updatedAt).toLocaleString(locale) })}
                       </Text>
                     )}
                   </Stack>
@@ -86,10 +90,20 @@ export default function NetworkControllerNetworkStatusWidget({
                   </Badge>
                 </Group>
                 <SimpleGrid cols={layout.columns} spacing="sm">
-                  <Card p={layout.cardPadding} withBorder>
+                  <Card
+                    p={layout.cardPadding}
+                    withBorder
+                    bg="transparent"
+                    style={{ borderColor: neutralBorderColor }}
+                  >
                     <WifiVariant countGuests={summary.wifi.guests} countUsers={summary.wifi.users} />
                   </Card>
-                  <Card p={layout.cardPadding} withBorder>
+                  <Card
+                    p={layout.cardPadding}
+                    withBorder
+                    bg="transparent"
+                    style={{ borderColor: neutralBorderColor }}
+                  >
                     <WiredVariant countGuests={summary.lan.guests} countUsers={summary.lan.users} />
                   </Card>
                 </SimpleGrid>
@@ -104,9 +118,15 @@ export default function NetworkControllerNetworkStatusWidget({
   return (
     <Stack p={layout.padding} h="100%" gap={0}>
       {queryIndicators}
-      <SimpleGrid cols={layout.columns} h="100%" spacing="sm">
+      <SimpleGrid cols={layout.columns} spacing="sm" style={{ flex: 1, alignItems: "stretch" }}>
         {layout.showWifi && (
-          <Card p={layout.cardPadding} withBorder={layout.withBorder}>
+          <Card
+            p={layout.cardPadding}
+            withBorder={layout.withBorder}
+            bg="transparent"
+            h="100%"
+            style={{ borderColor: neutralBorderColor }}
+          >
             <WifiVariant
               countGuests={countWifiGuests}
               countUsers={countWifiUsers}
@@ -116,7 +136,13 @@ export default function NetworkControllerNetworkStatusWidget({
           </Card>
         )}
         {layout.showWired && (
-          <Card p={layout.cardPadding} withBorder={layout.withBorder}>
+          <Card
+            p={layout.cardPadding}
+            withBorder={layout.withBorder}
+            bg="transparent"
+            h="100%"
+            style={{ borderColor: neutralBorderColor }}
+          >
             <WiredVariant
               countGuests={countLanGuests}
               countUsers={countLanUsers}

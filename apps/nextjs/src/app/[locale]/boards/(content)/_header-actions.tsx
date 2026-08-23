@@ -3,18 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Center, Loader, Menu, ScrollArea } from "@mantine/core";
 import { useHotkeys } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import {
-  IconDeviceFloppy,
-  IconLayoutBoard,
-  IconPencil,
-  IconPencilOff,
-  IconReplace,
-  IconSettings,
-  IconX,
-} from "@tabler/icons-react";
+import { IconDeviceFloppy, IconPencil, IconPencilOff, IconSettings, IconX } from "@tabler/icons-react";
 
 import { clientApi } from "@homarr/api/client";
 import { useRequiredBoard } from "@homarr/boards/context";
@@ -24,9 +15,7 @@ import { env } from "@homarr/common/env";
 import { hotkeys } from "@homarr/definitions";
 import { useConfirmModal } from "@homarr/modals";
 import { showErrorNotification, showSuccessNotification } from "@homarr/notifications";
-import { useI18n, useScopedI18n } from "@homarr/translation/client";
-import { Link } from "@homarr/ui";
-
+import { useI18n } from "@homarr/translation/client";
 import { useBoardPermissions } from "~/components/board/permissions/client";
 import { loadGridEditorAsync, scheduleGridEditorWarmup } from "~/components/board/sections/grid/grid-editor-loader";
 import { HeaderButton } from "~/components/layout/header/button";
@@ -53,12 +42,10 @@ const BoardEditActions = dynamic(loadEditActionsAsync, { ssr: false });
 export const BoardContentHeaderActions = ({ demoReadOnly }: { demoReadOnly: boolean }) => {
   const [isEditMode] = useEditMode();
   const board = useRequiredBoard();
-  const t = useI18n();
+  const t = useI18n("board");
   const { hasChangeAccess } = useBoardPermissions(board);
 
-  if (!hasChangeAccess) {
-    return <SelectBoardsMenu />;
-  }
+  if (!hasChangeAccess) return null;
 
   return (
     <>
@@ -68,13 +55,11 @@ export const BoardContentHeaderActions = ({ demoReadOnly }: { demoReadOnly: bool
 
       {!demoReadOnly && (
         <TourTarget id="board-settings">
-          <HeaderButton href={`/boards/${board.name}/settings`} aria-label={t("board.action.settings")}>
+          <HeaderButton href={`/boards/${board.name}/settings`} aria-label={t("action.settings")}>
             <IconSettings stroke={1.5} />
           </HeaderButton>
         </TourTarget>
       )}
-
-      <SelectBoardsMenu />
     </>
   );
 };
@@ -88,8 +73,9 @@ const EditModeMenu = ({ demoReadOnly }: { demoReadOnly: boolean }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { openConfirmModal } = useConfirmModal();
-  const commonT = useI18n();
-  const t = useScopedI18n("board.action.edit");
+  const tCommon = useI18n("common");
+  const tBoardSetting = useI18n("board.setting");
+  const t = useI18n("board.action.edit");
   const returnToLayoutSettings =
     isEditMode &&
     searchParams.get("edit") === "true" &&
@@ -104,7 +90,7 @@ const EditModeMenu = ({ demoReadOnly }: { demoReadOnly: boolean }) => {
     },
     onSuccess() {
       showSuccessNotification({
-        title: t("notification.success.title"),
+        title: tCommon("notification.update.success"),
         message: t("notification.success.message"),
       });
       void utils.board.getBoardByName.invalidate({ name: board.name });
@@ -115,7 +101,7 @@ const EditModeMenu = ({ demoReadOnly }: { demoReadOnly: boolean }) => {
     },
     onError() {
       showErrorNotification({
-        title: t("notification.error.title"),
+        title: tCommon("notification.update.error"),
         message: t("notification.error.message"),
       });
     },
@@ -178,9 +164,9 @@ const EditModeMenu = ({ demoReadOnly }: { demoReadOnly: boolean }) => {
 
   const cancelLayoutEdit = useCallback(() => {
     openConfirmModal({
-      title: commonT("board.setting.section.layout.edit.cancel.title"),
-      children: commonT("board.setting.section.layout.edit.cancel.message"),
-      confirmProps: { children: commonT("common.action.discard"), color: "red" },
+      title: tBoardSetting("section.layout.edit.cancel.title"),
+      children: tBoardSetting("section.layout.edit.cancel.message"),
+      confirmProps: { children: tCommon("action.discard"), color: "red" },
       onConfirm() {
         void (async () => {
           await utils.board.getBoardByName.invalidate({ name: board.name });
@@ -189,7 +175,7 @@ const EditModeMenu = ({ demoReadOnly }: { demoReadOnly: boolean }) => {
         })();
       },
     });
-  }, [board.name, close, commonT, openConfirmModal, router, utils.board.getBoardByName]);
+  }, [board.name, close, openConfirmModal, router, tBoardSetting, tCommon, utils.board.getBoardByName]);
 
   useHotkeys([[hotkeys.toggleBoardEdit, () => void toggle()]]);
   usePreventLeaveWithDirty(isEditMode);
@@ -200,14 +186,14 @@ const EditModeMenu = ({ demoReadOnly }: { demoReadOnly: boolean }) => {
         <HeaderButton
           onClick={() => saveBoard(board)}
           loading={isPending}
-          aria-label={commonT("board.setting.section.layout.edit.save")}
+          aria-label={tBoardSetting("section.layout.edit.save")}
         >
           <IconDeviceFloppy stroke={1.5} />
         </HeaderButton>
         <HeaderButton
           onClick={cancelLayoutEdit}
           disabled={isPending}
-          aria-label={commonT("board.setting.section.layout.edit.cancel.action")}
+          aria-label={tBoardSetting("section.layout.edit.cancel.action")}
         >
           <IconX stroke={1.5} />
         </HeaderButton>
@@ -234,50 +220,10 @@ const EditModeMenu = ({ demoReadOnly }: { demoReadOnly: boolean }) => {
   );
 };
 
-const SelectBoardsMenu = () => {
-  const t = useI18n();
-  const [isOpen, setIsOpen] = useState(false);
-  const utils = clientApi.useUtils();
-  const { data: boards = [], isPending } = clientApi.board.getAllBoards.useQuery(undefined, { enabled: isOpen });
-  const preloadBoards = () => void utils.board.getAllBoards.prefetch();
-
-  return (
-    <TourTarget id="board-switcher">
-      <Box onFocus={preloadBoards} onPointerEnter={preloadBoards}>
-        <Menu position="bottom-end" opened={isOpen} onChange={setIsOpen}>
-          <Menu.Target>
-            <HeaderButton w="auto" px={4} aria-label={t("board.action.switch")}>
-              <IconReplace stroke={1.5} />
-            </HeaderButton>
-          </Menu.Target>
-          <Menu.Dropdown style={{ transform: "translate(-7px, 0)" }}>
-            <ScrollArea.Autosize mah={300}>
-              {isPending && (
-                <Center p="xs">
-                  <Loader size="xs" />
-                </Center>
-              )}
-              {boards.map((board) => (
-                <Menu.Item
-                  key={board.id}
-                  component={Link}
-                  href={`/boards/${board.name}`}
-                  leftSection={<IconLayoutBoard size={20} />}
-                >
-                  {board.name}
-                </Menu.Item>
-              ))}
-            </ScrollArea.Autosize>
-          </Menu.Dropdown>
-        </Menu>
-      </Box>
-    </TourTarget>
-  );
-};
-
 const anchorSelector = "a[href]:not([target='_blank'])";
 const usePreventLeaveWithDirty = (isDirty: boolean) => {
-  const t = useI18n();
+  const tBoard = useI18n("board");
+  const tCommon = useI18n("common");
   const { openConfirmModal } = useConfirmModal();
   const router = useRouter();
 
@@ -293,13 +239,13 @@ const usePreventLeaveWithDirty = (isDirty: boolean) => {
       event.stopPropagation();
 
       openConfirmModal({
-        title: t("board.action.edit.confirmLeave.title"),
-        children: t("board.action.edit.confirmLeave.message"),
+        title: tBoard("action.edit.confirmLeave.title"),
+        children: tBoard("action.edit.confirmLeave.message"),
         onConfirm() {
           router.push(target.href);
         },
         confirmProps: {
-          children: t("common.action.discard"),
+          children: tCommon("action.discard"),
         },
       });
     };
@@ -325,5 +271,5 @@ const usePreventLeaveWithDirty = (isDirty: boolean) => {
       window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [isDirty, openConfirmModal, router, t]);
+  }, [isDirty, openConfirmModal, router, tBoard, tCommon]);
 };

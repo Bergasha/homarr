@@ -8,7 +8,7 @@ import { clientApi } from "@homarr/api/client";
 import { useRequiredBoard } from "@homarr/boards/context";
 import { getIconUrl } from "@homarr/definitions";
 import type { WudContainerUpdate } from "@homarr/integrations";
-import { useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 
 import { WidgetEmptyState } from "../common/empty-state";
 import { getSafeApplicationUrl, SAFE_NEW_TAB_REL } from "../common/application-url";
@@ -40,7 +40,7 @@ const WudWidgetContent = ({
   width: number;
   isAdvanced: boolean;
 }) => {
-  const t = useScopedI18n("widget.wud");
+  const t = useI18n("widget.wud");
   const [data, statsQuery] = clientApi.widget.wud.getStats.useSuspenseQuery({ integrationId });
   const board = useRequiredBoard();
 
@@ -198,7 +198,7 @@ const UpdateCard = ({
   radius: string | undefined;
   className: string | undefined;
 }) => {
-  const t = useScopedI18n("widget.wud");
+  const t = useI18n("widget.wud");
   const href = getSafeApplicationUrl(update.link);
   const isDigestUpdate = isDigestVersion(update.newVersion);
   const fullVersionText = buildVersionText(update.currentVersion, update.newVersion);
@@ -206,14 +206,20 @@ const UpdateCard = ({
     ? t("updateAvailable")
     : buildVersionText(truncateVersion(update.currentVersion), truncateVersion(update.newVersion));
   const versionBadge = versionText ? (
-    <Badge size="xs" variant="light" color="gray" style={{ whiteSpace: "nowrap" }}>
+    <Badge size="xs" variant="subtle" color="gray" style={{ whiteSpace: "nowrap" }}>
       {versionText}
     </Badge>
   ) : null;
   const showVersionTooltip = versionText !== null && !isDigestUpdate && versionText !== fullVersionText;
 
   return (
-    <Card className={combineClasses(className)} radius={radius} p="xs" style={{ overflow: "visible" }}>
+    <Card
+      className={combineClasses(className)}
+      radius={radius}
+      p="xs"
+      bg="transparent"
+      style={{ overflow: "visible" }}
+    >
       <Group justify="space-between" wrap="nowrap" gap="xs" miw={0}>
         <Text size="xs" fw={500} lineClamp={1} miw={0}>
           {update.name}

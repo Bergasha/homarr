@@ -8,7 +8,6 @@ import { getQueryKey } from "@trpc/react-query";
 import { clientApi } from "@homarr/api/client";
 import { formatBytes } from "@homarr/common";
 import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 import { WidgetEmptyState } from "../../common/empty-state";
 import type { WidgetComponentProps } from "../../definition";
@@ -27,7 +26,7 @@ export default function ImmichServerStatsWidget({
   height,
   widgetRuntimeRef,
 }: WidgetComponentProps<"immich-serverStats">) {
-  const t = useI18n();
+  const t = useI18n("widget.immich-serverStats");
   const locale = useCurrentIntlLocale();
   const input = { integrationId: integrationIds[0] ?? "" };
   const albumsInput = { ...input, limit: MAX_ADVANCED_ALBUMS };
@@ -56,42 +55,49 @@ export default function ImmichServerStatsWidget({
     Number(statVisibility.showStorage);
   const statsLayout = getImmichStatsLayout(width, height, statCount, isAdvanced);
 
-  const statsContent = (
-    <SimpleGrid cols={statsLayout.columns} spacing={statsLayout.dense ? 4 : "sm"}>
-      {statVisibility.showUsers && (
-        <StatItem
-          icon={<IconUsers style={iconSizes.xl} />}
-          label={t("widget.immich-serverStats.users")}
-          value={stats.userCount.toLocaleString(locale)}
-          dense={statsLayout.dense}
-        />
-      )}
-      {statVisibility.showPhotos && (
-        <StatItem
-          icon={<IconPhoto style={iconSizes.xl} />}
-          label={t("widget.immich-serverStats.photos")}
-          value={stats.photoCount.toLocaleString(locale)}
-          dense={statsLayout.dense}
-        />
-      )}
-      {statVisibility.showVideos && (
-        <StatItem
-          icon={<IconVideo style={iconSizes.xl} />}
-          label={t("widget.immich-serverStats.videos")}
-          value={stats.videoCount.toLocaleString(locale)}
-          dense={statsLayout.dense}
-        />
-      )}
-      {statVisibility.showStorage && (
-        <StatItem
-          icon={<IconDatabase style={iconSizes.xl} />}
-          label={t("widget.immich-serverStats.storage")}
-          value={formatBytes(stats.totalLibraryUsageInBytes)}
-          dense={statsLayout.dense}
-        />
-      )}
-    </SimpleGrid>
-  );
+  const statItems = [
+    {
+      key: "users",
+      enabled: statVisibility.showUsers,
+      icon: <IconUsers size={statsLayout.dense ? 16 : 18} />,
+      label: t("users"),
+      value: stats.userCount.toLocaleString(locale),
+    },
+    {
+      key: "photos",
+      enabled: statVisibility.showPhotos,
+      icon: <IconPhoto size={statsLayout.dense ? 16 : 18} />,
+      label: t("photos"),
+      value: stats.photoCount.toLocaleString(locale),
+    },
+    {
+      key: "videos",
+      enabled: statVisibility.showVideos,
+      icon: <IconVideo size={statsLayout.dense ? 16 : 18} />,
+      label: t("videos"),
+      value: stats.videoCount.toLocaleString(locale),
+    },
+    {
+      key: "storage",
+      enabled: statVisibility.showStorage,
+      icon: <IconDatabase size={statsLayout.dense ? 16 : 18} />,
+      label: t("storage"),
+      value: formatBytes(stats.totalLibraryUsageInBytes),
+    },
+  ]
+    .filter((item) => item.enabled)
+    .map(({ key, icon, label, value }) => (
+      <StatItem key={key} icon={icon} label={label} value={value} dense={statsLayout.dense} />
+    ));
+
+  const statsContent =
+    isAdvanced || statsLayout.dense ? (
+      <SimpleGrid cols={statsLayout.columns} spacing={statsLayout.dense ? 4 : "sm"}>
+        {statItems}
+      </SimpleGrid>
+    ) : (
+      <Stack gap="xs">{statItems}</Stack>
+    );
 
   if (!isAdvanced) {
     return (
@@ -99,7 +105,7 @@ export default function ImmichServerStatsWidget({
         {statsContent}
         {statsQuery.error && (
           <Box pos="absolute" top={4} right={4}>
-            <WidgetQueryErrorIndicator error={statsQuery.error} label={t("widget.immich-serverStats.name")} />
+            <WidgetQueryErrorIndicator error={statsQuery.error} label={t("name")} />
           </Box>
         )}
       </Stack>
@@ -113,19 +119,16 @@ export default function ImmichServerStatsWidget({
       {statsContent}
       <Group justify="space-between" wrap="nowrap">
         <Text size="xs" c="dimmed">
-          {t("widget.immich-serverStats.albumLimit", { count: MAX_ADVANCED_ALBUMS })}
+          {t("albumLimit", { count: MAX_ADVANCED_ALBUMS })}
         </Text>
-        <WidgetQueryErrorIndicator
-          error={statsQuery.error ?? albumsQuery.error}
-          label={t("widget.immich-serverStats.name")}
-        />
+        <WidgetQueryErrorIndicator error={statsQuery.error ?? albumsQuery.error} label={t("name")} />
       </Group>
       <ScrollArea style={{ flex: 1, minHeight: 0 }}>
         {isInitialWidgetQueryPending(albumsQuery) ? (
           <WidgetQueryLoadingState />
         ) : albumsQuery.error && albumsQuery.data === undefined ? (
           <Center h="100%" p="md">
-            <WidgetQueryErrorIndicator error={albumsQuery.error} label={t("widget.immich-serverStats.name")} />
+            <WidgetQueryErrorIndicator error={albumsQuery.error} label={t("name")} />
           </Center>
         ) : albums.length === 0 ? (
           <WidgetEmptyState />

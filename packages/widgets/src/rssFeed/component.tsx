@@ -7,7 +7,7 @@ import dayjs from "dayjs";
 import type { RouterInputs, RouterOutputs } from "@homarr/api";
 import { clientApi } from "@homarr/api/client";
 import { useRequiredBoard } from "@homarr/boards/context";
-import { useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
 import { getSafeApplicationUrl, SAFE_NEW_TAB_REL } from "../common/application-url";
@@ -51,7 +51,7 @@ export default function RssFeed({ options, width, height, displayMode }: WidgetC
   });
 
   const board = useRequiredBoard();
-  const t = useScopedI18n("widget.rssFeed");
+  const t = useI18n("widget.rssFeed");
   if (feed.hasError) {
     return (
       <BaseWidgetError

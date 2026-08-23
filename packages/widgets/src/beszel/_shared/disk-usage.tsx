@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Group, Popover, Progress, Stack, Text, UnstyledButton } from "@mantine/core";
 
-import { useScopedI18n } from "@homarr/translation/client";
+import { useI18n } from "@homarr/translation/client";
 
 import type { BeszelSystemRow } from "./types";
 import { thresholdColor } from "./colors";
@@ -21,7 +21,7 @@ const mountLabel = (path: string) =>
 const severityColor = (value: number) => `var(--mantine-color-${thresholdColor(value)}-6)`;
 
 export const DiskUsage = ({ system, fontSize, progressSize, valueMiw, valueGap = 6 }: DiskUsageProps) => {
-  const t = useScopedI18n("common");
+  const t = useI18n("common");
   const [opened, setOpened] = useState(false);
   const filesystems = Object.entries(system.extraFilesystems).filter(([path]) => path !== "/");
   const filesystemUsageLabel = t("filesystemUsage", { count: filesystems.length + 1 });
@@ -63,7 +63,11 @@ export const DiskUsage = ({ system, fontSize, progressSize, valueMiw, valueGap =
               }}
             >
               <Box pos="relative" style={{ flex: 1, minWidth: 24 }}>
-                <Progress value={system.disk} color={thresholdColor(system.disk)} size={trackSize} />
+                <Progress
+                  value={system.disk}
+                  color={thresholdColor(system.disk)}
+                  size={trackSize}
+                />
                 <Group
                   gap={dotGap}
                   wrap="nowrap"
@@ -101,7 +105,12 @@ export const DiskUsage = ({ system, fontSize, progressSize, valueMiw, valueGap =
                     <Text size="sm" fw={600} miw={48} lh={1.25}>
                       {formatPercent(value)}
                     </Text>
-                    <Progress value={value} color={thresholdColor(value)} size="xs" style={{ flex: 1 }} />
+                    <Progress
+                      value={value}
+                      color={thresholdColor(value)}
+                      size="xs"
+                      style={{ flex: 1 }}
+                    />
                   </Group>
                 </Stack>
               ))}
@@ -111,7 +120,11 @@ export const DiskUsage = ({ system, fontSize, progressSize, valueMiw, valueGap =
       ) : (
         <Box style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 24 }}>
           <Box pos="relative" style={{ flex: 1, minWidth: 24 }}>
-            <Progress value={system.disk} color={thresholdColor(system.disk)} size={trackSize} />
+            <Progress
+              value={system.disk}
+              color={thresholdColor(system.disk)}
+              size={trackSize}
+            />
           </Box>
         </Box>
       )}

@@ -5,7 +5,7 @@ import { Avatar, Badge, Card, Group, ScrollArea, SimpleGrid, Stack, Text } from 
 import { clientApi } from "@homarr/api/client";
 import { formatByteRate } from "@homarr/common";
 import { getIconUrl } from "@homarr/definitions";
-import { useCurrentIntlLocale, useScopedI18n } from "@homarr/translation/client";
+import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
 
 import type { WidgetComponentProps } from "../definition";
 import { WidgetQueryErrorIndicator } from "../common/query-state-indicator";
@@ -47,7 +47,8 @@ const ArchiveTeamWarriorWidgetContent = ({
   height: number;
   isAdvanced: boolean;
 }) => {
-  const t = useScopedI18n("widget.archiveTeamWarrior");
+  const t = useI18n("widget.archiveTeamWarrior");
+  const tWidgetCommon = useI18n("widget.common");
   const locale = useCurrentIntlLocale();
   const [data, statusQuery] = clientApi.widget.archiveTeamWarrior.getStatus.useSuspenseQuery({ integrationId });
 
@@ -81,7 +82,7 @@ const ArchiveTeamWarriorWidgetContent = ({
       </Group>
 
       {(isAdvanced || options.showBroadcastMessage) && status.broadcastMessage && layout.showBroadcast && (
-        <Card withBorder p="xs">
+        <Card withBorder p="xs" bg="transparent" style={{ borderColor: neutralSurfaceBorder }}>
           <Text size="xs" lineClamp={isAdvanced ? undefined : 3}>
             {status.broadcastMessage}
           </Text>
@@ -107,7 +108,7 @@ const ArchiveTeamWarriorWidgetContent = ({
               {t("runnerStatus", { status: t(`status.${getStatusKey(status.runnerStatus ?? status.status)}`) })}
             </Text>
             <Text size="xs" c="dimmed">
-              {t("updatedAt", { date: new Date(status.updatedAt).toLocaleString(locale) })}
+              {tWidgetCommon("updatedAt", { date: new Date(status.updatedAt).toLocaleString(locale) })}
             </Text>
           </Group>
           <Group gap="xs" wrap="wrap">
@@ -142,7 +143,13 @@ const ArchiveTeamWarriorWidgetContent = ({
               {status.items.map((item) => {
                 const itemStatusKey = getStatusKey(item.status);
                 return (
-                  <Card key={item.id} withBorder p="xs">
+                  <Card
+                    key={item.id}
+                    withBorder
+                    p="xs"
+                    bg="transparent"
+                    style={{ borderColor: neutralSurfaceBorder }}
+                  >
                     <Group justify="space-between" wrap="nowrap">
                       <Stack gap={0} miw={0}>
                         <Text size="sm" fw={600} lineClamp={1}>
@@ -199,6 +206,9 @@ export const getArchiveCompactLayout = (width: number, height: number, isAdvance
 };
 
 const formatBandwidth = (value?: number) => formatByteRate(Math.round(value ?? 0));
+
+const neutralSurfaceBorder =
+  "rgb(from var(--mantine-color-default-border) r g b / calc(var(--opacity, 1) * 0.45))";
 
 type WarriorStatusKey = "running" | "completed" | "failed" | "canceled" | "stopped" | "idle" | "unknown";
 
