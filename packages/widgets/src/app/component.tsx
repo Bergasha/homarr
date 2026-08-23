@@ -113,7 +113,7 @@ export default function AppWidget({ options, isEditMode, height, width }: Widget
                 height: "100%",
                 width: "100%",
                 minWidth: "20%",
-                maxWidth: isTiny ? "38%" : "50%",
+                maxWidth: isColumnLayout ? undefined : isTiny ? "38%" : "50%",
               }}
             />
           </Flex>
