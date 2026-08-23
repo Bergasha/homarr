@@ -11,6 +11,12 @@
 .viewport.scrollableViewport {
   overflow-x: hidden;
   overflow-y: auto;
+  /* Without this, a browser with classic (non-overlay) scrollbars reserves gutter
+     space only on the right when content actually overflows, silently eating into
+     the grid's fixed pixel width on that side only and making items near the right
+     edge sit closer to the border than items on the left. Reserving a matching
+     blank gutter on the left keeps both sides equal whether or not it's scrolled. */
+  scrollbar-gutter: stable both-edges;
   /* --board-grid-drag-height inherits down the DOM tree like any custom property. A capped
      section's own GridPreviewLayer effect correctly avoids setting it on itself (see
      grid-preview-layer.tsx), but that does nothing to stop it inheriting the value an
@@ -57,7 +63,7 @@
 /* Inside a container section, give items a bit more breathing room so the ones
    sitting against the container's edge don't look flush with its border. */
 [data-board-container-body] .staticItem[data-type="item"] > .contentMount {
-  inset: calc(16px * var(--board-canvas-inverse-scale, 1));
+  inset: calc(12px * var(--board-canvas-inverse-scale, 1));
 }
 
 .staticItem:has([data-board-container-label]) {
