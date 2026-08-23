@@ -11,12 +11,14 @@
 .viewport.scrollableViewport {
   overflow-x: hidden;
   overflow-y: auto;
-  /* Without this, a browser with classic (non-overlay) scrollbars reserves gutter
-     space only on the right when content actually overflows, silently eating into
-     the grid's fixed pixel width on that side only and making items near the right
-     edge sit closer to the border than items on the left. Reserving a matching
-     blank gutter on the left keeps both sides equal whether or not it's scrolled. */
-  scrollbar-gutter: stable both-edges;
+  /* The grid content inside has a fixed pixel width matching this viewport's full
+     outer width (needed for the drag/resize math), so there's no room to reserve
+     for a scrollbar without it eating into - or overlapping - the content on
+     whichever side it renders. Hiding the native scrollbar track entirely (wheel/
+     touch/drag scrolling still works) avoids that instead of trying to reserve
+     space for it. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   /* --board-grid-drag-height inherits down the DOM tree like any custom property. A capped
      section's own GridPreviewLayer effect correctly avoids setting it on itself (see
      grid-preview-layer.tsx), but that does nothing to stop it inheriting the value an
@@ -29,6 +31,10 @@
      above it, no matter what any ancestor's own drag state is doing.
      https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_cascading_variables#custom_properties_and_inheritance */
   --board-grid-drag-height: initial;
+}
+
+.viewport.scrollableViewport::-webkit-scrollbar {
+  display: none;
 }
 
 .staticGrid,
