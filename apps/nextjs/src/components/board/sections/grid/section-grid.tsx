@@ -138,9 +138,18 @@ export const SectionGrid = ({
   // of expanding to fit every widget, so its viewport height is capped independently of rowCount.
   const isScrollableContainer = section.kind === "container" && section.options.scrollable;
   const viewportRowCount = isScrollableContainer ? Math.max(requestedRowCount, 1) : rowCount;
-  const logicalWidth = getLogicalGridSize(columnCount);
-  const logicalHeight = getLogicalGridSize(rowCount);
-  const viewportHeight = getLogicalGridSize(viewportRowCount);
+  // A container's own visible card is inset from its allocated board cell by the board's
+  // standard per-item gap (see the base, non-container `.staticItem[data-type="item"] >
+  // .contentMount` rule in section-grid.module.css - a container is placed as an "item" like
+  // any widget, so it gets that same gap). A widget's content just fills whatever size its
+  // card ends up being, but this SectionGrid instead computes its own fixed pixel size from
+  // the same column/row counts used to allocate the *outer*, uninset cell - so without
+  // subtracting that gap back out here, a container's inner grid renders larger than its own
+  // card and visually spills past its right/bottom edges. 10 must match that CSS rule's inset.
+  const outerCardInset = section.kind === "container" ? (2 * 10) / canvasScale : 0;
+  const logicalWidth = getLogicalGridSize(columnCount) - outerCardInset;
+  const logicalHeight = getLogicalGridSize(rowCount) - outerCardInset;
+  const viewportHeight = getLogicalGridSize(viewportRowCount) - outerCardInset;
   // A collapsed container's compact coordinates are display-only. Its own
   // nested grid stays inactive until an explicit edit interaction expands it.
   const isInteractionDisabled = section.kind === "container" && collapsedSectionIds.has(section.id);
