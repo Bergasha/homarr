@@ -52,7 +52,7 @@ type SortState = { column: SortColumn; descending: boolean } | null;
 
 export const getMediaServerColumnVisibility = (width: number, isAdvanced: boolean) => ({
   user: isAdvanced || width >= 300,
-  // The user (240px) and status (200px) columns together need a floor here, otherwise the
+  // The user (26%) and status (22%) columns together need a floor here, otherwise the
   // currentlyPlaying column - the primary content - gets squeezed to almost nothing.
   status: isAdvanced || width >= 590,
 });
@@ -143,7 +143,7 @@ function StreamTableHeader({
   sortable: boolean;
   sort: SortState;
   onSort: (column: SortColumn) => void;
-  width?: number;
+  width?: number | string;
   className?: string;
 }) {
   const active = sort?.column === column;
@@ -287,7 +287,7 @@ export default function MediaServerWidget({
                   sortable={isAdvanced}
                   sort={sort}
                   onSort={toggleSort}
-                  width={240}
+                  width="26%"
                 />
               )}
               <StreamTableHeader
@@ -304,7 +304,7 @@ export default function MediaServerWidget({
                   sortable={isAdvanced}
                   sort={sort}
                   onSort={toggleSort}
-                  width={200}
+                  width="22%"
                   className={classes.statusCell}
                 />
               )}
