@@ -55,8 +55,8 @@ import { iconSizes } from "@homarr/ui";
 
 import type { WidgetComponentProps } from "../definition";
 import { IntegrationErrorIndicator } from "../common/integration-error-indicator";
-import { getUsableWidgetQueryData } from "../common/query-state";
-import { WidgetQueryErrorIndicator } from "../common/query-state-indicator";
+import { getUsableWidgetQueryData, isInitialWidgetQueryPending } from "../common/query-state";
+import { WidgetQueryLoadingState } from "../common/query-state-indicator";
 import { HomarrDataTable } from "../common/homarr-data-table";
 import { formatLocalizedDateTime } from "../common/locale";
 import { usePersistedTableLayout, useTableLayoutPersistence } from "../common/use-persisted-table-layout";
@@ -315,7 +315,6 @@ export default function DownloadClientsWidget({
   const queryIndicators = (
     <Group gap={0}>
       <IntegrationErrorIndicator results={currentItems ?? []} />
-      <WidgetQueryErrorIndicator error={downloadsQuery.error} label={t("name")} />
     </Group>
   );
 
@@ -743,6 +742,8 @@ export default function DownloadClientsWidget({
       </Box>
     );
   }
+
+  if (isInitialWidgetQueryPending(downloadsQuery)) return <WidgetQueryLoadingState />;
 
   let rowContextMenuHandler: typeof handleContextMenu | undefined = handleContextMenu;
   if (isEditMode) rowContextMenuHandler = undefined;

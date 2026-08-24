@@ -30,7 +30,6 @@ import { useWidgetRuntimeActions } from "../runtime-hooks";
 import { getSafeApplicationUrl, SAFE_NEW_TAB_REL } from "../common/application-url";
 import { WidgetEmptyState } from "../common/empty-state";
 import { getUsableWidgetQueryData, isInitialWidgetQueryPending } from "../common/query-state";
-import { WidgetQueryErrorIndicator } from "../common/query-state-indicator";
 import actionTargetClasses from "../common/action-target.module.css";
 import classes from "./component.module.css";
 import { getIndexerDisplayStatus } from "./status";
@@ -119,7 +118,6 @@ export default function IndexerManagerWidget({
             )}
           </Group>
         )}
-        <WidgetQueryErrorIndicator error={indexersQuery.error} label={t("title")} />
         <Tooltip label={testAllError ? tCommon("error") : t("testAll")}>
           <ActionIcon
             className={combineClasses("indexer-manager-test-action-icon", classes.testAction, actionTargetClasses.root)}

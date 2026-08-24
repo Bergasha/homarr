@@ -29,7 +29,6 @@ import { iconSizes } from "@homarr/ui";
 import type { WidgetComponentProps } from "../definition";
 import { IntegrationErrorIndicator } from "../common/integration-error-indicator";
 import { getUsableWidgetQueryData } from "../common/query-state";
-import { WidgetQueryErrorIndicator } from "../common/query-state-indicator";
 import { useWidgetRuntimeQueries } from "../runtime-hooks";
 import { getBeszelAlertsQueryInput } from "./display";
 import { buildBeszelSystemNameMap, getBeszelSystemName } from "./system-name-map";
@@ -127,7 +126,6 @@ export default function BeszelAlertsWidget({
     <Box h="100%" pos="relative">
       <Box pos="absolute" top={4} right={8} style={{ zIndex: 1 }}>
         <Group gap={0}>
-          <WidgetQueryErrorIndicator error={alertsQuery.error} label={t("name")} />
           <IntegrationErrorIndicator results={results} />
         </Group>
       </Box>

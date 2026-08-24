@@ -15,7 +15,6 @@ import { iconSizes } from "@homarr/ui";
 import { WidgetEmptyState } from "../common/empty-state";
 import type { WidgetComponentProps } from "../definition";
 import { getUsableWidgetQueryData } from "../common/query-state";
-import { WidgetQueryErrorIndicator } from "../common/query-state-indicator";
 import actionTargetClasses from "../common/action-target.module.css";
 import { storedContentToPlainText } from "./content";
 
@@ -240,7 +239,6 @@ const AnchorNoteWidgetContent = ({
           )}
         </Stack>
         <Group gap="xs" wrap="nowrap">
-          <WidgetQueryErrorIndicator error={noteQuery.error} label={t("name")} />
           {(isEditing || canEdit) && (
             <Group className="homarr-anchor-actions" data-visible={isEditing || isAdvanced || undefined} gap="xs">
               {isEditing ? (

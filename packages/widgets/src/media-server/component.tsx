@@ -41,7 +41,6 @@ import type { TablerIcon } from "@homarr/ui";
 import type { WidgetComponentProps } from "../definition";
 import { getUsableWidgetQueryData } from "../common/query-state";
 import { IntegrationErrorIndicator } from "../common/integration-error-indicator";
-import { WidgetQueryErrorIndicator } from "../common/query-state-indicator";
 import classes from "./component.module.css";
 
 type TranscodingDecision = NonNullable<NonNullable<StreamSession["currentlyPlaying"]>["metadata"]>["transcoding"];
@@ -261,14 +260,12 @@ export default function MediaServerWidget({
               aria-label={tSearch("placeholder")}
               leftSection={<IconSearch style={iconSizes.xs} aria-hidden />}
             />
-            <WidgetQueryErrorIndicator error={currentStreamsQuery.error} label={t("name")} />
             <IntegrationErrorIndicator results={currentStreams} />
           </Group>
         </Group>
       )}
-      {!isAdvanced && (hasFailedIntegrations || currentStreamsQuery.error) && (
+      {!isAdvanced && hasFailedIntegrations && (
         <Group px="xs" justify="flex-end">
-          <WidgetQueryErrorIndicator error={currentStreamsQuery.error} label={t("name")} />
           <IntegrationErrorIndicator results={currentStreams} />
         </Group>
       )}

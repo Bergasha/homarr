@@ -12,7 +12,6 @@ import {
 } from "@tabler/icons-react";
 
 import { clientApi } from "@homarr/api/client";
-import { getIntegrationName } from "@homarr/definitions";
 import type { TraefikDashboardData, TraefikProtocolSummary, TraefikResourceSummary } from "@homarr/integrations/types";
 import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
@@ -21,7 +20,6 @@ import { WidgetEmptyState } from "../common/empty-state";
 import { IntegrationErrorIndicator } from "../common/integration-error-indicator";
 import type { WidgetComponentProps } from "../definition";
 import { getUsableWidgetQueryData } from "../common/query-state";
-import { WidgetQueryErrorIndicator } from "../common/query-state-indicator";
 import { NoIntegrationDataError } from "../errors/no-data-integration";
 import classes from "./component.module.css";
 
@@ -213,7 +211,6 @@ function TraefikWidgetContent({
       <Box h="100%" pos="relative">
         <Group pos="absolute" top={4} right={8} gap={0} style={{ zIndex: 2 }}>
           <IntegrationErrorIndicator results={data} />
-          <WidgetQueryErrorIndicator error={dashboardQuery.error} label={getIntegrationName("traefik")} />
         </Group>
         <ScrollArea h="100%">{summary}</ScrollArea>
       </Box>
@@ -266,7 +263,6 @@ function TraefikWidgetContent({
       <Box h="100%" pos="relative">
         <Group pos="absolute" top={4} right={8} gap={0} style={{ zIndex: 2 }}>
           <IntegrationErrorIndicator results={data} />
-          <WidgetQueryErrorIndicator error={dashboardQuery.error} label={getIntegrationName("traefik")} />
         </Group>
         <ScrollArea h="100%">
           <Stack gap="md" p="md">
@@ -282,7 +278,6 @@ function TraefikWidgetContent({
     <Box h="100%" pos="relative">
       <Group pos="absolute" top={4} right={8} gap={0} style={{ zIndex: 2 }}>
         <IntegrationErrorIndicator results={data} />
-        <WidgetQueryErrorIndicator error={dashboardQuery.error} label={getIntegrationName("traefik")} />
       </Group>
       <SimpleGrid cols={2} spacing="md" h="100%" p="md" style={{ gridTemplateRows: "minmax(0, 1fr)" }}>
         <ScrollArea h="100%">{summary}</ScrollArea>
