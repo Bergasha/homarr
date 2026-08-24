@@ -10,12 +10,8 @@ import { TestConnectionError } from "../base/test-connection/test-connection-err
 import type { TestingResult } from "../base/test-connection/test-connection-service";
 import type { IMediaServerIntegration } from "../interfaces/media-server/media-server-integration";
 import type { CurrentSessionsInput, StreamSession } from "../interfaces/media-server/media-server-types";
-import { convertJellyfinType, parseLocation } from "../jellyfin/jellyfin-integration";
+import { convertJellyfinType, parseLocation, ticksToMs } from "../jellyfin/jellyfin-integration";
 import type { IMediaReleasesIntegration, MediaRelease, MediaType } from "../types";
-
-function ticksToMs(ticks: number | null | undefined): number | null {
-  return ticks ? Math.round(ticks / 10_000) : null;
-}
 
 const transcodingInfoSchema = z.object({
   Bitrate: z.number().nullish(),
