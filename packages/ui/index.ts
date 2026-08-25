@@ -21,3 +21,16 @@ export const iconSizes = {
   lg: { width: "var(--mantine-font-size-lg)", height: "var(--mantine-font-size-lg)", flexShrink: 0 },
   xl: { width: "var(--mantine-font-size-xl)", height: "var(--mantine-font-size-xl)", flexShrink: 0 },
 } as const satisfies Record<string, CSSProperties>;
+
+/**
+ * For icon/element sizes that don't fit one of `iconSizes`' fixed tokens (e.g. a deliberately
+ * oversized icon). Same reasoning as `iconSizes`: pass as `style`, not a raw `size` number - a
+ * bare pixel value never re-scales when the board's zoom level changes, so it renders at a
+ * fraction of its intended size on any board that isn't at 100% zoom (which is most boards with
+ * more than a couple of widgets).
+ */
+export const zoomCompensatedSize = (px: number): CSSProperties => ({
+  width: `calc(${px}px * var(--board-canvas-ui-scale, 1))`,
+  height: `calc(${px}px * var(--board-canvas-ui-scale, 1))`,
+  flexShrink: 0,
+});

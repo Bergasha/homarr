@@ -190,7 +190,7 @@ export default function NetworkControllerSummaryWidget({
                     <StatusIcon
                       status={summary.wanStatus}
                       label={statusLabels[getBinaryStatusKey(summary.wanStatus)]}
-                      size={isDense ? 16 : 20}
+                      style={isDense ? iconSizes.md : iconSizes.xl}
                     />
                   }
                 >
@@ -201,7 +201,7 @@ export default function NetworkControllerSummaryWidget({
                     <StatusIcon
                       status={summary.www.status}
                       label={statusLabels[getBinaryStatusKey(summary.www.status)]}
-                      size={isDense ? 16 : 20}
+                      style={isDense ? iconSizes.md : iconSizes.xl}
                     />
                   }
                 >
@@ -217,7 +217,7 @@ export default function NetworkControllerSummaryWidget({
                     <StatusIcon
                       status={summary.wifi.status}
                       label={statusLabels[getBinaryStatusKey(summary.wifi.status)]}
-                      size={isDense ? 16 : 20}
+                      style={isDense ? iconSizes.md : iconSizes.xl}
                     />
                   }
                 >
@@ -230,7 +230,7 @@ export default function NetworkControllerSummaryWidget({
                       <StatusIcon
                         status={summary.lan.status}
                         label={statusLabels[getBinaryStatusKey(summary.lan.status)]}
-                        size={isDense ? 16 : 20}
+                        style={isDense ? iconSizes.md : iconSizes.xl}
                       />
                     }
                   >
@@ -242,7 +242,7 @@ export default function NetworkControllerSummaryWidget({
                     <StatusIcon
                       status={summary.vpn.status}
                       label={statusLabels[getBinaryStatusKey(summary.vpn.status)]}
-                      size={isDense ? 16 : 20}
+                      style={isDense ? iconSizes.md : iconSizes.xl}
                     />
                   }
                 >

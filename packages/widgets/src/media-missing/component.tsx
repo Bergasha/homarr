@@ -24,7 +24,7 @@ import { getQueryKey } from "@trpc/react-query";
 import { clientApi } from "@homarr/api/client";
 import type { MissingMediaItem, QueuedMediaItem } from "@homarr/integrations/types";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
+import { iconSizes, zoomCompensatedSize } from "@homarr/ui";
 
 import { WidgetEmptyState } from "../common/empty-state";
 import { getSafeApplicationUrl, SAFE_NEW_TAB_REL } from "../common/application-url";
@@ -254,7 +254,11 @@ const Poster = ({ src, type, density }: { src?: string | null; type: "movie" | "
       variant="light"
       color={type === "movie" ? "yellow" : "blue"}
     >
-      {type === "movie" ? <IconMovie size={size * 0.5} /> : <IconVideo size={size * 0.5} />}
+      {type === "movie" ? (
+        <IconMovie style={zoomCompensatedSize(size * 0.5)} />
+      ) : (
+        <IconVideo style={zoomCompensatedSize(size * 0.5)} />
+      )}
     </ThemeIcon>
   );
 };

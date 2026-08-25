@@ -254,7 +254,7 @@ function NoPhotosInAlbum() {
   return (
     <Center h="100%">
       <Stack align="center" gap="xs">
-        <IconAlertCircle size={32} />
+        <IconAlertCircle style={iconSizes.xl} />
         <Text size="sm" fw={500}>
           {t("noPhotos")}
         </Text>
