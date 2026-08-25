@@ -51,7 +51,7 @@ type ContainerAction = "start" | "stop" | "restart" | "remove";
 const rowActionButtonSize = 22;
 const rowActionIconVisualSize = 32;
 const footerRefreshButtonSize = 24;
-const footerRefreshIconVisualSize = 34;
+const footerRefreshIconVisualSize = 18;
 
 interface ContextMenuState {
   x: number;
