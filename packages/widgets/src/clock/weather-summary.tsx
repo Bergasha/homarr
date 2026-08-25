@@ -68,7 +68,7 @@ export const ClockWeatherSummary = ({
             animated={animateIcon}
             code={weather.current.weatherCode}
             isDay={weather.current.isDay}
-            style={zoomCompensatedSize(38)}
+            style={zoomCompensatedSize(33)}
           />
           <Text size="sm" c="dimmed">
             {Math.round(temperature)}
