@@ -126,7 +126,9 @@ export default function SystemResources({
   const panelWidth = width / panelColumns;
   const renderCharts = (entry: (typeof data)[number], availableWidth: number, availableHeight: number) => {
     const currentItem = toChartItem(entry.healthInfo);
-    const fullHistory = historyByIntegration[entry.integrationId] ?? [currentItem];
+    // Duplicate the first point so the chart has two points to draw a line from
+    // immediately, instead of showing the single-value fallback until the next poll.
+    const fullHistory = historyByIntegration[entry.integrationId] ?? [currentItem, currentItem];
     const history = isAdvanced ? fullHistory : fullHistory.slice(-COMPACT_HISTORY_SIZE);
 
     return (
