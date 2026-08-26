@@ -110,14 +110,13 @@ export default function SystemResources({
     lastUpdatedAt.current = dataUpdatedAt;
     setHistoryByIntegration((previous) =>
       Object.fromEntries(
-        data.map((entry) => [
-          entry.integrationId,
-          appendBoundedHistory(
-            previous[entry.integrationId] ?? [],
-            toChartItem(entry.healthInfo),
-            ADVANCED_HISTORY_SIZE,
-          ),
-        ]),
+        data.map((entry) => {
+          const currentItem = toChartItem(entry.healthInfo);
+          // Seed with the current item when there's no history yet, so the first real
+          // update lands at 2 points instead of dropping back to the single-value fallback.
+          const seed = previous[entry.integrationId] ?? [currentItem];
+          return [entry.integrationId, appendBoundedHistory(seed, currentItem, ADVANCED_HISTORY_SIZE)];
+        }),
       ),
     );
   }, [dataUpdatedAt, data]);
