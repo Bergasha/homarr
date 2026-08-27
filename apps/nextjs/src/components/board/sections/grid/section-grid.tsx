@@ -150,6 +150,20 @@ export const SectionGrid = ({
   const logicalWidth = getLogicalGridSize(columnCount) - outerCardInset;
   const logicalHeight = getLogicalGridSize(rowCount) - outerCardInset;
   const viewportHeight = getLogicalGridSize(viewportRowCount) - outerCardInset;
+  // Items are positioned in a coordinate space sized to the *un-inset* column/row count
+  // (fullGridWidth/Height below - see getLogicalItemStyle), but logicalWidth/Height above are
+  // deliberately smaller by outerCardInset to match the container's actual visible card size.
+  // Left alone, that mismatch means the items - not just the grid's own box - spill past the
+  // card's right/bottom edge by exactly that inset. Scale the grid's content down by the same
+  // ratio the board's own canvas uses for its whole-board zoom (see ScaledBoardCanvas), just one
+  // level deeper, so it fits the actual card instead of clipping. --board-canvas-ui-scale is
+  // corrected to compensate so icon/text sizing inside the container isn't affected.
+  const fullGridWidth = getLogicalGridSize(columnCount);
+  const fullGridHeight = getLogicalGridSize(rowCount);
+  const containerContentScale =
+    section.kind === "container" && fullGridWidth > 0 && fullGridHeight > 0
+      ? Math.min(logicalWidth / fullGridWidth, logicalHeight / fullGridHeight, 1)
+      : 1;
   // A collapsed container's compact coordinates are display-only. Its own
   // nested grid stays inactive until an explicit edit interaction expands it.
   const isInteractionDisabled = section.kind === "container" && collapsedSectionIds.has(section.id);
@@ -258,7 +272,20 @@ export const SectionGrid = ({
       >
         <Box
           className={classes.staticGrid}
-          style={{ width: logicalWidth, height: logicalHeight }}
+          style={
+            {
+              width: fullGridWidth,
+              height: fullGridHeight,
+              zoom: containerContentScale,
+              // The uniform scale above is the more-constrained of width/height, so it can leave
+              // a small gap on the other axis rather than exactly filling it (better than clipping
+              // that axis instead). Center horizontally so that gap is even on both sides.
+              margin: containerContentScale < 1 ? "0 auto" : undefined,
+              ...(containerContentScale < 1
+                ? { "--board-canvas-ui-scale": `calc(var(--board-canvas-ui-scale, 1) / ${containerContentScale})` }
+                : {}),
+            } as CSSProperties
+          }
           data-grid-section-id={section.id}
           data-kind={section.kind}
           data-grid-editor-error={isEditMode && editorRuntimeStatus === "error" ? "true" : undefined}
