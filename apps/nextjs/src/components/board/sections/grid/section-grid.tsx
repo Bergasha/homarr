@@ -160,17 +160,15 @@ export const SectionGrid = ({
   // corrected to compensate so icon/text sizing inside the container isn't affected.
   const fullGridWidth = getLogicalGridSize(columnCount);
   const fullGridHeight = getLogicalGridSize(rowCount);
-  const containerScaleX =
-    section.kind === "container" && fullGridWidth > 0 ? Math.min(logicalWidth / fullGridWidth, 1) : 1;
-  const containerScaleY =
-    section.kind === "container" && fullGridHeight > 0 ? Math.min(logicalHeight / fullGridHeight, 1) : 1;
-  // zoom is layout-affecting (unlike transform), so a scrollable container's scrollHeight still
-  // matches what's actually visible - use the smaller of the two ratios as that baseline. The
-  // other axis, if less constrained, gets a supplementary transform on top to stretch it out to
-  // its own exact ratio instead of leaving it under-filled by the stricter one.
-  const containerContentScale = Math.min(containerScaleX, containerScaleY);
-  const containerWidthCorrection = containerContentScale > 0 ? containerScaleX / containerContentScale : 1;
-  const containerHeightCorrection = containerContentScale > 0 ? containerScaleY / containerContentScale : 1;
+  // A uniform zoom is required (not a non-uniform transform scale(x, y)) - --board-canvas-ui-scale
+  // is a single scalar that every icon/text/custom-CSS size compensation in the app multiplies
+  // by, so a non-uniform stretch can never be captured by it correctly. That means one axis can
+  // be left with a small amount of unfilled slack when width/height need different ratios to
+  // exactly fit - centered below so it's even on both sides rather than left-aligned.
+  const containerContentScale =
+    section.kind === "container" && fullGridWidth > 0 && fullGridHeight > 0
+      ? Math.min(logicalWidth / fullGridWidth, logicalHeight / fullGridHeight, 1)
+      : 1;
   // A collapsed container's compact coordinates are display-only. Its own
   // nested grid stays inactive until an explicit edit interaction expands it.
   const isInteractionDisabled = section.kind === "container" && collapsedSectionIds.has(section.id);
@@ -284,15 +282,7 @@ export const SectionGrid = ({
               width: fullGridWidth,
               height: fullGridHeight,
               zoom: containerContentScale,
-              // zoom above uses the more-constrained axis, so the other one (if less
-              // constrained) would otherwise be left under-filled. Stretch it back out to its
-              // own exact ratio with a supplementary transform, which doesn't affect the layout
-              // size zoom already established (so scrollHeight etc. stay correct).
-              transform:
-                containerWidthCorrection !== 1 || containerHeightCorrection !== 1
-                  ? `scale(${containerWidthCorrection}, ${containerHeightCorrection})`
-                  : undefined,
-              transformOrigin: "top left",
+              margin: containerContentScale < 1 ? "0 auto" : undefined,
               ...(containerContentScale < 1
                 ? { "--board-canvas-ui-scale": `calc(var(--board-canvas-ui-scale, 1) / ${containerContentScale})` }
                 : {}),
