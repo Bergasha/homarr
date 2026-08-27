@@ -147,13 +147,7 @@ export const SectionGrid = ({
   // subtracting that gap back out here, a container's inner grid renders larger than its own
   // card and visually spills past its right/bottom edges. 10 must match that CSS rule's inset.
   const outerCardInset = section.kind === "container" ? (2 * 10) / canvasScale : 0;
-  // A scrollable container reserves a stable gutter for its scrollbar (see .scrollableViewport
-  // in section-grid.module.css) so the right edge stays consistent with the other three sides
-  // regardless of overflow state or browser, instead of the content reaching flush to the edge
-  // and depending on the scrollbar staying fully hidden. Subtract that reserved width back out
-  // of the grid's own size the same way outerCardInset is, so content doesn't spill past it.
-  const scrollbarGutterInset = isScrollableContainer ? SCROLLBAR_GUTTER_PX / canvasScale : 0;
-  const logicalWidth = getLogicalGridSize(columnCount) - outerCardInset - scrollbarGutterInset;
+  const logicalWidth = getLogicalGridSize(columnCount) - outerCardInset;
   const logicalHeight = getLogicalGridSize(rowCount) - outerCardInset;
   const viewportHeight = getLogicalGridSize(viewportRowCount) - outerCardInset;
   // A collapsed container's compact coordinates are display-only. Its own
@@ -276,11 +270,6 @@ export const SectionGrid = ({
     </SectionProvider>
   );
 };
-
-// Matches the gutter reserved by `scrollbar-gutter: stable` in .scrollableViewport
-// (section-grid.module.css) - comfortably covers a native scrollbar's width so it never
-// visually overlaps this reserved space even before scrollbar-width:none hides it.
-const SCROLLBAR_GUTTER_PX = 10;
 
 const INTERACTIVE_GRID_SELECTOR =
   'a,button,input,textarea,select,option,[contenteditable="true"],[role="button"],[data-grid-no-drag]';
