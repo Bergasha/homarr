@@ -11,12 +11,13 @@
 .viewport.scrollableViewport {
   overflow-x: hidden;
   overflow-y: auto;
-  /* The grid content inside has a fixed pixel width matching this viewport's full
-     outer width (needed for the drag/resize math), so there's no room to reserve
-     for a scrollbar without it eating into - or overlapping - the content on
-     whichever side it renders. Hiding the native scrollbar track entirely (wheel/
-     touch/drag scrolling still works) avoids that instead of trying to reserve
-     space for it. */
+  /* Reserve a stable gutter for the scrollbar regardless of whether it's actually
+     showing, so the content's right edge never shifts or gets crowded depending on
+     overflow state or browser. section-grid.tsx subtracts SCROLLBAR_GUTTER_PX from
+     the grid's own width so this doesn't eat into the content's available space -
+     it becomes a real, consistent margin instead. Combined with scrollbar-width:
+     none below, that gutter is always empty; the scrollbar itself never renders. */
+  scrollbar-gutter: stable;
   scrollbar-width: none;
   -ms-overflow-style: none;
   /* --board-grid-drag-height inherits down the DOM tree like any custom property. A capped
