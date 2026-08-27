@@ -284,7 +284,14 @@ export const SectionGrid = ({
               zoom: containerContentScale,
               margin: containerContentScale < 1 ? "0 auto" : undefined,
               ...(containerContentScale < 1
-                ? { "--board-canvas-ui-scale": `calc(var(--board-canvas-ui-scale, 1) / ${containerContentScale})` }
+                ? {
+                    // Referencing --board-canvas-ui-scale inside its own reassignment on the same
+                    // element is a circular reference - CSS doesn't treat that as "the old value",
+                    // it makes the whole property invalid (as if never set) for every descendant.
+                    // Capture the inherited value under a different name first to break the cycle.
+                    "--board-canvas-ui-scale-inherited": "var(--board-canvas-ui-scale, 1)",
+                    "--board-canvas-ui-scale": `calc(var(--board-canvas-ui-scale-inherited) / ${containerContentScale})`,
+                  }
                 : {}),
             } as CSSProperties
           }
