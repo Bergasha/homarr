@@ -18,7 +18,7 @@ import {
   getReadonlyCanvasAttributes,
   normalizeGridPlacement,
 } from "~/components/board/layout";
-import { useBoardCanvasScale } from "~/components/board/layout/scaled-board-canvas";
+import { calculateBoardUiScale, useBoardCanvasScale } from "~/components/board/layout/scaled-board-canvas";
 import { useGridEditorRuntimeStatus } from "./grid-editor-runtime";
 import { createGridEntryElementStore, useGridEditorRegistry } from "./grid-editor-registry";
 import type { SectionGridPlacement } from "./use-grid-layout-actions";
@@ -169,6 +169,13 @@ export const SectionGrid = ({
     section.kind === "container" && fullGridWidth > 0 && fullGridHeight > 0
       ? Math.min(logicalWidth / fullGridWidth, logicalHeight / fullGridHeight, 1)
       : 1;
+  // Compute the combined value in JS rather than a CSS calc() referencing the existing
+  // --board-canvas-ui-scale: custom properties declared on the *same* element don't have a
+  // sequential/temporal order the way normal variables do, so any calc() on this element that
+  // both reads and writes --board-canvas-ui-scale (even indirectly, through another property)
+  // is a circular reference - CSS invalidates the whole group rather than using "the old value",
+  // silently breaking every icon/text/custom-CSS size that compensates off it for descendants.
+  const combinedUiScale = calculateBoardUiScale(canvasScale) / containerContentScale;
   // A collapsed container's compact coordinates are display-only. Its own
   // nested grid stays inactive until an explicit edit interaction expands it.
   const isInteractionDisabled = section.kind === "container" && collapsedSectionIds.has(section.id);
@@ -283,16 +290,7 @@ export const SectionGrid = ({
               height: fullGridHeight,
               zoom: containerContentScale,
               margin: containerContentScale < 1 ? "0 auto" : undefined,
-              ...(containerContentScale < 1
-                ? {
-                    // Referencing --board-canvas-ui-scale inside its own reassignment on the same
-                    // element is a circular reference - CSS doesn't treat that as "the old value",
-                    // it makes the whole property invalid (as if never set) for every descendant.
-                    // Capture the inherited value under a different name first to break the cycle.
-                    "--board-canvas-ui-scale-inherited": "var(--board-canvas-ui-scale, 1)",
-                    "--board-canvas-ui-scale": `calc(var(--board-canvas-ui-scale-inherited) / ${containerContentScale})`,
-                  }
-                : {}),
+              ...(containerContentScale < 1 ? { "--board-canvas-ui-scale": combinedUiScale } : {}),
             } as CSSProperties
           }
           data-grid-section-id={section.id}
