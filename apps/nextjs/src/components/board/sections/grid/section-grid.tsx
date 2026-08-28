@@ -149,14 +149,19 @@ export const SectionGrid = ({
   const effectiveCanvasScale = Number.isFinite(canvasScale) && canvasScale > 0 ? canvasScale : 1;
   const outerCardInset = section.kind === "container" ? (2 * 10) / effectiveCanvasScale : 0;
   // A collapsible container's toggle bar (see the `containerToggle` Button in
-  // container-section.tsx) is an absolutely positioned overlay sitting on top of this grid,
-  // not part of the board's zoomed coordinate space conversion outerCardInset above accounts
-  // for - it's authored directly inside the same un-zoomed logical space as this grid's own
-  // sizing, so it needs no canvasScale conversion, just a plain subtraction. Without reserving
-  // it, the header bar covers the first row of the container's content instead of sitting above
-  // it. Only the vertical axis is affected - the toggle spans the full width already.
+  // container-section.tsx) is an absolutely positioned overlay sitting on top of this grid.
+  // Its height comes from a Mantine size prop, which - like spacing/font-size - is compensated
+  // by --mantine-scale to render at a constant physical size regardless of board zoom (see
+  // scaled-board-canvas.module.css). That makes it behave like the outerCardInset gap above,
+  // not like the grid's own un-compensated logical-pixel math, so it needs the same
+  // effectiveCanvasScale conversion - a plain, unconverted subtraction would under-reserve on
+  // a zoomed-out board and leave the header overlapping the content. Without reserving it at
+  // all, the header bar covers the first row of the container's content instead of sitting
+  // above it. Only the vertical axis is affected - the toggle spans the full width already.
   const collapsibleHeaderInset =
-    section.kind === "container" && section.options.collapsible ? CONTAINER_HEADER_HEIGHT : 0;
+    section.kind === "container" && section.options.collapsible
+      ? CONTAINER_HEADER_HEIGHT / effectiveCanvasScale
+      : 0;
   const logicalWidth = getLogicalGridSize(columnCount) - outerCardInset;
   const viewportHeight = Math.max(
     1,
