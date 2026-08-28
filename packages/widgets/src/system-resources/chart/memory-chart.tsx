@@ -28,17 +28,13 @@ export const SystemResourceMemoryChart = ({
   const percentageUsed =
     memoryUsageOverTime.length > 0 && totalCapacityInBytes > 0
       ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        memoryUsageOverTime[memoryUsageOverTime.length - 1]! /
-        totalCapacityInBytes
+        memoryUsageOverTime[memoryUsageOverTime.length - 1]! / totalCapacityInBytes
       : undefined;
 
   const tooltipLabel = (index: number) => {
     const used = memoryUsageOverTime[index] ?? 0;
     const memory = formatBytesPair(Math.round(used), totalCapacityInBytes);
-    const percent =
-      totalCapacityInBytes > 0
-        ? Math.round((used / totalCapacityInBytes) * 100)
-        : 0;
+    const percent = totalCapacityInBytes > 0 ? Math.round((used / totalCapacityInBytes) * 100) : 0;
     return t("memoryTooltip", {
       used: memory.used,
       available: memory.available,
@@ -56,11 +52,7 @@ export const SystemResourceMemoryChart = ({
       labelDisplayMode={labelDisplayMode}
       advanced={advanced}
       yAxisProps={{ domain: [0, totalCapacityInBytes] }}
-      lastValue={
-        percentageUsed !== undefined
-          ? `${Math.round(percentageUsed * 100)}%`
-          : undefined
-      }
+      lastValue={percentageUsed !== undefined ? `${Math.round(percentageUsed * 100)}%` : undefined}
       chartType={hasShadow ? "area" : "line"}
       tooltipLabel={tooltipLabel}
     />

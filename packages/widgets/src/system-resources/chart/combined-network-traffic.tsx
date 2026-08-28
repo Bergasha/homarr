@@ -33,23 +33,13 @@ export const CombinedNetworkTrafficChart = ({
     return (
       <Stack gap={2}>
         <Group gap={4} wrap="nowrap">
-          <Box
-            bg="orange.5"
-            w={8}
-            h={8}
-            style={{ borderRadius: 99, flexShrink: 0 }}
-          />
+          <Box bg="orange.5" w={8} h={8} style={{ borderRadius: 99, flexShrink: 0 }} />
           <Text size="xs">
             {t("up")}: {formatByteRate(Math.round(point?.up ?? 0))}
           </Text>
         </Group>
         <Group gap={4} wrap="nowrap">
-          <Box
-            bg="yellow.5"
-            w={8}
-            h={8}
-            style={{ borderRadius: 99, flexShrink: 0 }}
-          />
+          <Box bg="yellow.5" w={8} h={8} style={{ borderRadius: 99, flexShrink: 0 }} />
           <Text size="xs">
             {t("down")}: {formatByteRate(Math.round(point?.down ?? 0))}
           </Text>
