@@ -20,11 +20,16 @@ function getTooltipPortalRoot(): HTMLDivElement | undefined {
   if (typeof document === "undefined") return undefined;
   if (tooltipPortalRoot?.isConnected) return tooltipPortalRoot;
 
+  // Recharts clamps the tooltip position to stay within its portal container's bounds,
+  // so the container needs real viewport dimensions (not 0x0) or the tooltip collapses
+  // to the container's origin. position:fixed still keeps it out of document flow, so
+  // this can't inflate the page's scroll height the way document.body did.
   const root = document.createElement("div");
   root.style.position = "fixed";
-  root.style.inset = "0";
-  root.style.width = "0";
-  root.style.height = "0";
+  root.style.top = "0";
+  root.style.left = "0";
+  root.style.width = "100vw";
+  root.style.height = "100vh";
   root.style.overflow = "visible";
   root.style.pointerEvents = "none";
   root.style.zIndex = "9999";
