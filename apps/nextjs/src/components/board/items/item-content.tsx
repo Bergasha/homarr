@@ -336,6 +336,7 @@ const LoadedBoardItemContent = ({
         widgetStateRef={widgetStateRef}
         widgetRuntimeRef={widgetRuntimeRef}
         sourceRef={sourceRef}
+        disabled={isAdvanced}
       >
         <Box
           ref={sourceRef}
