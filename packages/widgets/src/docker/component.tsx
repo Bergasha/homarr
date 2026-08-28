@@ -3,7 +3,20 @@
 import "./styles.css";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActionIcon, Avatar, Badge, Box, Center, Group, Menu, Portal, Stack, Text, Tooltip } from "@mantine/core";
+import {
+  ActionIcon,
+  Avatar,
+  Badge,
+  Box,
+  Center,
+  getDefaultZIndex,
+  Group,
+  Menu,
+  Portal,
+  Stack,
+  Text,
+  Tooltip,
+} from "@mantine/core";
 import {
   IconBrandDocker,
   IconCategoryPlus,
@@ -311,8 +324,8 @@ export default function DockerWidget({
   );
 
   const columnVisibility = useMemo(
-    () => getDockerColumnVisibility(options.columns, isAdvanced),
-    [isAdvanced, options.columns],
+    () => getDockerColumnVisibility(options.columns, width, isAdvanced),
+    [isAdvanced, options.columns, width],
   );
   const columns = useMemo(() => {
     const sortingEnabled = (isAdvanced || options.enableRowSorting) && !isEditMode;
@@ -352,7 +365,7 @@ export default function DockerWidget({
       <Box style={{ flex: 1, minHeight: 0 }}>
         <HomarrDataTable
           isEditMode={isEditMode}
-          cellPadding="2px 8px"
+          cellPadding={isAdvanced || width < 400 ? "2px 8px" : "4px 8px"}
           className="docker-table"
           rowCursor="default"
           fetching={isFetching && containers.length === 0}
@@ -546,7 +559,7 @@ function ContainerContextMenu({
         left={0}
         w="100vw"
         h="100vh"
-        style={{ zIndex: 1000 }}
+        style={{ zIndex: getDefaultZIndex("popover") }}
         onClick={onClose}
         onContextMenu={(event) => {
           event.preventDefault();

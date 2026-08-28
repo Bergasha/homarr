@@ -18,7 +18,7 @@ import { Collapsible, PaginatedList, StatBar, TabPanel, TabsContainer, TypeBadge
 import { getScopedCustomJsxControlName, isSafeCustomJsxUrl } from "./runtime-component-policy";
 import { sanitizeCustomJsxProps } from "./safe-properties";
 
-type Namespace = Readonly<Record<string, unknown>>;
+type Namespace = object;
 
 function resolveExport(namespace: Namespace, name: string): ComponentType<never> | undefined {
   let value: unknown = namespace;
@@ -26,7 +26,7 @@ function resolveExport(namespace: Namespace, name: string): ComponentType<never>
     if (!value || (typeof value !== "object" && typeof value !== "function") || !Object.hasOwn(value, segment)) {
       return undefined;
     }
-    value = (value as Record<string, unknown>)[segment];
+    value = Reflect.get(value, segment);
   }
   return typeof value === "function" || (typeof value === "object" && value !== null)
     ? (value as ComponentType<never>)
@@ -39,7 +39,7 @@ interface CustomJsxInputsContextValue {
   scopeId: string;
   inputs: Record<string, WidgetInputValue>;
   inputTypes: Record<string, WidgetInputType>;
-  registerInput(name: string, type: WidgetInputType, initialValue: WidgetInputValue): void;
+  registerInput(name: string, type: WidgetInputType, initialValue: WidgetInputValue): () => void;
   setInputValue(name: string, type: WidgetInputType, value: WidgetInputValue): void;
 }
 
@@ -104,14 +104,21 @@ function useBoundProps(componentName: string, props: Record<string, unknown>): R
   delete sanitized.bind;
   const inputType = getCustomJsxBindingType(componentName, sanitized);
   const initialValue = getInitialInputValue(inputType, sanitized);
+  const serializedInitialValue = JSON.stringify(initialValue);
   const isBound = Boolean(binding && context && inputType && customJsxBindableComponentNames.has(componentName));
+  const registerInput = context?.registerInput;
   useEffect(() => {
-    if (isBound && binding && context && inputType) context.registerInput(binding, inputType, initialValue);
-  }, [binding, context, initialValue, inputType, isBound]);
+    if (!isBound || !binding || !registerInput || !inputType || serializedInitialValue === undefined) return;
+    return registerInput(binding, inputType, JSON.parse(serializedInitialValue) as WidgetInputValue);
+  }, [binding, inputType, isBound, registerInput, serializedInitialValue]);
   if (!isBound || !binding || !context || !inputType) return sanitized;
   delete sanitized.defaultValue;
   delete sanitized.defaultChecked;
-  const currentValue = context.inputs[binding] ?? initialValue;
+  let currentValue = initialValue;
+  if (context.inputTypes[binding] === inputType && Object.hasOwn(context.inputs, binding)) {
+    const storedValue = context.inputs[binding];
+    if (storedValue !== undefined) currentValue = storedValue;
+  }
 
   const update = (value: unknown, checked = false) => {
     const extracted = extractEventValue(value, checked);
@@ -137,11 +144,15 @@ function getInitialInputValue(type: WidgetInputType | null, props: Record<string
   if (!type) return "";
   const candidate = type === "boolean" ? props.defaultChecked : props.defaultValue;
   if (type === "boolean" && typeof candidate === "boolean") return candidate;
-  if (type === "number" && typeof candidate === "number") return candidate;
+  if (type === "number" && typeof candidate === "number" && Number.isFinite(candidate)) return candidate;
   if (type === "string" && typeof candidate === "string") return candidate;
   if (type === "string[]" && Array.isArray(candidate) && candidate.every((item) => typeof item === "string"))
     return candidate;
-  if (type === "number[]" && Array.isArray(candidate) && candidate.every((item) => typeof item === "number"))
+  if (
+    type === "number[]" &&
+    Array.isArray(candidate) &&
+    candidate.every((item) => typeof item === "number" && Number.isFinite(item))
+  )
     return candidate;
   return emptyInputValue(type);
 }
@@ -222,9 +233,9 @@ export interface CustomJsxComponentAdapters {
 
 export function createCustomJsxComponents(adapters: CustomJsxComponentAdapters): Record<string, ComponentType<never>> {
   const namespaces: Record<string, Namespace> = {
-    "@mantine/core": Core as unknown as Namespace,
-    "@mantine/charts": Charts as unknown as Namespace,
-    "@mantine/dates": Dates as unknown as Namespace,
+    "@mantine/core": Core,
+    "@mantine/charts": Charts,
+    "@mantine/dates": Dates,
   };
   const components: Record<string, ComponentType<never>> = {};
   for (const descriptor of enabledCustomJsxComponents) {
@@ -242,7 +253,7 @@ export function createCustomJsxComponents(adapters: CustomJsxComponentAdapters):
       components[descriptor.name] = wrap(descriptor.name, component, additions);
     }
   }
-  const core = Core as unknown as Namespace;
+  const core: Namespace = Core;
   for (const name of [
     "Notification",
     "LoadingOverlay",

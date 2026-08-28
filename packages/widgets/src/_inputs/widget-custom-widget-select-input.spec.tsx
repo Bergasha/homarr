@@ -81,7 +81,10 @@ vi.mock("@homarr/translation/client", () => ({
     })[key] ?? key,
 }));
 
-vi.mock("@homarr/ui", () => ({ Link: "a" }));
+vi.mock("@homarr/ui", () => ({
+  Link: "a",
+  iconSizes: { xs: {}, sm: {}, md: {}, lg: {}, xl: {} },
+}));
 
 vi.mock("./form", () => ({
   useFormContext: () => ({

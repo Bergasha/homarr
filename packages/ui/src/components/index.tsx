@@ -1,5 +1,6 @@
 export * from "./count-badge";
 export { OverflowBadge } from "./overflow-badge";
+export { InlineConfirmActionIcon, InlineConfirmButton, InlineConfirmMenuItem } from "./inline-confirm-action";
 export { SearchInput } from "./search-input";
 export * from "./select-with-description";
 export * from "./select-with-description-and-badge";
@@ -27,6 +28,8 @@ export { LanguageIcon } from "./language-icon";
 export { LanguageCombobox } from "./language-combobox";
 export { ColorSchemeCombobox } from "./color-scheme-combobox";
 export { BoardColorInput } from "./board-color-input";
+export { CornerStylePicker, cornerStyleValues } from "./corner-style-picker";
+export type { CornerStyle } from "./corner-style-picker";
 export { IntegrationMarquee } from "./integration-marquee";
 export { Link } from "./link";
 export {

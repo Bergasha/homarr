@@ -26,21 +26,30 @@ import { IconDeviceMobile, IconHomeFilled, IconLayoutBoard, IconSearch } from "@
 import type { RouterOutputs } from "@homarr/api";
 import { clientApi } from "@homarr/api/client";
 import { useOptionalBoard } from "@homarr/boards/context";
+import { useRegisterSpotlightContextActions } from "@homarr/spotlight";
 import { useI18n } from "@homarr/translation/client";
 import { Link, UserAvatar } from "@homarr/ui";
 
-import { BoardLayoutThumbnail } from "~/components/board/board-layout-thumbnail";
+import { BoardLayoutThumbnail, maxBoardLayoutThumbnailRows } from "~/components/board/board-layout-thumbnail";
 
 import classes from "./board-switcher.module.css";
 
 export const boardSwitcherHotkey = "shift+c";
+const boardSwitcherPreview = { previewRowLimit: maxBoardLayoutThumbnailRows } as const;
+
+export interface BoardSwitcherControls {
+  open: () => void;
+  preload: () => void;
+  hotkey: string;
+}
 
 interface BoardSwitcherProps {
-  children: (controls: { open: () => void; preload: () => void; hotkey: string }) => ReactNode;
+  children: (controls: BoardSwitcherControls) => ReactNode;
 }
 
 export const BoardSwitcher = ({ children }: BoardSwitcherProps) => {
   const t = useI18n("board.action.switcher");
+  const tBoard = useI18n("board");
   const manageBoardsT = useI18n("management.page.board");
   const currentBoard = useOptionalBoard();
   const [isOpen, setIsOpen] = useState(false);
@@ -53,18 +62,12 @@ export const BoardSwitcher = ({ children }: BoardSwitcherProps) => {
     data: boards = [],
     isPending,
     isError,
-  } = clientApi.board.getManageOverview.useQuery(
-    { fullPreview: true },
-    {
-      enabled: isOpen,
-    },
-  );
+  } = clientApi.board.getManageOverview.useQuery(boardSwitcherPreview, {
+    enabled: isOpen,
+  });
 
   const switcherBoards = useMemo(
-    () => [
-      ...boards.filter((board) => board.id !== currentBoard?.id),
-      ...boards.filter((board) => board.id === currentBoard?.id),
-    ],
+    () => boards.filter((board) => board.id !== currentBoard?.id),
     [boards, currentBoard?.id],
   );
   const filteredBoards = useMemo(() => {
@@ -83,7 +86,21 @@ export const BoardSwitcher = ({ children }: BoardSwitcherProps) => {
     setSearch("");
     setActiveIndex(0);
   }, []);
-  const preloadBoards = () => void utils.board.getManageOverview.prefetch({ fullPreview: true });
+  const preloadBoards = () => void utils.board.getManageOverview.prefetch(boardSwitcherPreview);
+
+  const spotlightAction = useMemo(
+    () => ({
+      id: "open-board-switcher",
+      name: tBoard("action.switch"),
+      icon: IconLayoutBoard,
+      interaction: () => ({
+        type: "javaScript" as const,
+        onSelect: openSwitcher,
+      }),
+    }),
+    [openSwitcher, tBoard],
+  );
+  useRegisterSpotlightContextActions("board-switcher", [spotlightAction], [spotlightAction]);
 
   useHotkeys([[boardSwitcherHotkey, openSwitcher, { preventDefault: true }]]);
 
@@ -206,7 +223,13 @@ export const BoardSwitcher = ({ children }: BoardSwitcherProps) => {
             radius="xl"
             classNames={{ input: classes.searchInput }}
           />
-          <ScrollArea.Autosize mah="min(80vh, 42rem)" type="never">
+          <ScrollArea.Autosize
+            mah="min(80vh, 42rem)"
+            type="never"
+            scrollbars="y"
+            overscrollBehavior="contain"
+            className={classes.results}
+          >
             {results}
           </ScrollArea.Autosize>
         </Stack>
@@ -313,7 +336,7 @@ const getBoardSwitcherResults = ({
               <BoardLayoutThumbnail
                 preview={board.preview}
                 label={t("preview", { name: board.name, count: String(board.preview?.items.length ?? 0) })}
-                fitFullLayout
+                previewRowLimit={boardSwitcherPreview.previewRowLimit}
               />
             </Card.Section>
             <Card.Section withBorder px="sm" py={6}>

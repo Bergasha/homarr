@@ -2,6 +2,7 @@ export type DockerColumn = "name" | "state" | "host" | "cpuUsage" | "memoryUsage
 
 export const getDockerColumnVisibility = (
   configuredColumns: readonly DockerColumn[],
+  _width: number,
   isAdvanced: boolean,
 ): Record<DockerColumn, boolean> => {
   const configured = new Set(configuredColumns);
@@ -19,6 +20,6 @@ export const getDockerColumnVisibility = (
 
 export const getDockerFooterVisibility = (width: number, isAdvanced: boolean) => ({
   footer: isAdvanced || width > 256,
-  cpu: isAdvanced || width >= 360,
-  memory: isAdvanced || width >= 480,
+  cpu: isAdvanced || width > 256,
+  memory: isAdvanced || width > 256,
 });

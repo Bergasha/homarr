@@ -3,7 +3,8 @@
 import { ActionIcon, Group, Tooltip } from "@mantine/core";
 import { IconCopy, IconRobot } from "@tabler/icons-react";
 
-import { buildCustomWidgetAiPrompt } from "@homarr/custom-widgets/authoring-prompt";
+import { buildCustomWidgetAiPrompt, buildCustomWidgetAssistantPrompt } from "@homarr/custom-widgets/authoring-prompt";
+import type { CustomWidgetAiDiagnostic, CustomWidgetAiDraft } from "@homarr/custom-widgets/authoring-prompt";
 import { showErrorNotification, showSuccessNotification } from "@homarr/notifications";
 import { useI18n } from "@homarr/translation/client";
 
@@ -11,29 +12,45 @@ import { useOptionalHomarrAssistant } from "~/components/assistant/assistant-con
 
 interface CopyAiPromptButtonProps {
   rawResponse?: string | null;
-  currentConfig?: Record<string, unknown> | null;
   request?: string | null;
   documentationUrl?: string | null;
+  getDraft: () => CustomWidgetAiDraft;
+  getDiagnostics: () => readonly CustomWidgetAiDiagnostic[];
 }
 
 export const CopyAiPromptButton = ({
   rawResponse,
-  currentConfig,
+  getDraft,
+  getDiagnostics,
   request,
   documentationUrl,
 }: CopyAiPromptButtonProps) => {
   const t = useI18n("customWidget");
   const assistant = useOptionalHomarrAssistant();
-  const prompt = () => buildCustomWidgetAiPrompt(undefined, rawResponse, currentConfig, request, documentationUrl);
 
   const handleAssistant = () => {
-    if (!assistant?.enabled || !assistant.sendPrompt(prompt())) return;
+    const prompt = buildCustomWidgetAssistantPrompt(
+      undefined,
+      rawResponse,
+      getDraft(),
+      request,
+      documentationUrl,
+      getDiagnostics(),
+    );
+    if (!assistant?.enabled || !assistant.sendPrompt(prompt)) return;
     showSuccessNotification({ title: t("action.aiPrompt"), message: t("notification.aiPromptSent") });
   };
 
   const handleCopy = async () => {
     try {
-      const value = prompt();
+      const value = buildCustomWidgetAiPrompt(
+        undefined,
+        rawResponse,
+        getDraft(),
+        request,
+        documentationUrl,
+        getDiagnostics(),
+      );
       await navigator.clipboard.writeText(value);
       showSuccessNotification({
         title: t("action.copyAiPrompt"),

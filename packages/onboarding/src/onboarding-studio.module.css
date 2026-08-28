@@ -31,11 +31,14 @@
 }
 
 .marqueeRail {
+  --marquee-horizontal-mask: linear-gradient(black, black);
   position: absolute;
   top: -14rem;
   bottom: -14rem;
   width: clamp(22rem, 26vw, 32rem);
-  mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+  mask-image:
+    linear-gradient(to bottom, transparent, black 10%, black 90%, transparent), var(--marquee-horizontal-mask);
+  mask-composite: intersect;
 }
 
 .marqueeRail > * {
@@ -46,12 +49,14 @@
 .marqueeRailLeft {
   left: -7rem;
   --integration-marquee-accent: var(--studio-glow-color);
+  --marquee-horizontal-mask: linear-gradient(to right, black 55%, transparent);
 }
 
 .marqueeRailRight {
   right: -7rem;
   top: -22rem;
   --integration-marquee-accent: var(--studio-secondary-glow-color);
+  --marquee-horizontal-mask: linear-gradient(to left, black 55%, transparent);
 }
 
 .shell {
@@ -81,6 +86,33 @@
 .wordmark.welcomeWordmark {
   height: clamp(8rem, 20vw, 12rem);
   max-width: min(92vw, 42rem);
+}
+
+.customBrand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mantine-spacing-md);
+  max-width: min(92vw, 42rem);
+  color: var(--mantine-color-text);
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.customBrand[data-large="true"] {
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
+}
+
+.customBrandImage {
+  width: auto;
+  height: clamp(4rem, 11vw, 7rem);
+  object-fit: contain;
+}
+
+.customBrand[data-large="true"] .customBrandImage {
+  height: clamp(5rem, 16vw, 9rem);
 }
 
 .celebratingWordmark {
@@ -133,6 +165,25 @@
   display: grid;
   min-height: 100dvh;
   padding-block: clamp(1rem, 4vw, 3rem) calc(clamp(1rem, 4vw, 3rem) + env(safe-area-inset-bottom));
+}
+
+.authBackground {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.authBackground::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: rgb(0 0 0 / var(--auth-background-overlay, 0.55));
+}
+
+.page[data-background-image] .marqueeBackdrop {
+  opacity: 0.14;
 }
 
 .authLayout {

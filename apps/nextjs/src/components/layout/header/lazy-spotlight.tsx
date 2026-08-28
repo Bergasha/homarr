@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import type { HotkeyItem } from "@mantine/hooks";
 import { useHotkeys } from "@mantine/hooks";
 
 import { hotkeys } from "@homarr/definitions";
@@ -13,23 +14,18 @@ const Spotlight = dynamic(() => loadSpotlight().then(({ Spotlight: Component }) 
   loading: () => null,
 });
 
+const spotlightHotkeys: HotkeyItem[] = [
+  [hotkeys.openSpotlight, () => openSpotlight(), { preventDefault: true }],
+  [hotkeys.openSpotlightApps, () => openSpotlight({ mode: "apps" }), { preventDefault: true }],
+  [hotkeys.openSpotlightAssistant, () => openSpotlight({ mode: "assistant" }), { preventDefault: true }],
+  [hotkeys.openSpotlightPreferences, () => openSpotlight({ mode: "preferences" }), { preventDefault: true }],
+];
+
 export const LazySpotlight = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [isPreloaded, setIsPreloaded] = useState(false);
 
-  useHotkeys(
-    isMounted
-      ? []
-      : [
-          [
-            hotkeys.openSpotlight,
-            () => {
-              setIsMounted(true);
-              openSpotlight();
-            },
-          ],
-        ],
-  );
+  useHotkeys(spotlightHotkeys, [], true);
 
   useEffect(() => {
     let isActive = true;
@@ -58,15 +54,13 @@ export const LazySpotlight = () => {
     };
   }, []);
 
-  return isMounted || isPreloaded ? (
+  if (!isMounted && !isPreloaded) return null;
+
+  return (
     <>
       {isPreloaded && <span hidden data-homarr-dev-benchmark-spotlight-preloaded />}
-      {isMounted && (
-        <>
-          <span hidden data-homarr-dev-benchmark-spotlight-mounted />
-          <Spotlight />
-        </>
-      )}
+      {isMounted && <span hidden data-homarr-dev-benchmark-spotlight-mounted />}
+      {isMounted && <Spotlight />}
     </>
-  ) : null;
+  );
 };

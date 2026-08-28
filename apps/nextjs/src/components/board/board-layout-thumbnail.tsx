@@ -11,23 +11,31 @@ import classes from "./board-layout-thumbnail.module.css";
 interface BoardLayoutThumbnailProps {
   preview: BoardPreviewData | null;
   label: string;
-  fitFullLayout?: boolean;
+  previewRowLimit?: number;
+  className?: string;
 }
 
-const maxThumbnailRows = 12;
+const compactBoardLayoutThumbnailRows = 12;
+export const maxBoardLayoutThumbnailRows = 48;
 
-export const BoardLayoutThumbnail = ({ preview, label, fitFullLayout = false }: BoardLayoutThumbnailProps) => {
+export const BoardLayoutThumbnail = ({
+  preview,
+  label,
+  previewRowLimit = compactBoardLayoutThumbnailRows,
+  className,
+}: BoardLayoutThumbnailProps) => {
+  const canvasClassName = [classes.canvas, className].filter(Boolean).join(" ");
   const layout = preview?.layouts.find((candidate) => candidate.role === "base") ?? preview?.layouts.at(0);
   if (!preview || !layout) {
     return (
-      <Center className={classes.canvas} role="img" aria-label={label}>
+      <Center className={canvasClassName} role="img" aria-label={label}>
         <IconLayoutGrid size={28} stroke={1.4} aria-hidden />
       </Center>
     );
   }
 
   const elements = projectBoardLayout(preview, layout, layout);
-  const thumbnailRowLimit = fitFullLayout ? Number.POSITIVE_INFINITY : maxThumbnailRows;
+  const thumbnailRowLimit = Math.max(1, Math.min(Math.floor(previewRowLimit), maxBoardLayoutThumbnailRows));
   const roots = preview.sections
     .filter((section) => section.kind === "empty")
     .toSorted((first, second) => (first.xOffset ?? 0) - (second.xOffset ?? 0) || first.id.localeCompare(second.id));
@@ -38,7 +46,7 @@ export const BoardLayoutThumbnail = ({ preview, label, fitFullLayout = false }: 
   });
   if (lanes.length === 0) {
     return (
-      <Center className={classes.canvas} role="img" aria-label={label}>
+      <Center className={canvasClassName} role="img" aria-label={label}>
         <IconLayoutGrid size={28} stroke={1.4} aria-hidden />
       </Center>
     );
@@ -55,7 +63,7 @@ export const BoardLayoutThumbnail = ({ preview, label, fitFullLayout = false }: 
   };
 
   return (
-    <Box className={classes.canvas} role="img" aria-label={label}>
+    <Box className={canvasClassName} role="img" aria-label={label}>
       <div
         className={classes.lanes}
         style={{ gridTemplateColumns: lanes.map(({ columnCount }) => `${columnCount}fr`).join(" ") }}
@@ -87,9 +95,21 @@ export const BoardLayoutThumbnail = ({ preview, label, fitFullLayout = false }: 
               }}
             >
               {laneElements.map((element) => {
+                const renderedWidth = Math.min(element.width, columnCount - element.xOffset);
+                const renderedHeight = Math.min(element.height, rowCount - element.yOffset);
                 const nestedItems =
                   element.type === "section"
-                    ? elements.filter((candidate) => candidate.type === "item" && candidate.sectionId === element.id)
+                    ? elements.filter(
+                        (candidate) =>
+                          candidate.type === "item" &&
+                          candidate.sectionId === element.id &&
+                          candidate.xOffset >= 0 &&
+                          candidate.xOffset < renderedWidth &&
+                          candidate.yOffset >= 0 &&
+                          candidate.yOffset < renderedHeight &&
+                          candidate.width > 0 &&
+                          candidate.height > 0,
+                      )
                     : [];
                 return (
                   <span
@@ -97,16 +117,16 @@ export const BoardLayoutThumbnail = ({ preview, label, fitFullLayout = false }: 
                     aria-hidden
                     className={`${classes.tile} ${element.type === "section" ? classes.container : ""}`}
                     style={{
-                      gridColumn: `${element.xOffset + 1} / span ${Math.min(element.width, columnCount - element.xOffset)}`,
-                      gridRow: `${element.yOffset + 1} / span ${Math.min(element.height, rowCount - element.yOffset)}`,
+                      gridColumn: `${element.xOffset + 1} / span ${renderedWidth}`,
+                      gridRow: `${element.yOffset + 1} / span ${renderedHeight}`,
                     }}
                   >
                     {element.type === "section" ? (
                       <span
                         className={classes.containerContents}
                         style={{
-                          gridTemplateColumns: `repeat(${element.width}, minmax(0, 1fr))`,
-                          gridTemplateRows: `repeat(${element.height}, minmax(0, 1fr))`,
+                          gridTemplateColumns: `repeat(${renderedWidth}, minmax(0, 1fr))`,
+                          gridTemplateRows: `repeat(${renderedHeight}, minmax(0, 1fr))`,
                         }}
                       >
                         {nestedItems.map((nestedItem) => (
@@ -116,11 +136,11 @@ export const BoardLayoutThumbnail = ({ preview, label, fitFullLayout = false }: 
                             style={{
                               gridColumn: `${nestedItem.xOffset + 1} / span ${Math.min(
                                 nestedItem.width,
-                                element.width - nestedItem.xOffset,
+                                renderedWidth - nestedItem.xOffset,
                               )}`,
                               gridRow: `${nestedItem.yOffset + 1} / span ${Math.min(
                                 nestedItem.height,
-                                element.height - nestedItem.yOffset,
+                                renderedHeight - nestedItem.yOffset,
                               )}`,
                             }}
                           >
