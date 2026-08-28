@@ -213,6 +213,7 @@ const CalendarBase = ({
           monthCell: {
             textAlign: "center",
             position: "relative",
+            padding: 3,
           },
           day: {
             borderRadius: actualItemRadius,
