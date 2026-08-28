@@ -10,6 +10,29 @@ import { useRequiredBoard } from "@homarr/boards/context";
 import { zoomCompensatedSize } from "@homarr/ui";
 import type { TablerIcon } from "@homarr/ui";
 
+let tooltipPortalRoot: HTMLDivElement | undefined;
+
+// A single, shared position:fixed container to portal chart tooltips into. Portaling
+// straight into document.body puts the (always-mounted, just hidden-until-hover) tooltip
+// wrapper inside normal document flow, which can inflate the page's scroll height. A
+// zero-size fixed container is excluded from document flow entirely, so it can't do that.
+function getTooltipPortalRoot(): HTMLDivElement | undefined {
+  if (typeof document === "undefined") return undefined;
+  if (tooltipPortalRoot?.isConnected) return tooltipPortalRoot;
+
+  const root = document.createElement("div");
+  root.style.position = "fixed";
+  root.style.inset = "0";
+  root.style.width = "0";
+  root.style.height = "0";
+  root.style.overflow = "visible";
+  root.style.pointerEvents = "none";
+  root.style.zIndex = "9999";
+  document.body.appendChild(root);
+  tooltipPortalRoot = root;
+  return root;
+}
+
 import type { LabelDisplayModeOption } from "..";
 
 export const CommonChart = ({
@@ -141,7 +164,7 @@ export const CommonChart = ({
           tooltipProps={{
             // Render via portal so the tooltip isn't clipped by the card's overflow:hidden
             // (needed to stop the chart line itself bleeding past its rounded corners).
-            portal: typeof document !== "undefined" ? document.body : undefined,
+            portal: getTooltipPortalRoot(),
             ...tooltipProps,
           }}
           withTooltip={height >= 64}
