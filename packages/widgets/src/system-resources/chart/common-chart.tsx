@@ -44,7 +44,9 @@ export const CommonChart = ({
   const { hovered, ref: hoverRef } = useHover();
   const ref = useMergedRef(elementSizeRef, hoverRef);
 
-  const opacity = board.opacity / 100;
+  // Cap the compact card's alpha so it stays a translucent overlay instead of a flat
+  // opaque box at higher board opacity settings, matching the rest of the board's theme.
+  const opacity = Math.min(board.opacity / 100, 0.5);
   let backgroundColor = colorScheme === "dark" ? `rgba(57, 57, 57, ${opacity})` : `rgba(246, 247, 248, ${opacity})`;
   const cardStyle: CSSProperties = { overflow: "hidden" };
   const chartRootStyle: CSSProperties = { padding: 5, borderRadius: theme.radius[board.itemRadius] };
