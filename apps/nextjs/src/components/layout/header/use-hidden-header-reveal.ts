@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { atom, useSetAtom } from "jotai";
 
+const HOVER_ENTER_DELAY_MS = 150;
 const HOVER_LEAVE_GRACE_MS = 300;
 const HOT_ZONE_HEIGHT = 18;
 
@@ -14,11 +15,18 @@ export const useHiddenHeaderReveal = (enabled: boolean) => {
   const [isPinned, setIsPinned] = useState(false);
   const isHoveringRef = useRef(false);
   const isPinnedRef = useRef(false);
+  const enterTimeoutRef = useRef<number | null>(null);
   const leaveTimeoutRef = useRef<number | null>(null);
   const setRevealedAtom = useSetAtom(hiddenHeaderRevealedAtom);
 
   isHoveringRef.current = isHovering;
   isPinnedRef.current = isPinned;
+
+  const clearEnterTimeout = () => {
+    if (enterTimeoutRef.current === null) return;
+    window.clearTimeout(enterTimeoutRef.current);
+    enterTimeoutRef.current = null;
+  };
 
   const clearLeaveTimeout = () => {
     if (leaveTimeoutRef.current === null) return;
@@ -28,6 +36,7 @@ export const useHiddenHeaderReveal = (enabled: boolean) => {
 
   useEffect(() => {
     if (!enabled) {
+      clearEnterTimeout();
       clearLeaveTimeout();
       setIsHovering(false);
       setIsPinned(false);
@@ -44,9 +53,15 @@ export const useHiddenHeaderReveal = (enabled: boolean) => {
       const threshold = Math.max(HOT_ZONE_HEIGHT, headerBottom);
       if (event.clientY <= threshold) {
         clearLeaveTimeout();
-        if (!isHoveringRef.current) setIsHovering(true);
+        if (!isHoveringRef.current && enterTimeoutRef.current === null) {
+          enterTimeoutRef.current = window.setTimeout(() => {
+            enterTimeoutRef.current = null;
+            setIsHovering(true);
+          }, HOVER_ENTER_DELAY_MS);
+        }
         return;
       }
+      clearEnterTimeout();
       if (isHoveringRef.current && leaveTimeoutRef.current === null) {
         leaveTimeoutRef.current = window.setTimeout(() => setIsHovering(false), HOVER_LEAVE_GRACE_MS);
       }
@@ -60,11 +75,13 @@ export const useHiddenHeaderReveal = (enabled: boolean) => {
       const headerBottom = headerRef.current?.getBoundingClientRect().bottom ?? 0;
       const threshold = Math.max(HOT_ZONE_HEIGHT, headerBottom);
       if (event.clientY <= threshold) {
+        clearEnterTimeout();
         clearLeaveTimeout();
         setIsHovering(true);
         return;
       }
       setIsPinned(false);
+      clearEnterTimeout();
       clearLeaveTimeout();
       setIsHovering(false);
     };
@@ -74,6 +91,7 @@ export const useHiddenHeaderReveal = (enabled: boolean) => {
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("pointerdown", handlePointerDown);
+      clearEnterTimeout();
       clearLeaveTimeout();
     };
   }, [enabled]);
