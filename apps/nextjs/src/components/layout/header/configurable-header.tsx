@@ -73,7 +73,7 @@ export const ConfigurableHeader = ({
   const isAutoHidden = useHeaderAutoHide(
     headerPreferences.visible && headerPreferences.autoHideOnScroll && !isEditMode,
   );
-  const { headerRef, isRevealed, reveal, unhover } = useHiddenHeaderReveal(!headerPreferences.visible);
+  const { headerRef, isRevealed } = useHiddenHeaderReveal(!headerPreferences.visible);
 
   return (
     <BoardSwitcher>
@@ -114,9 +114,7 @@ export const ConfigurableHeader = ({
 
         return (
           <>
-            {!headerPreferences.visible ? (
-              <div className={classes.hiddenHeaderZone} aria-hidden onPointerEnter={reveal} onPointerDown={reveal} />
-            ) : null}
+            {!headerPreferences.visible ? <div className={classes.hiddenHeaderZone} aria-hidden /> : null}
             <AppShellHeader
               ref={headerRef}
               maw="100vw"
@@ -125,8 +123,6 @@ export const ConfigurableHeader = ({
               data-visible={headerPreferences.visible}
               data-auto-hidden={isAutoHidden || undefined}
               data-hidden-revealed={isRevealed || undefined}
-              onPointerEnter={!headerPreferences.visible ? reveal : undefined}
-              onPointerLeave={!headerPreferences.visible ? unhover : undefined}
               data-advanced-focus-background
               data-app-shell-header
             >
