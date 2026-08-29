@@ -18,7 +18,6 @@ import {
   Paper,
   SegmentedControl,
   Stack,
-  Switch,
   Text,
   ThemeIcon,
   Tooltip,
@@ -29,6 +28,8 @@ import {
   IconEyeOff,
   IconHome,
   IconLayoutDashboard,
+  IconLayoutNavbarCollapse,
+  IconLayoutNavbarExpand,
   IconPencil,
   IconPlus,
   IconReplace,
@@ -203,15 +204,17 @@ export const HeaderComposer = ({ value, onChange, boards, homeBoardId }: HeaderC
               {t("description")}
             </Text>
           </Stack>
-          <Group gap="sm">
-            <Tooltip label={t("action.autoHideOnScrollDescription")} disabled={!value.visible}>
-              <Switch
-                size="sm"
-                label={t("action.autoHideOnScroll")}
-                checked={value.autoHideOnScroll}
+          <Group gap="xs">
+            <Tooltip label={t("action.autoHideOnScroll")}>
+              <ActionIcon
+                size="lg"
+                variant={value.autoHideOnScroll ? "filled" : "default"}
+                aria-label={t("action.autoHideOnScroll")}
                 disabled={!value.visible}
-                onChange={(event) => onChange({ ...value, autoHideOnScroll: event.currentTarget.checked })}
-              />
+                onClick={() => onChange({ ...value, autoHideOnScroll: !value.autoHideOnScroll })}
+              >
+                {value.autoHideOnScroll ? <IconLayoutNavbarCollapse size={18} /> : <IconLayoutNavbarExpand size={18} />}
+              </ActionIcon>
             </Tooltip>
             <Tooltip label={value.visible ? t("action.hide") : t("action.show")}>
               <ActionIcon
