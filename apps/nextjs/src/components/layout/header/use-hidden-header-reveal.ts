@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { atom, useSetAtom } from "jotai";
 
 const HOVER_LEAVE_GRACE_MS = 150;
+
+export const hiddenHeaderRevealedAtom = atom(false);
 
 export const useHiddenHeaderReveal = (enabled: boolean) => {
   const headerRef = useRef<HTMLElement>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const leaveTimeoutRef = useRef<number | null>(null);
+  const setRevealedAtom = useSetAtom(hiddenHeaderRevealedAtom);
 
   const clearLeaveTimeout = () => {
     if (leaveTimeoutRef.current === null) return;
@@ -41,9 +45,19 @@ export const useHiddenHeaderReveal = (enabled: boolean) => {
     };
   }, [enabled]);
 
+  const isRevealed = enabled && (isHovering || isPinned);
+
+  useEffect(() => {
+    setRevealedAtom(isRevealed);
+  }, [isRevealed, setRevealedAtom]);
+
+  useEffect(() => {
+    return () => setRevealedAtom(false);
+  }, [setRevealedAtom]);
+
   return {
     headerRef,
-    isRevealed: enabled && (isHovering || isPinned),
+    isRevealed,
     reveal: () => {
       clearLeaveTimeout();
       setIsHovering(true);

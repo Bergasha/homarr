@@ -8,6 +8,7 @@ import { useSettings } from "@homarr/settings";
 import { useOptionalBackgroundProps } from "./background";
 import { appShellHeaderHeight } from "./constants";
 import { navigationCollapsedAtom } from "./header/burger";
+import { hiddenHeaderRevealedAtom } from "./header/use-hidden-header-reveal";
 
 interface ClientShellProps {
   hasHeader?: boolean;
@@ -20,9 +21,10 @@ export const ClientShell = ({
   children,
 }: PropsWithChildren<ClientShellProps>) => {
   const collapsed = useAtomValue(navigationCollapsedAtom);
+  const isHiddenHeaderRevealed = useAtomValue(hiddenHeaderRevealedAtom);
   const backgroundProps = useOptionalBackgroundProps();
   const { headerPreferences } = useSettings();
-  const headerHeight = headerPreferences.visible ? appShellHeaderHeight : 0;
+  const headerHeight = headerPreferences.visible || isHiddenHeaderRevealed ? appShellHeaderHeight : 0;
 
   return (
     <AppShell
