@@ -70,6 +70,18 @@ export const useHiddenHeaderReveal = (enabled: boolean) => {
       }
     };
 
+    // The cursor leaving the browser viewport entirely (e.g. up into the tab/bookmarks bar
+    // while passing through the hot zone) stops delivering pointermove events altogether, so
+    // nothing would otherwise cancel a reveal timer already scheduled from the last in-page
+    // position. `mouseout` with a null relatedTarget is the standard signal for "left the page".
+    const handleWindowLeave = (event: MouseEvent) => {
+      if (event.relatedTarget !== null) return;
+      clearEnterTimeout();
+      if (isHoveringRef.current && leaveTimeoutRef.current === null) {
+        leaveTimeoutRef.current = window.setTimeout(() => setIsHovering(false), HOVER_LEAVE_GRACE_MS);
+      }
+    };
+
     const handlePointerDown = (event: PointerEvent) => {
       if (event.target instanceof Node && headerRef.current?.contains(event.target)) {
         setIsPinned(true);
@@ -91,9 +103,11 @@ export const useHiddenHeaderReveal = (enabled: boolean) => {
 
     window.addEventListener("pointermove", handlePointerMove);
     document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("mouseout", handleWindowLeave);
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("mouseout", handleWindowLeave);
       clearEnterTimeout();
       clearLeaveTimeout();
     };
