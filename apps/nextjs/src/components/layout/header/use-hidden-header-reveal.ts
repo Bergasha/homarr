@@ -53,7 +53,10 @@ export const useHiddenHeaderReveal = (enabled: boolean) => {
       const threshold = Math.max(HOT_ZONE_HEIGHT, headerBottom);
       if (event.clientY <= threshold) {
         clearLeaveTimeout();
-        if (!isHoveringRef.current && enterTimeoutRef.current === null) {
+        if (!isHoveringRef.current) {
+          // Reschedule on every move so the header only reveals once the cursor comes to rest
+          // in the zone, not just after it has spent the delay passing through.
+          clearEnterTimeout();
           enterTimeoutRef.current = window.setTimeout(() => {
             enterTimeoutRef.current = null;
             setIsHovering(true);
