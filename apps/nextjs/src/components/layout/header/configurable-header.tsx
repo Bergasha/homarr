@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { AppShellHeader, Avatar, Group, Indicator, Loader, Tooltip, useMantineColorScheme } from "@mantine/core";
 import { IconBrandDocker, IconHome, IconReplace, IconRobot, IconSettings, IconSunMoon } from "@tabler/icons-react";
 
@@ -26,6 +26,7 @@ import { LazySpotlight } from "./lazy-spotlight";
 import { DesktopSearchInput, MobileSearchButton } from "./search";
 import { TourTarget } from "./tour-target";
 import { useHeaderAutoHide } from "./use-header-auto-hide";
+import { useHiddenHeaderReveal } from "./use-hidden-header-reveal";
 import { UserButtonClient } from "./user-client";
 import classes from "./configurable-header.module.css";
 
@@ -43,9 +44,6 @@ interface ConfigurableHeaderProps {
 }
 
 type HeaderBoard = RouterOutputs["board"]["getAllBoards"][number];
-
-const floatingControlsIntroDurationMs = 5_000;
-const floatingControlsDismissDelayMs = 900;
 
 export const ConfigurableHeader = ({
   logo,
@@ -75,6 +73,7 @@ export const ConfigurableHeader = ({
   const isAutoHidden = useHeaderAutoHide(
     headerPreferences.visible && headerPreferences.autoHideOnScroll && !isEditMode,
   );
+  const { headerRef, isRevealed, reveal, unhover } = useHiddenHeaderReveal(!headerPreferences.visible);
 
   return (
     <BoardSwitcher>
@@ -115,12 +114,19 @@ export const ConfigurableHeader = ({
 
         return (
           <>
+            {!headerPreferences.visible ? (
+              <div className={classes.hiddenHeaderZone} aria-hidden onPointerEnter={reveal} onPointerDown={reveal} />
+            ) : null}
             <AppShellHeader
+              ref={headerRef}
               maw="100vw"
               zIndex="var(--homarr-z-index-board-header)"
               className={classes.header}
               data-visible={headerPreferences.visible}
               data-auto-hidden={isAutoHidden || undefined}
+              data-hidden-revealed={isRevealed || undefined}
+              onPointerEnter={!headerPreferences.visible ? reveal : undefined}
+              onPointerLeave={!headerPreferences.visible ? unhover : undefined}
               data-advanced-focus-background
               data-app-shell-header
             >
@@ -151,104 +157,11 @@ export const ConfigurableHeader = ({
                 </Group>
               </div>
             </AppShellHeader>
-            {!headerPreferences.visible ? (
-              <FloatingHeaderControls>
-                {hasNavigation ? <ClientBurger /> : null}
-                <UserButtonClient
-                  avatar={avatar}
-                  isAdmin={isAdmin}
-                  isDockerEnabled={isDockerEnabled}
-                  boardSwitcher={boardSwitcher}
-                />
-              </FloatingHeaderControls>
-            ) : null}
             <LazySpotlight />
           </>
         );
       }}
     </BoardSwitcher>
-  );
-};
-
-const FloatingHeaderControls = ({ children }: { children: ReactNode }) => {
-  const [isIntroComplete, setIsIntroComplete] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const isInteractingRef = useRef(false);
-  const isPinnedRef = useRef(false);
-  const dismissTimeoutRef = useRef<number | null>(null);
-
-  const clearDismissTimeout = () => {
-    if (dismissTimeoutRef.current === null) return;
-    window.clearTimeout(dismissTimeoutRef.current);
-    dismissTimeoutRef.current = null;
-  };
-
-  const dismissSoon = () => {
-    if (!isIntroComplete || isPinnedRef.current) return;
-    clearDismissTimeout();
-    dismissTimeoutRef.current = window.setTimeout(() => {
-      if (!isInteractingRef.current) setIsVisible(false);
-    }, floatingControlsDismissDelayMs);
-  };
-
-  const revealFromCorner = () => {
-    if (!isIntroComplete) return;
-    isPinnedRef.current = true;
-    clearDismissTimeout();
-    setIsVisible(true);
-  };
-
-  const startInteraction = () => {
-    isInteractingRef.current = true;
-    isPinnedRef.current = true;
-    clearDismissTimeout();
-    setIsVisible(true);
-  };
-
-  const endInteraction = () => {
-    isInteractingRef.current = false;
-    dismissSoon();
-  };
-
-  useEffect(() => {
-    const introTimeout = window.setTimeout(() => {
-      setIsIntroComplete(true);
-      if (!isInteractingRef.current && !isPinnedRef.current) setIsVisible(false);
-    }, floatingControlsIntroDurationMs);
-
-    return () => {
-      window.clearTimeout(introTimeout);
-      if (dismissTimeoutRef.current !== null) window.clearTimeout(dismissTimeoutRef.current);
-    };
-  }, []);
-
-  return (
-    <>
-      <div
-        className={classes.floatingControlsCorner}
-        data-active={isIntroComplete || undefined}
-        aria-hidden
-        onPointerEnter={revealFromCorner}
-        onPointerMove={revealFromCorner}
-        onPointerDown={revealFromCorner}
-        onPointerLeave={dismissSoon}
-      />
-      <Group
-        className={classes.floatingControls}
-        data-visible={isVisible || undefined}
-        gap={4}
-        wrap="nowrap"
-        onPointerEnter={startInteraction}
-        onPointerLeave={endInteraction}
-        onFocusCapture={startInteraction}
-        onBlurCapture={(event) => {
-          if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
-          endInteraction();
-        }}
-      >
-        {children}
-      </Group>
-    </>
   );
 };
 
