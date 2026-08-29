@@ -174,6 +174,7 @@ const FloatingHeaderControls = ({ children }: { children: ReactNode }) => {
   const [isIntroComplete, setIsIntroComplete] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const isInteractingRef = useRef(false);
+  const isPinnedRef = useRef(false);
   const dismissTimeoutRef = useRef<number | null>(null);
 
   const clearDismissTimeout = () => {
@@ -183,7 +184,7 @@ const FloatingHeaderControls = ({ children }: { children: ReactNode }) => {
   };
 
   const dismissSoon = () => {
-    if (!isIntroComplete) return;
+    if (!isIntroComplete || isPinnedRef.current) return;
     clearDismissTimeout();
     dismissTimeoutRef.current = window.setTimeout(() => {
       if (!isInteractingRef.current) setIsVisible(false);
@@ -192,12 +193,14 @@ const FloatingHeaderControls = ({ children }: { children: ReactNode }) => {
 
   const revealFromCorner = () => {
     if (!isIntroComplete) return;
+    isPinnedRef.current = true;
     clearDismissTimeout();
     setIsVisible(true);
   };
 
   const startInteraction = () => {
     isInteractingRef.current = true;
+    isPinnedRef.current = true;
     clearDismissTimeout();
     setIsVisible(true);
   };
@@ -210,7 +213,7 @@ const FloatingHeaderControls = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const introTimeout = window.setTimeout(() => {
       setIsIntroComplete(true);
-      if (!isInteractingRef.current) setIsVisible(false);
+      if (!isInteractingRef.current && !isPinnedRef.current) setIsVisible(false);
     }, floatingControlsIntroDurationMs);
 
     return () => {
