@@ -5728,8 +5728,7 @@
                 "configure": "Move or configure {item}",
                 "remove": "Remove {item}",
                 "dropIntoZone": "Move into the {zone} section",
-                "autoHideOnScroll": "Auto-hide on scroll",
-                "autoHideOnScrollDescription": "Slide the header away while scrolling down and bring it back on scroll-up or near the top of the page."
+                "autoHideOnScroll": "Auto-hide header while scrolling"
               },
               "preview": {
                 "board": "Dashboard preview for {name}",

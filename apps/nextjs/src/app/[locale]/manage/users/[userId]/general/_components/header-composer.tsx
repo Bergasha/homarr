@@ -203,15 +203,7 @@ export const HeaderComposer = ({ value, onChange, boards, homeBoardId }: HeaderC
               {t("description")}
             </Text>
           </Stack>
-          <Group gap="sm" align="flex-start">
-            <Switch
-              size="sm"
-              label={t("action.autoHideOnScroll")}
-              description={t("action.autoHideOnScrollDescription")}
-              checked={value.autoHideOnScroll}
-              disabled={!value.visible}
-              onChange={(event) => onChange({ ...value, autoHideOnScroll: event.currentTarget.checked })}
-            />
+          <Group gap="sm">
             <Tooltip label={value.visible ? t("action.hide") : t("action.show")}>
               <ActionIcon
                 size="lg"
@@ -222,6 +214,13 @@ export const HeaderComposer = ({ value, onChange, boards, homeBoardId }: HeaderC
                 {value.visible ? <IconEye size={18} /> : <IconEyeOff size={18} />}
               </ActionIcon>
             </Tooltip>
+            <Switch
+              size="sm"
+              label={t("action.autoHideOnScroll")}
+              checked={value.autoHideOnScroll}
+              disabled={!value.visible}
+              onChange={(event) => onChange({ ...value, autoHideOnScroll: event.currentTarget.checked })}
+            />
           </Group>
         </Group>
 
