@@ -101,7 +101,7 @@ export class EeroClient {
         logger.warn("Could not find a devices array in eero's devices response", { body });
         return [];
       }
-      return rawDevices.map((device) => {
+      const devices = rawDevices.map((device) => {
         const parsed = eeroDeviceListItemSchema.parse(device);
         return {
           id: parsed.mac ?? parsed.hostname ?? parsed.nickname ?? crypto.randomUUID(),
@@ -114,6 +114,8 @@ export class EeroClient {
           lastActiveAt: parsed.last_active ?? null,
         };
       });
+      logger.debug("Parsed eero devices", { deviceNodeIds: devices.map((device) => device.nodeId) });
+      return devices;
     } catch (error) {
       logger.debug("Devices list unavailable", { error });
       return [];
@@ -129,10 +131,10 @@ export class EeroClient {
         logger.warn("Could not find a nodes array in eero's eeros response", { body });
         return [];
       }
-      return rawNodes.map((node) => {
+      const nodes = rawNodes.map((node) => {
         const parsed = eeroNodeItemSchema.parse(node);
         return {
-          id: parsed.serial_number ?? parsed.url ?? parsed.nickname ?? crypto.randomUUID(),
+          id: extractTrailingSegment(parsed.url) ?? parsed.serial_number ?? parsed.nickname ?? crypto.randomUUID(),
           name: parsed.nickname ?? parsed.location ?? "Unknown node",
           status: toEeroStatus(parsed.status),
           isGateway: parsed.is_gateway ?? false,
@@ -141,6 +143,8 @@ export class EeroClient {
           backhaulType: toBackhaulType(parsed.wired, parsed.backhaul?.type),
         };
       });
+      logger.debug("Parsed eero nodes", { nodeIds: nodes.map((node) => node.id) });
+      return nodes;
     } catch (error) {
       logger.debug("Nodes list unavailable", { error });
       return [];
@@ -227,11 +231,14 @@ const toBackhaulType = (
   return backhaulType.toLowerCase() === "wired" ? "wired" : "wireless";
 };
 
+const extractTrailingSegment = (url: string | undefined): string | null => {
+  if (!url) return null;
+  return url.split("/").filter(Boolean).pop() ?? null;
+};
+
 const extractNodeId = (source: { url?: string; location?: string } | undefined): string | null => {
   if (!source) return null;
-  const url = source.url;
-  if (url) return url.split("/").filter(Boolean).pop() ?? null;
-  return source.location ?? null;
+  return extractTrailingSegment(source.url) ?? source.location ?? null;
 };
 
 const extractFirstNetworkUrl = (body: unknown): string | null => {
