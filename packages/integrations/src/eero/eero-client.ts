@@ -3,11 +3,11 @@ import { fetchWithTrustedCertificatesAsync } from "@homarr/core/infrastructure/h
 import { createLogger } from "@homarr/core/infrastructure/logs";
 
 import {
-  eeroDevicesResponseSchema,
+  eeroDeviceItemSchema,
   eeroGuestNetworkResponseSchema,
   eeroLoginResponseSchema,
+  eeroNetworkListItemSchema,
   eeroNetworkStatusResponseSchema,
-  eeroNetworksResponseSchema,
 } from "./eero-types";
 
 const logger = createLogger({ module: "eeroClient" });
@@ -41,11 +41,14 @@ export class EeroClient {
   }
 
   public async getFirstNetworkIdAsync(userToken: string): Promise<string | null> {
-    const response = await this.requestAsync("/networks", { userToken });
-    const payload = eeroNetworksResponseSchema.parse(await response.json());
-    const network = payload.data?.[0];
-    if (!network) return null;
-    return network.url.split("/").filter(Boolean).pop() ?? null;
+    const response = await this.requestAsync("/account", { userToken });
+    const body: unknown = await response.json();
+    const networkUrl = extractFirstNetworkUrl(body);
+    if (!networkUrl) {
+      logger.warn("Could not find a network url in eero's /account response", { body });
+      return null;
+    }
+    return networkUrl.split("/").filter(Boolean).pop() ?? null;
   }
 
   public async getNetworkStatusAsync(userToken: string, networkId: string) {
@@ -68,9 +71,13 @@ export class EeroClient {
   public async getConnectedDeviceCountAsync(userToken: string, networkId: string): Promise<number | undefined> {
     try {
       const response = await this.requestAsync(`/networks/${networkId}/devices`, { userToken });
-      const payload = eeroDevicesResponseSchema.parse(await response.json());
-      const devices = payload.data;
-      if (!devices) return undefined;
+      const body: unknown = await response.json();
+      const rawDevices = extractFirstArray(body);
+      if (!rawDevices) {
+        logger.warn("Could not find a devices array in eero's devices response", { body });
+        return undefined;
+      }
+      const devices = rawDevices.map((device) => eeroDeviceItemSchema.parse(device));
       return devices.filter((device) => device.connected !== false).length;
     } catch (error) {
       logger.debug("Connected devices unavailable", { error });
@@ -109,3 +116,32 @@ export class EeroClient {
     return response;
   }
 }
+
+const getProperty = (value: unknown, key: string): unknown =>
+  value !== null && typeof value === "object" && key in value ? (value as Record<string, unknown>)[key] : undefined;
+
+const extractFirstArray = (body: unknown): unknown[] | null => {
+  const candidates = [getProperty(getProperty(body, "data"), "data"), getProperty(body, "data"), body];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate;
+  }
+  return null;
+};
+
+const extractFirstNetworkUrl = (body: unknown): string | null => {
+  const singleNetworkUrl = getProperty(getProperty(body, "data"), "url");
+  if (typeof singleNetworkUrl === "string") return singleNetworkUrl;
+
+  const arrayCandidates = [
+    getProperty(getProperty(getProperty(body, "data"), "networks"), "data"),
+    getProperty(getProperty(body, "data"), "networks"),
+    getProperty(getProperty(body, "networks"), "data"),
+    getProperty(body, "data"),
+  ];
+  for (const candidate of arrayCandidates) {
+    if (!Array.isArray(candidate)) continue;
+    const parsed = eeroNetworkListItemSchema.safeParse(candidate[0]);
+    if (parsed.success) return parsed.data.url;
+  }
+  return null;
+};

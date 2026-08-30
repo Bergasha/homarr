@@ -16,10 +16,6 @@ export const eeroNetworkListItemSchema = z
   })
   .partial({ name: true });
 
-export const eeroNetworksResponseSchema = z.object({
-  data: z.array(eeroNetworkListItemSchema).optional(),
-});
-
 export const eeroNetworkStatusResponseSchema = z.object({
   data: z
     .object({
@@ -46,18 +42,12 @@ export const eeroGuestNetworkResponseSchema = z.object({
     .catch(undefined),
 });
 
-export const eeroDevicesResponseSchema = z.object({
-  data: z
-    .array(
-      z
-        .object({
-          connected: z.boolean().optional(),
-        })
-        .partial()
-        .catch({}),
-    )
-    .optional(),
-});
+export const eeroDeviceItemSchema = z
+  .object({
+    connected: z.boolean().optional(),
+  })
+  .partial()
+  .catch({});
 
 export interface EeroNetworkSummary {
   meshStatus: "online" | "offline" | "unknown";
