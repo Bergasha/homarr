@@ -117,7 +117,7 @@ export class EeroClient {
       logger.debug("Parsed eero devices", { deviceNodeIds: devices.map((device) => device.nodeId) });
       return devices;
     } catch (error) {
-      logger.debug("Devices list unavailable", { error });
+      logger.warn("Devices list unavailable", { error });
       return [];
     }
   }
@@ -146,7 +146,7 @@ export class EeroClient {
       logger.debug("Parsed eero nodes", { nodeIds: nodes.map((node) => node.id) });
       return nodes;
     } catch (error) {
-      logger.debug("Nodes list unavailable", { error });
+      logger.warn("Nodes list unavailable", { error });
       return [];
     }
   }
@@ -159,17 +159,25 @@ export class EeroClient {
         userToken,
         timeoutMs: SPEEDTEST_TIMEOUT_MS,
       });
-      const payload = eeroSpeedtestResponseSchema.parse(await response.json());
+      const rawBody: unknown = await response.json();
+      const payload = eeroSpeedtestResponseSchema.parse(rawBody);
       const data = payload.data;
-      if (!data) return null;
-      return {
+      if (!data) {
+        logger.warn("eero speedtest response had no data field", { body: rawBody });
+        return null;
+      }
+      const result = {
         downloadMbps: data.down?.value ?? null,
         uploadMbps: data.up?.value ?? null,
         pingMs: typeof data.ping === "number" ? data.ping : (data.ping?.value ?? null),
         ranAt: data.date ?? new Date().toISOString(),
       };
+      if (result.downloadMbps === null && result.uploadMbps === null && result.pingMs === null) {
+        logger.warn("eero speedtest response parsed but every metric was null", { body: rawBody });
+      }
+      return result;
     } catch (error) {
-      logger.debug("Speedtest result unavailable", { error });
+      logger.warn("Speedtest request failed", { error });
       return null;
     }
   }
