@@ -6,7 +6,8 @@ import { TestConnectionError } from "../base/test-connection/test-connection-err
 import type { TestingResult } from "../base/test-connection/test-connection-service";
 import type { EeroSummaryIntegration } from "../interfaces/eero-summary/eero-summary-integration";
 import { EERO_BASE_URL, EeroClient, EeroUnauthorizedError } from "./eero-client";
-import type { EeroNetworkSummary } from "./eero-types";
+import { toEeroStatus } from "./eero-status";
+import type { EeroNetworkDetails, EeroNetworkSummary } from "./eero-types";
 
 const NETWORK_ID_TTL_SECONDS = 60 * 60;
 
@@ -49,10 +50,31 @@ export class EeroIntegration extends Integration implements EeroSummaryIntegrati
     const status = statusResult.status === "fulfilled" ? statusResult.value : undefined;
 
     return {
-      meshStatus: toBinaryStatus(status?.status),
-      wanStatus: toBinaryStatus(status?.wan?.status),
+      meshStatus: toEeroStatus(status?.status),
+      wanStatus: toEeroStatus(status?.wan?.status),
       guestNetworkEnabled: guestNetworkResult.status === "fulfilled" ? (guestNetworkResult.value ?? null) : null,
       connectedDeviceCount: deviceCountResult.status === "fulfilled" ? (deviceCountResult.value ?? null) : null,
+    };
+  }
+
+  public async getEeroDetailsAsync(): Promise<EeroNetworkDetails> {
+    const userToken = this.getSecretValue("eeroSessionToken");
+    const networkId = await this.resolveNetworkIdAsync(userToken);
+
+    if (!networkId) {
+      return { devices: [], nodes: [], latestSpeedtest: null };
+    }
+
+    const [devicesResult, nodesResult, speedtestResult] = await Promise.allSettled([
+      this.client.getDevicesAsync(userToken, networkId),
+      this.client.getNodesAsync(userToken, networkId),
+      this.client.getLatestSpeedtestAsync(userToken, networkId),
+    ]);
+
+    return {
+      devices: devicesResult.status === "fulfilled" ? devicesResult.value : [],
+      nodes: nodesResult.status === "fulfilled" ? nodesResult.value : [],
+      latestSpeedtest: speedtestResult.status === "fulfilled" ? speedtestResult.value : null,
     };
   }
 
@@ -67,8 +89,3 @@ export class EeroIntegration extends Integration implements EeroSummaryIntegrati
     return networkId;
   }
 }
-
-const toBinaryStatus = (status: string | undefined): "online" | "offline" | "unknown" => {
-  if (status === undefined) return "unknown";
-  return status.toLowerCase() === "connected" || status.toLowerCase() === "online" ? "online" : "offline";
-};

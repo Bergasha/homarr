@@ -4634,6 +4634,56 @@
         "guestNetwork": "Guest network",
         "devices": "Devices"
       },
+      "section": {
+        "summary": "Network status",
+        "devices": "Devices",
+        "nodes": "Nodes",
+        "speedtest": "Speedtest"
+      },
+      "device": {
+        "connectionType": {
+          "wired": "Wired",
+          "wireless": "Wireless",
+          "unknown": "Unknown"
+        },
+        "offlineLabel": "Offline",
+        "empty": "No devices found"
+      },
+      "node": {
+        "gateway": "Gateway",
+        "clients": "{count} clients",
+        "empty": "No nodes found"
+      },
+      "speedtest": {
+        "download": "Download",
+        "upload": "Upload",
+        "ping": "Ping",
+        "lastRun": "Last run {timestamp}",
+        "never": "Never run"
+      },
+      "option": {
+        "showSummaryCard": {
+          "label": "Show network status summary"
+        },
+        "showDevices": {
+          "label": "Show devices"
+        },
+        "showOfflineDevices": {
+          "label": "Show offline devices"
+        },
+        "deviceLimit": {
+          "label": "Device list limit"
+        },
+        "showNodes": {
+          "label": "Show nodes"
+        },
+        "showSpeedtest": {
+          "label": "Show speedtest"
+        }
+      },
+      "empty": {
+        "noSectionsEnabled": "All sections are hidden. Enable one in widget settings."
+      },
       "error": {
         "internalServerError": "Failed to fetch eero network summary"
       },

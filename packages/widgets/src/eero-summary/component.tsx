@@ -1,34 +1,53 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { Box, Center, Group, List, Stack, Text, useMantineTheme } from "@mantine/core";
-import { IconCircleCheckFilled, IconCircleXFilled, IconDeviceMobile } from "@tabler/icons-react";
+import type { ReactNode } from "react";
+import { Box, Center, Group, ScrollArea, Stack, Text } from "@mantine/core";
 
 import { clientApi } from "@homarr/api/client";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 import { IntegrationErrorIndicator } from "../common/integration-error-indicator";
 import { getUsableWidgetQueryData } from "../common/query-state";
 import type { WidgetComponentProps } from "../definition";
-import { formatEeroDeviceCount, getEeroStats } from "./display";
+import { getEeroSummaryLayout } from "./layout";
+import { DevicesListSection } from "./sections/devices-list";
+import { NodesGridSection } from "./sections/nodes-grid";
+import { SpeedtestSection } from "./sections/speedtest-section";
+import { SummaryCardSection } from "./sections/summary-card";
 
-export default function EeroSummaryWidget({ integrationIds, displayMode }: WidgetComponentProps<"eeroSummary">) {
+export default function EeroSummaryWidget({
+  integrationIds,
+  displayMode,
+  options,
+  width,
+  height,
+}: WidgetComponentProps<"eeroSummary">) {
   const summaryQuery = clientApi.widget.eero.summary.useQuery({ integrationIds });
   const isAdvanced = displayMode === "advanced";
-  const results = isAdvanced ? (getUsableWidgetQueryData(summaryQuery) ?? []) : (summaryQuery.data ?? []);
-  const summaries = results.filter(
+  const summaryResults = isAdvanced ? (getUsableWidgetQueryData(summaryQuery) ?? []) : (summaryQuery.data ?? []);
+  const summaries = summaryResults.filter(
     (result): result is typeof result & { summary: NonNullable<typeof result.summary> } => result.summary !== null,
   );
-  const { isPending } = summaryQuery;
+
+  const layout = getEeroSummaryLayout({ width, height, displayMode, options });
+  const needsDetails = layout.visibleSections.some(
+    (section) => section === "devices" || section === "nodes" || section === "speedtest",
+  );
+  const detailsQuery = clientApi.widget.eero.details.useQuery({ integrationIds }, { enabled: needsDetails });
+  const detailsResults = needsDetails
+    ? isAdvanced
+      ? (getUsableWidgetQueryData(detailsQuery) ?? [])
+      : (detailsQuery.data ?? [])
+    : [];
+  const details = detailsResults.find((result) => result.details !== null)?.details ?? null;
 
   const t = useI18n("widget.eeroSummary");
   const tCommon = useI18n("common");
   const tWidgetCommon = useI18n("widget.common");
 
   const indicatorResults =
-    results.length > 0 || !summaryQuery.error
-      ? results
+    summaryResults.length > 0 || !summaryQuery.error
+      ? summaryResults
       : integrationIds.map((integrationId) => ({ integrationId, error: "query" }));
   const queryIndicators = (
     <Group gap={0} justify="flex-end">
@@ -37,13 +56,13 @@ export default function EeroSummaryWidget({ integrationIds, displayMode }: Widge
   );
   const firstSummary = summaries[0];
 
-  if (isPending || !firstSummary) {
+  if (summaryQuery.isPending || !firstSummary) {
     return (
       <Stack h="100%" gap={0}>
         {queryIndicators}
         <Center p="sm" style={{ flex: 1 }}>
           <Text c="dimmed" size="sm" ta="center">
-            {isPending ? tCommon("action.loading") : tWidgetCommon("integrationDisconnected")}
+            {summaryQuery.isPending ? tCommon("action.loading") : tWidgetCommon("integrationDisconnected")}
           </Text>
         </Center>
       </Stack>
@@ -52,50 +71,57 @@ export default function EeroSummaryWidget({ integrationIds, displayMode }: Widge
 
   const summary = firstSummary.summary;
 
-  return (
-    <Box h="100%" p="sm" pos="relative">
-      <Box pos="absolute" top={4} right={8} style={{ zIndex: 2 }}>
+  if (layout.visibleSections.length === 0) {
+    return (
+      <Stack h="100%" gap={0}>
         {queryIndicators}
+        <Center p="sm" style={{ flex: 1 }}>
+          <Text c="dimmed" size="sm" ta="center">
+            {t("empty.noSectionsEnabled")}
+          </Text>
+        </Center>
+      </Stack>
+    );
+  }
+
+  const sectionContent: Record<(typeof layout.visibleSections)[number], ReactNode> = {
+    summary: <SummaryCardSection summary={summary} />,
+    speedtest: <SpeedtestSection result={details?.latestSpeedtest ?? null} />,
+    nodes: <NodesGridSection nodes={details?.nodes ?? []} />,
+    devices: (
+      <DevicesListSection
+        devices={details?.devices ?? []}
+        showOffline={options.showOfflineDevices}
+        limit={layout.deviceRowLimit}
+      />
+    ),
+  };
+
+  if (!isAdvanced) {
+    return (
+      <Box h="100%" p="sm" pos="relative">
+        <Box pos="absolute" top={4} right={8} style={{ zIndex: 2 }}>
+          {queryIndicators}
+        </Box>
+        <Center h="100%">
+          <Stack gap="sm" w="100%">
+            {layout.visibleSections.map((section) => (
+              <Box key={section}>{sectionContent[section]}</Box>
+            ))}
+          </Stack>
+        </Center>
       </Box>
-      <Center h="100%">
-        <List spacing="xs" center>
-          {getEeroStats(summary).map((stat) => (
-            <List.Item
-              key={stat.key}
-              icon={<StatusIcon status={stat.status} label={t(`card.${stat.key}` as never)} style={iconSizes.xl} />}
-            >
-              {t(`card.${stat.key}` as never)}
-            </List.Item>
-          ))}
-          <List.Item icon={<IconDeviceMobile aria-hidden style={iconSizes.xl} />}>
-            <Text>
-              {t("card.devices")}
-              <Text c="dimmed" size="md" ms="xs" span>
-                {formatEeroDeviceCount(summary.connectedDeviceCount)}
-              </Text>
-            </Text>
-          </List.Item>
-        </List>
-      </Center>
-    </Box>
+    );
+  }
+
+  return (
+    <ScrollArea h="100%" p="sm">
+      {queryIndicators}
+      <Stack gap="md">
+        {layout.visibleSections.map((section) => (
+          <Box key={section}>{sectionContent[section]}</Box>
+        ))}
+      </Stack>
+    </ScrollArea>
   );
 }
-
-const StatusIcon = ({
-  status,
-  label,
-  style,
-}: {
-  status: "online" | "offline" | "unknown";
-  label: string;
-  style?: CSSProperties;
-}) => {
-  const mantineTheme = useMantineTheme();
-  if (status === "online") {
-    return <IconCircleCheckFilled aria-label={label} style={style} color={mantineTheme.colors.green[6]} />;
-  }
-  if (status === "offline") {
-    return <IconCircleXFilled aria-label={label} style={style} color={mantineTheme.colors.red[6]} />;
-  }
-  return <IconCircleXFilled aria-label={label} style={style} color={mantineTheme.colors.gray[6]} />;
-};

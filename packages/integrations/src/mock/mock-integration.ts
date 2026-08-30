@@ -136,6 +136,7 @@ export class MockIntegration
 
   // EeroSummaryIntegration
   getEeroSummaryAsync = MockIntegration.eero.getEeroSummaryAsync.bind(MockIntegration.eero);
+  getEeroDetailsAsync = MockIntegration.eero.getEeroDetailsAsync.bind(MockIntegration.eero);
 
   // NotificationsIntegration
   getNotificationsAsync = MockIntegration.notifications.getNotificationsAsync.bind(MockIntegration.notifications);

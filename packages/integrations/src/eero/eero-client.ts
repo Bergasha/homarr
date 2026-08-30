@@ -2,13 +2,19 @@ import { ResponseError } from "@homarr/common/server";
 import { fetchWithTrustedCertificatesAsync } from "@homarr/core/infrastructure/http";
 import { createLogger } from "@homarr/core/infrastructure/logs";
 
+import { toEeroStatus } from "./eero-status";
+
 import {
   eeroDeviceItemSchema,
+  eeroDeviceListItemSchema,
   eeroGuestNetworkResponseSchema,
   eeroLoginResponseSchema,
   eeroNetworkListItemSchema,
   eeroNetworkStatusResponseSchema,
+  eeroNodeItemSchema,
+  eeroSpeedtestResponseSchema,
 } from "./eero-types";
+import type { EeroDevice, EeroNode, EeroSpeedtestResult } from "./eero-types";
 
 const logger = createLogger({ module: "eeroClient" });
 
@@ -85,6 +91,78 @@ export class EeroClient {
     }
   }
 
+  public async getDevicesAsync(userToken: string, networkId: string): Promise<EeroDevice[]> {
+    try {
+      const response = await this.requestAsync(`/networks/${networkId}/devices`, { userToken });
+      const body: unknown = await response.json();
+      const rawDevices = extractFirstArray(body);
+      if (!rawDevices) {
+        logger.warn("Could not find a devices array in eero's devices response", { body });
+        return [];
+      }
+      return rawDevices.map((device) => {
+        const parsed = eeroDeviceListItemSchema.parse(device);
+        return {
+          id: parsed.mac ?? parsed.hostname ?? parsed.nickname ?? crypto.randomUUID(),
+          name: parsed.nickname ?? parsed.hostname ?? parsed.mac ?? "Unknown device",
+          ip: parsed.ip ?? null,
+          connectionType: toConnectionType(parsed.connection_type),
+          connected: parsed.connected ?? false,
+          nodeId: extractNodeId(parsed.source),
+          manufacturer: parsed.manufacturer ?? null,
+          lastActiveAt: parsed.last_active ?? null,
+        };
+      });
+    } catch (error) {
+      logger.debug("Devices list unavailable", { error });
+      return [];
+    }
+  }
+
+  public async getNodesAsync(userToken: string, networkId: string): Promise<EeroNode[]> {
+    try {
+      const response = await this.requestAsync(`/networks/${networkId}/eeros`, { userToken });
+      const body: unknown = await response.json();
+      const rawNodes = extractFirstArray(body);
+      if (!rawNodes) {
+        logger.warn("Could not find a nodes array in eero's eeros response", { body });
+        return [];
+      }
+      return rawNodes.map((node) => {
+        const parsed = eeroNodeItemSchema.parse(node);
+        return {
+          id: parsed.serial_number ?? parsed.url ?? parsed.nickname ?? crypto.randomUUID(),
+          name: parsed.nickname ?? parsed.location ?? "Unknown node",
+          status: toEeroStatus(parsed.status),
+          isGateway: parsed.is_gateway ?? false,
+          connectedClientCount: parsed.connected_clients_count ?? null,
+          model: parsed.model_number ?? null,
+        };
+      });
+    } catch (error) {
+      logger.debug("Nodes list unavailable", { error });
+      return [];
+    }
+  }
+
+  public async getLatestSpeedtestAsync(userToken: string, networkId: string): Promise<EeroSpeedtestResult | null> {
+    try {
+      const response = await this.requestAsync(`/networks/${networkId}/speedtest`, { userToken });
+      const payload = eeroSpeedtestResponseSchema.parse(await response.json());
+      const data = payload.data;
+      if (!data) return null;
+      return {
+        downloadMbps: data.down?.value ?? null,
+        uploadMbps: data.up?.value ?? null,
+        pingMs: typeof data.ping === "number" ? data.ping : (data.ping?.value ?? null),
+        ranAt: data.date ?? null,
+      };
+    } catch (error) {
+      logger.debug("Speedtest result unavailable", { error });
+      return null;
+    }
+  }
+
   private async requestAsync(
     path: string,
     options: { method?: "GET" | "POST"; body?: Record<string, unknown>; userToken?: string },
@@ -126,6 +204,18 @@ const extractFirstArray = (body: unknown): unknown[] | null => {
     if (Array.isArray(candidate)) return candidate;
   }
   return null;
+};
+
+const toConnectionType = (connectionType: string | undefined): "wired" | "wireless" | "unknown" => {
+  if (connectionType === undefined) return "unknown";
+  return connectionType.toLowerCase() === "wired" ? "wired" : "wireless";
+};
+
+const extractNodeId = (source: { url?: string; location?: string } | undefined): string | null => {
+  if (!source) return null;
+  const url = source.url;
+  if (url) return url.split("/").filter(Boolean).pop() ?? null;
+  return source.location ?? null;
 };
 
 const extractFirstNetworkUrl = (body: unknown): string | null => {
