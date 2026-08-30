@@ -9,7 +9,7 @@ const HOT_ZONE_HEIGHT = 18;
 
 export const hiddenHeaderRevealedAtom = atom(false);
 
-export const useHiddenHeaderReveal = (enabled: boolean) => {
+export const useHiddenHeaderReveal = (enabled: boolean, forceOpen = false) => {
   const headerRef = useRef<HTMLElement>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
@@ -113,7 +113,7 @@ export const useHiddenHeaderReveal = (enabled: boolean) => {
     };
   }, [enabled]);
 
-  const isRevealed = enabled && (isHovering || isPinned);
+  const isRevealed = enabled && (isHovering || isPinned || forceOpen);
 
   useEffect(() => {
     setRevealedAtom(isRevealed);

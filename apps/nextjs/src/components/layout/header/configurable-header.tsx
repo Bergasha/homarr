@@ -73,7 +73,7 @@ export const ConfigurableHeader = ({
   const isAutoHidden = useHeaderAutoHide(
     headerPreferences.visible && headerPreferences.autoHideOnScroll && !isEditMode,
   );
-  const { headerRef, isRevealed } = useHiddenHeaderReveal(!headerPreferences.visible);
+  const { headerRef, isRevealed } = useHiddenHeaderReveal(!headerPreferences.visible, isEditMode);
 
   return (
     <BoardSwitcher>
