@@ -37,7 +37,7 @@ describe("dashboard layout reflow", () => {
       ],
       {
         columnCount: 3,
-        collapsedItemIds: new Set(["section"]),
+        collapsedRowCounts: new Map([["section", 0.5]]),
       },
     );
 
@@ -48,6 +48,24 @@ describe("dashboard layout reflow", () => {
     ]);
   });
 
+  test("shrinks a hidden inline container down to zero height", () => {
+    const result = getCollapsedDisplayLayout(
+      [
+        { id: "section", x: 0, y: 0, w: 2, h: 3 },
+        { id: "below", x: 0, y: 3, w: 2, h: 1 },
+      ],
+      {
+        columnCount: 2,
+        collapsedRowCounts: new Map([["section", 0]]),
+      },
+    );
+
+    expect(result).toEqual([
+      { id: "section", x: 0, y: 0, w: 2, h: 0 },
+      { id: "below", x: 0, y: 0, w: 2, h: 1 },
+    ]);
+  });
+
   test("preserves intentional gaps below a collapsed container", () => {
     const result = getCollapsedDisplayLayout(
       [
@@ -55,7 +73,7 @@ describe("dashboard layout reflow", () => {
         { id: "below", x: 0, y: 6, w: 2, h: 1 },
         { id: "above", x: 0, y: 0, w: 2, h: 1 },
       ],
-      { columnCount: 2, collapsedItemIds: new Set(["section"]) },
+      { columnCount: 2, collapsedRowCounts: new Map([["section", 0.5]]) },
     );
 
     expect(result).toEqual([
@@ -72,7 +90,13 @@ describe("dashboard layout reflow", () => {
         { id: "right", x: 1, y: 0, w: 1, h: 3 },
         { id: "below", x: 0, y: 3, w: 2, h: 1 },
       ],
-      { columnCount: 2, collapsedItemIds: new Set(["left", "right"]) },
+      {
+        columnCount: 2,
+        collapsedRowCounts: new Map([
+          ["left", 0.5],
+          ["right", 0.5],
+        ]),
+      },
     );
 
     expect(result).toEqual([

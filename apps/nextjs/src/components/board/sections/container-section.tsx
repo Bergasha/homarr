@@ -37,14 +37,13 @@ export const BoardContainerSection = ({ section }: Props) => {
     collapsible: options.collapsible,
   });
   const isAutoExpanded = useIsAutoExpanded(section.id);
+  const isHiddenInactive =
+    options.autoExpand.enabled && options.autoExpand.inactiveDisplay === "hidden" && !isAutoExpanded && !isEditMode;
+  const effectivelyCollapsed = isVisuallyCollapsed || isHiddenInactive;
   const label = options.title.trim() || t("untitled");
   const contentId = `board-container-${section.id}-content`;
   const labelLeft = 8;
   const labelRight = isEditMode ? 48 : options.showOpenAll ? 40 : 8;
-
-  if (options.autoExpand.enabled && options.autoExpand.inactiveDisplay === "hidden" && !isAutoExpanded && !isEditMode) {
-    return null;
-  }
 
   return (
     <Box className="board-grid-item-content" data-grid-item-content w="100%" h="100%" style={{ overflow: "visible" }}>
@@ -53,11 +52,11 @@ export const BoardContainerSection = ({ section }: Props) => {
           classes.itemCard,
           classes.containerCard,
           options.customCssClasses.join(" "),
-          isVisuallyCollapsed && classes.collapsedContainerCard,
+          effectivelyCollapsed && classes.collapsedContainerCard,
         )}
         w="100%"
         h="100%"
-        data-board-container-collapsed={isVisuallyCollapsed ? "true" : "false"}
+        data-board-container-collapsed={effectivelyCollapsed ? "true" : "false"}
         styles={{
           root: {
             overflow: "visible",
@@ -68,7 +67,7 @@ export const BoardContainerSection = ({ section }: Props) => {
         radius={board.itemRadius}
         p={0}
       >
-        {options.collapsible && (
+        {options.collapsible && !isHiddenInactive && (
           <Button
             className={classes.containerToggle}
             pos="absolute"
@@ -107,7 +106,7 @@ export const BoardContainerSection = ({ section }: Props) => {
             )}
           </Button>
         )}
-        {!isVisuallyCollapsed && !options.collapsible && options.showLabel && options.title && (
+        {!isVisuallyCollapsed && !options.collapsible && !isHiddenInactive && options.showLabel && options.title && (
           <Badge
             className={classes.containerLabel}
             pos="absolute"
@@ -128,7 +127,7 @@ export const BoardContainerSection = ({ section }: Props) => {
             {options.title}
           </Badge>
         )}
-        {options.showOpenAll && !isEditMode && (
+        {options.showOpenAll && !isEditMode && !isHiddenInactive && (
           <ActionIcon
             className={classes.containerAction}
             pos="absolute"
@@ -150,9 +149,9 @@ export const BoardContainerSection = ({ section }: Props) => {
           className={classes.containerBody}
           h="100%"
           data-board-container-body
-          data-collapsed={isVisuallyCollapsed ? "true" : "false"}
-          aria-hidden={isVisuallyCollapsed}
-          inert={isVisuallyCollapsed}
+          data-collapsed={effectivelyCollapsed ? "true" : "false"}
+          aria-hidden={effectivelyCollapsed}
+          inert={effectivelyCollapsed}
         >
           <SectionGrid section={section} columnCount={section.width} requestedRowCount={section.height} label={label} />
         </Box>

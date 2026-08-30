@@ -225,3 +225,13 @@ export const useIsAutoExpanded = (sectionId: string) => {
 
   return context.autoExpandedSectionIds.has(sectionId);
 };
+
+export const useAutoExpandedSectionIds = () => {
+  const context = useContext(SectionCollapseContext);
+
+  if (!context) {
+    throw new Error("BoardSectionCollapseProvider is required");
+  }
+
+  return context.autoExpandedSectionIds;
+};

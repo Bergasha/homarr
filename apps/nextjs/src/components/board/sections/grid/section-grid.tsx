@@ -10,6 +10,7 @@ import { useEditMode } from "@homarr/boards/edit-mode";
 
 import type { ContainerSectionItem, Section } from "~/app/[locale]/boards/_types";
 import {
+  COLLAPSED_SECTION_ROW_COUNT,
   getCollapsedDisplayLayout,
   getEditableCanvasAttributes,
   getGridRowCountForVisualHeight,
@@ -23,7 +24,7 @@ import { useGridEditorRuntimeStatus } from "./grid-editor-runtime";
 import { createGridEntryElementStore, useGridEditorRegistry } from "./grid-editor-registry";
 import type { SectionGridPlacement } from "./use-grid-layout-actions";
 import { SectionContent } from "../content";
-import { useCollapsedSectionIds, useExpandSectionsForEditing } from "../section-collapse";
+import { useAutoExpandedSectionIds, useCollapsedSectionIds, useExpandSectionsForEditing } from "../section-collapse";
 import { SectionProvider } from "../section-context";
 import { useSectionItems } from "../use-section-items";
 import { useBoardGridPortalHost } from "./grid-portal-host";
@@ -57,6 +58,7 @@ export const SectionGrid = ({
   const { items, innerSections } = useSectionItems(section.id);
   const { announce, integrations } = useBoardGridPortalHost();
   const collapsedSectionIds = useCollapsedSectionIds();
+  const autoExpandedSectionIds = useAutoExpandedSectionIds();
   const expandSectionsForEditing = useExpandSectionsForEditing();
   const minimumBySectionId = useMemo(() => {
     const minimumSizes = getContainerMinimumSizes(board, currentLayoutId);
@@ -105,14 +107,33 @@ export const SectionGrid = ({
       ),
     [collapsedSectionIds, collapsibleSectionIds, placements],
   );
+  const hiddenInactiveIds = useMemo(() => {
+    if (isEditMode) return EMPTY_SECTION_ID_SET;
+    return new Set(
+      innerSections
+        .filter(
+          (inner) =>
+            inner.options.autoExpand.enabled &&
+            inner.options.autoExpand.inactiveDisplay === "hidden" &&
+            !autoExpandedSectionIds.has(inner.id),
+        )
+        .map((inner) => inner.id),
+    );
+  }, [autoExpandedSectionIds, innerSections, isEditMode]);
+  const collapsedRowCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const id of directCollapsedIds) map.set(id, COLLAPSED_SECTION_ROW_COUNT);
+    for (const id of hiddenInactiveIds) map.set(id, 0);
+    return map;
+  }, [directCollapsedIds, hiddenInactiveIds]);
   const displayPlacements = useMemo(() => {
-    if (directCollapsedIds.size === 0) return placements;
+    if (collapsedRowCounts.size === 0) return placements;
 
     return getCollapsedDisplayLayout(placements, {
       columnCount,
-      collapsedItemIds: directCollapsedIds,
+      collapsedRowCounts,
     });
-  }, [columnCount, directCollapsedIds, placements]);
+  }, [columnCount, collapsedRowCounts, placements]);
 
   const placementById = useMemo(
     () => new Map(displayPlacements.map((placement) => [placement.id, placement])),
@@ -159,14 +180,9 @@ export const SectionGrid = ({
   // all, the header bar covers the first row of the container's content instead of sitting
   // above it. Only the vertical axis is affected - the toggle spans the full width already.
   const collapsibleHeaderInset =
-    section.kind === "container" && section.options.collapsible
-      ? CONTAINER_HEADER_HEIGHT / effectiveCanvasScale
-      : 0;
+    section.kind === "container" && section.options.collapsible ? CONTAINER_HEADER_HEIGHT / effectiveCanvasScale : 0;
   const logicalWidth = getLogicalGridSize(columnCount) - outerCardInset;
-  const viewportHeight = Math.max(
-    1,
-    getLogicalGridSize(viewportRowCount) - outerCardInset - collapsibleHeaderInset,
-  );
+  const viewportHeight = Math.max(1, getLogicalGridSize(viewportRowCount) - outerCardInset - collapsibleHeaderInset);
   // Items are positioned in a coordinate space sized to the *un-inset* column/row count
   // (fullGridWidth/Height below - see getLogicalItemStyle), but logicalWidth/Height above are
   // deliberately smaller by outerCardInset to match the container's actual visible card size.
@@ -337,6 +353,8 @@ export const SectionGrid = ({
 
 // Matches the collapsible container toggle's h={24} in container-section.tsx.
 const CONTAINER_HEADER_HEIGHT = 24;
+
+const EMPTY_SECTION_ID_SET: ReadonlySet<string> = new Set();
 
 const INTERACTIVE_GRID_SELECTOR =
   'a,button,input,textarea,select,option,[contenteditable="true"],[role="button"],[data-grid-no-drag]';

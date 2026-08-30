@@ -1,4 +1,3 @@
-import { COLLAPSED_SECTION_ROW_COUNT } from "./constants";
 import { normalizeGridPlacement } from "./geometry";
 import type { GridPlacement } from "./types";
 
@@ -13,8 +12,8 @@ interface ReflowOptions {
 
 interface CollapsedLayoutOptions {
   columnCount: number;
-  collapsedItemIds: ReadonlySet<string>;
-  collapsedRowCount?: number;
+  /** Each collapsed item's own display row count (e.g. 0.5 for a collapsed bar, 0 for fully hidden). */
+  collapsedRowCounts: ReadonlyMap<string, number>;
 }
 
 export const doGridPlacementsOverlap = (first: GridPlacement, second: GridPlacement) =>
@@ -61,23 +60,21 @@ export const reflowVerticalLayout = <TPlacement extends GridPlacement>(
  */
 export const getCollapsedDisplayLayout = <TPlacement extends GridPlacement>(
   placements: readonly TPlacement[],
-  { columnCount, collapsedItemIds, collapsedRowCount = COLLAPSED_SECTION_ROW_COUNT }: CollapsedLayoutOptions,
+  { columnCount, collapsedRowCounts }: CollapsedLayoutOptions,
 ): TPlacement[] => {
-  if (!Number.isFinite(collapsedRowCount) || collapsedRowCount <= 0) {
-    throw new RangeError("collapsedRowCount must be positive and finite");
+  for (const rowCount of collapsedRowCounts.values()) {
+    if (!Number.isFinite(rowCount) || rowCount < 0) {
+      throw new RangeError("collapsedRowCounts values must be zero or positive and finite");
+    }
   }
 
   const normalized = placements.map((placement) => normalizeGridPlacement(placement, columnCount));
-  const displayPlacements = normalized.map((placement) =>
-    collapsedItemIds.has(placement.id)
-      ? {
-          ...placement,
-          h: collapsedRowCount,
-        }
-      : placement,
-  );
+  const displayPlacements = normalized.map((placement) => {
+    const rowCount = collapsedRowCounts.get(placement.id);
+    return rowCount === undefined ? placement : { ...placement, h: rowCount };
+  });
 
-  return reflowCollapsedDisplayLayout(normalized, displayPlacements, collapsedItemIds, collapsedRowCount);
+  return reflowCollapsedDisplayLayout(normalized, displayPlacements, collapsedRowCounts);
 };
 
 /**
@@ -121,17 +118,16 @@ const findFirstAvailableRow = (candidate: GridPlacement, placed: readonly GridPl
 const reflowCollapsedDisplayLayout = <TPlacement extends GridPlacement>(
   expandedPlacements: readonly TPlacement[],
   displayPlacements: readonly TPlacement[],
-  collapsedItemIds: ReadonlySet<string>,
-  collapsedRowCount: number,
+  collapsedRowCounts: ReadonlyMap<string, number>,
 ): TPlacement[] => {
   assertUniqueIds(expandedPlacements);
   const displayById = new Map(displayPlacements.map((placement) => [placement.id, placement]));
-  const collapsedPlacements = expandedPlacements.filter((placement) => collapsedItemIds.has(placement.id));
+  const collapsedPlacements = expandedPlacements.filter((placement) => collapsedRowCounts.has(placement.id));
   const placed: TPlacement[] = [];
 
   for (const expandedPlacement of expandedPlacements.toSorted(comparePlacements)) {
     const candidate = getRequiredPlacement(displayById, expandedPlacement.id);
-    const verticalShift = getCollapsedVerticalShift(expandedPlacement, collapsedPlacements, collapsedRowCount);
+    const verticalShift = getCollapsedVerticalShift(expandedPlacement, collapsedPlacements, collapsedRowCounts);
     placed.push({
       ...candidate,
       y: findFirstAvailableRowAtOrAfter(candidate, placed, Math.max(0, candidate.y - verticalShift)),
@@ -145,7 +141,7 @@ const reflowCollapsedDisplayLayout = <TPlacement extends GridPlacement>(
 const getCollapsedVerticalShift = (
   candidate: GridPlacement,
   collapsedPlacements: readonly GridPlacement[],
-  collapsedRowCount: number,
+  collapsedRowCounts: ReadonlyMap<string, number>,
 ) => {
   const removedIntervals = collapsedPlacements
     .filter(
@@ -154,7 +150,10 @@ const getCollapsedVerticalShift = (
         collapsed.y + collapsed.h <= candidate.y &&
         doGridPlacementsOverlapHorizontally(candidate, collapsed),
     )
-    .map((collapsed) => ({ start: collapsed.y + collapsedRowCount, end: collapsed.y + collapsed.h }))
+    .map((collapsed) => ({
+      start: collapsed.y + (collapsedRowCounts.get(collapsed.id) ?? 0),
+      end: collapsed.y + collapsed.h,
+    }))
     .toSorted((first, second) => first.start - second.start || first.end - second.end);
 
   let shift = 0;
