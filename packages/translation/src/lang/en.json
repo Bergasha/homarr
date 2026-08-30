@@ -1694,7 +1694,43 @@
         "slug": {
           "label": "Status page slug",
           "newLabel": "New status page slug"
+        },
+        "eeroSessionToken": {
+          "label": "Session token",
+          "newLabel": "New session token"
         }
+      }
+    },
+    "eero": {
+      "login": {
+        "title": "Sign in to eero",
+        "description": "Enter the email or phone number on your eero account. eero will send you a one-time code.",
+        "field": {
+          "login": {
+            "label": "Email or phone number",
+            "placeholder": "you@example.com"
+          }
+        },
+        "action": {
+          "sendCode": "Send code"
+        }
+      },
+      "verify": {
+        "title": "Enter the code",
+        "description": "Enter the code eero just sent you.",
+        "field": {
+          "code": {
+            "label": "Verification code"
+          }
+        },
+        "action": {
+          "verify": "Verify and connect",
+          "resendCode": "Use a different email or phone number"
+        }
+      },
+      "error": {
+        "requestCode": "Couldn't send a code. Check the email or phone number and try again.",
+        "verifyCode": "That code didn't work. Double check it and try again."
       }
     },
     "permission": {
@@ -4590,6 +4626,19 @@
       "error": {
         "internalServerError": "Failed to fetch Network Controller Summary"
       }
+    },
+    "eeroSummary": {
+      "card": {
+        "mesh": "Mesh",
+        "wan": "WAN",
+        "guestNetwork": "Guest network",
+        "devices": "Devices"
+      },
+      "error": {
+        "internalServerError": "Failed to fetch eero network summary"
+      },
+      "name": "eero Network Summary",
+      "description": "Displays your eero mesh network's status, guest network, and connected device count"
     },
     "firewall": {
       "name": "Firewall Monitoring",

@@ -35,6 +35,7 @@ import * as mediaMissing from "./media-missing";
 import * as minecraftServerStatus from "./minecraft/server-status";
 import * as networkControllerStatus from "./network-controller/network-status";
 import * as networkControllerSummary from "./network-controller/summary";
+import * as eeroSummary from "./eero-summary";
 import * as notebook from "./notebook";
 import * as paperlessNgx from "./paperless-ngx";
 import * as patchmon from "./patchmon";
@@ -116,6 +117,7 @@ export const widgetImports = {
   mediaMissing,
   networkControllerSummary,
   networkControllerStatus,
+  eeroSummary,
   rssFeed,
   bookmarks,
   bazarr,

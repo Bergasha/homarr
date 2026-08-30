@@ -3,6 +3,7 @@ export * from "./interfaces/media-organizer/media-organizer-types";
 export type { IMediaOrganizerIntegration } from "./interfaces/media-organizer/media-organizer-integration";
 export * from "./interfaces/dns-hole-summary/dns-hole-summary-types";
 export * from "./interfaces/network-controller-summary/network-controller-summary-types";
+export * from "./eero/eero-types";
 export * from "./interfaces/firewall-summary/firewall-summary-types";
 export * from "./interfaces/health-monitoring/health-monitoring-types";
 export * from "./interfaces/ups-summary/ups-summary-types";

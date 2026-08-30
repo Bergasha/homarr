@@ -35,6 +35,7 @@ export const nativeFeatureCapabilities = {
   mediaMissing: { integrations: getIntegrationKindsByCategory("mediaOrganizer") },
   networkControllerSummary: { integrations: getIntegrationKindsByCategory("networkController") },
   networkControllerStatus: { integrations: getIntegrationKindsByCategory("networkController") },
+  eeroSummary: { integrations: ["eero", "mock"] },
   indexerManager: { integrations: getIntegrationKindsByCategory("indexerManager") },
   healthMonitoring: {
     integrations: getIntegrationKindsByCategory("healthMonitoring").filter(

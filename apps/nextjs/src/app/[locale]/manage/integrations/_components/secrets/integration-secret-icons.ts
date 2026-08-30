@@ -32,4 +32,5 @@ export const integrationSecretIcons = {
   githubInstallationId: IconPlug,
   privateKey: IconKey,
   slug: IconTag,
+  eeroSessionToken: IconKey,
 } satisfies Record<IntegrationSecretKind, TablerIcon>;

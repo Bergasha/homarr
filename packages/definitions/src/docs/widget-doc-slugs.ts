@@ -25,6 +25,7 @@ export const widgetDocSlugs: Record<WidgetKind, string | null> = {
   mediaMissing: "media-missing",
   minecraftServerStatus: "minecraft-server-status",
   networkControllerSummary: "network-controller-summary",
+  eeroSummary: null,
   networkControllerStatus: "network-controller-status",
   rssFeed: "rss-feed",
   bookmarks: "bookmarks",

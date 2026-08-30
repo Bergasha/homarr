@@ -20,6 +20,7 @@ export const integrationSecretKindObject = {
   githubAppId: { isPublic: true, multiline: false },
   githubInstallationId: { isPublic: true, multiline: false },
   slug: { isPublic: true, multiline: false },
+  eeroSessionToken: { isPublic: false, multiline: false },
 } satisfies Record<string, { isPublic: boolean; multiline: boolean }>;
 
 export const integrationSecretKinds = objectKeys(integrationSecretKindObject);
@@ -288,6 +289,14 @@ export const integrationDefs = {
     category: ["networkController"],
     documentationUrl: createDocumentationLink("/docs/integrations/unifi-controller"),
     defaultPort: 8443,
+  },
+  eero: {
+    name: "eero",
+    secretKinds: [["eeroSessionToken"]],
+    iconUrl: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons@master/svg/router.svg",
+    category: ["meshRouter"],
+    documentationUrl: null,
+    defaultUrl: "https://api-user.e2ro.com/2.2",
   },
   opnsense: {
     name: "OPNsense",
@@ -606,6 +615,7 @@ export const integrationCategories = [
   "search",
   "mediaTranscoding",
   "networkController",
+  "meshRouter",
   "notifications",
   "firewall",
   "timetable",

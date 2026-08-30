@@ -14,6 +14,7 @@ import type { IMediaReleasesIntegration } from "../interfaces/media-releases";
 import type { IMediaRequestIntegration } from "../interfaces/media-requests/media-request-integration";
 import type { IMediaServerIntegration } from "../interfaces/media-server/media-server-integration";
 import type { IMediaTranscodingIntegration } from "../interfaces/media-transcoding/media-transcoding-integration";
+import type { EeroSummaryIntegration } from "../interfaces/eero-summary/eero-summary-integration";
 import type { NetworkControllerSummaryIntegration } from "../interfaces/network-controller-summary/network-controller-summary-integration";
 import type { ISmartHomeIntegration } from "../interfaces/smart-home/smart-home-integration";
 import type { IUpsSummaryIntegration } from "../interfaces/ups-summary/ups-summary-integration";
@@ -21,6 +22,7 @@ import { CalendarMockService } from "./data/calendar";
 import { ClusterHealthMonitoringMockService } from "./data/cluster-health-monitoring";
 import { DnsHoleMockService } from "./data/dns-hole";
 import { DownloadClientMockService } from "./data/download";
+import { EeroMockService } from "./data/eero";
 import { IndexerManagerMockService } from "./data/indexer-manager";
 import { MediaOrganizerMockService } from "./data/media-organizer";
 import { MediaReleasesMockService } from "./data/media-releases";
@@ -49,6 +51,7 @@ export class MockIntegration
     IMediaServerIntegration,
     IMediaTranscodingIntegration,
     NetworkControllerSummaryIntegration,
+    EeroSummaryIntegration,
     ISmartHomeIntegration,
     IUpsSummaryIntegration
 {
@@ -64,6 +67,7 @@ export class MockIntegration
   private static readonly mediaServer = new MediaServerMockService();
   private static readonly mediaTranscoding = new MediaTranscodingMockService();
   private static readonly networkController = new NetworkControllerSummaryMockService();
+  private static readonly eero = new EeroMockService();
   private static readonly notifications = new NotificationsMockService();
   private static readonly smartHome = new SmartHomeMockService();
   private static readonly beszel = new BeszelMockService();
@@ -129,6 +133,9 @@ export class MockIntegration
   getNetworkSummaryAsync = MockIntegration.networkController.getNetworkSummaryAsync.bind(
     MockIntegration.networkController,
   );
+
+  // EeroSummaryIntegration
+  getEeroSummaryAsync = MockIntegration.eero.getEeroSummaryAsync.bind(MockIntegration.eero);
 
   // NotificationsIntegration
   getNotificationsAsync = MockIntegration.notifications.getNotificationsAsync.bind(MockIntegration.notifications);

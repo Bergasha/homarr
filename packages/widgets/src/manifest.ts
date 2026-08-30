@@ -47,6 +47,7 @@ const moduleLoaders: Record<WidgetKind, () => Promise<WidgetModule>> = {
   mediaMissing: () => import("./media-missing") as Promise<WidgetModule>,
   networkControllerSummary: () => import("./network-controller/summary") as Promise<WidgetModule>,
   networkControllerStatus: () => import("./network-controller/network-status") as Promise<WidgetModule>,
+  eeroSummary: () => import("./eero-summary") as Promise<WidgetModule>,
   rssFeed: () => import("./rssFeed") as Promise<WidgetModule>,
   bookmarks: () => import("./bookmarks") as Promise<WidgetModule>,
   bazarr: () => import("./bazarr") as Promise<WidgetModule>,
@@ -113,6 +114,7 @@ const componentLoaders: Record<WidgetKind, () => Promise<WidgetComponentModule>>
   networkControllerSummary: () => import("./network-controller/summary/component") as Promise<WidgetComponentModule>,
   networkControllerStatus: () =>
     import("./network-controller/network-status/component") as Promise<WidgetComponentModule>,
+  eeroSummary: () => import("./eero-summary/component") as Promise<WidgetComponentModule>,
   rssFeed: () => import("./rssFeed/component") as Promise<WidgetComponentModule>,
   bookmarks: () => import("./bookmarks/component") as Promise<WidgetComponentModule>,
   bazarr: () => import("./bazarr/component") as Promise<WidgetComponentModule>,
