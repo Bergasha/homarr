@@ -7,14 +7,16 @@ import type { TestingResult } from "../base/test-connection/test-connection-serv
 import type { EeroSummaryIntegration } from "../interfaces/eero-summary/eero-summary-integration";
 import { EERO_BASE_URL, EeroClient, EeroUnauthorizedError } from "./eero-client";
 import { toEeroStatus } from "./eero-status";
-import type { EeroNetworkDetails, EeroNetworkSummary } from "./eero-types";
+import type { EeroNetworkDetails, EeroNetworkSummary, EeroSpeedtestResult } from "./eero-types";
 
 const NETWORK_ID_TTL_SECONDS = 60 * 60;
+const SPEEDTEST_CACHE_TTL_SECONDS = 60 * 60 * 6;
 
 @HandleIntegrationErrors([])
 export class EeroIntegration extends Integration implements EeroSummaryIntegration {
   private readonly client = new EeroClient(EERO_BASE_URL);
   private readonly networkIdStore = createSessionStore<{ networkId: string }>(this.integration);
+  private readonly speedtestStore = createSessionStore<EeroSpeedtestResult>({ id: `${this.integration.id}:speedtest` });
 
   protected async testingAsync(_input: IntegrationTestingInput): Promise<TestingResult> {
     try {
@@ -68,7 +70,7 @@ export class EeroIntegration extends Integration implements EeroSummaryIntegrati
     const [devicesResult, nodesResult, speedtestResult] = await Promise.allSettled([
       this.client.getDevicesAsync(userToken, networkId),
       this.client.getNodesAsync(userToken, networkId),
-      this.client.getLatestSpeedtestAsync(userToken, networkId),
+      this.resolveLatestSpeedtestAsync(userToken, networkId),
     ]);
 
     return {
@@ -87,5 +89,20 @@ export class EeroIntegration extends Integration implements EeroSummaryIntegrati
       await this.networkIdStore.setAsync({ networkId }, { ttlSeconds: NETWORK_ID_TTL_SECONDS });
     }
     return networkId;
+  }
+
+  /**
+   * Runs eero's speedtest at most once per SPEEDTEST_CACHE_TTL_SECONDS so the widget can show a
+   * "last result" without a manual trigger, without hammering an endpoint that can take 10-30s+.
+   */
+  private async resolveLatestSpeedtestAsync(userToken: string, networkId: string): Promise<EeroSpeedtestResult | null> {
+    const cached = await this.speedtestStore.getAsync();
+    if (cached) return cached;
+
+    const result = await this.client.runSpeedtestAsync(userToken, networkId);
+    if (result) {
+      await this.speedtestStore.setAsync(result, { ttlSeconds: SPEEDTEST_CACHE_TTL_SECONDS });
+    }
+    return result;
   }
 }

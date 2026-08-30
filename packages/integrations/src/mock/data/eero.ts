@@ -73,6 +73,7 @@ export class EeroMockService implements EeroSummaryIntegration {
           isGateway: true,
           connectedClientCount: 8,
           model: "eero Pro 6E",
+          backhaulType: "wired",
         },
         {
           id: "mock-node-2",
@@ -81,6 +82,7 @@ export class EeroMockService implements EeroSummaryIntegration {
           isGateway: false,
           connectedClientCount: 6,
           model: "eero 6",
+          backhaulType: "wireless",
         },
         {
           id: "mock-node-3",
@@ -89,6 +91,7 @@ export class EeroMockService implements EeroSummaryIntegration {
           isGateway: false,
           connectedClientCount: 0,
           model: "eero 6",
+          backhaulType: "wireless",
         },
       ],
       latestSpeedtest: {

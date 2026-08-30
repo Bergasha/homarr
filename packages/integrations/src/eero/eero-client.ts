@@ -21,6 +21,7 @@ const logger = createLogger({ module: "eeroClient" });
 export const EERO_BASE_URL = "https://api-user.e2ro.com/2.2";
 
 const REQUEST_TIMEOUT_MS = 10_000;
+const SPEEDTEST_TIMEOUT_MS = 45_000;
 
 export class EeroUnauthorizedError extends Error {
   constructor() {
@@ -137,6 +138,7 @@ export class EeroClient {
           isGateway: parsed.is_gateway ?? false,
           connectedClientCount: parsed.connected_clients_count ?? null,
           model: parsed.model_number ?? null,
+          backhaulType: toBackhaulType(parsed.wired, parsed.backhaul?.type),
         };
       });
     } catch (error) {
@@ -145,9 +147,14 @@ export class EeroClient {
     }
   }
 
-  public async getLatestSpeedtestAsync(userToken: string, networkId: string): Promise<EeroSpeedtestResult | null> {
+  public async runSpeedtestAsync(userToken: string, networkId: string): Promise<EeroSpeedtestResult | null> {
     try {
-      const response = await this.requestAsync(`/networks/${networkId}/speedtest`, { userToken });
+      const response = await this.requestAsync(`/networks/${networkId}/speedtest`, {
+        method: "POST",
+        body: {},
+        userToken,
+        timeoutMs: SPEEDTEST_TIMEOUT_MS,
+      });
       const payload = eeroSpeedtestResponseSchema.parse(await response.json());
       const data = payload.data;
       if (!data) return null;
@@ -155,7 +162,7 @@ export class EeroClient {
         downloadMbps: data.down?.value ?? null,
         uploadMbps: data.up?.value ?? null,
         pingMs: typeof data.ping === "number" ? data.ping : (data.ping?.value ?? null),
-        ranAt: data.date ?? null,
+        ranAt: data.date ?? new Date().toISOString(),
       };
     } catch (error) {
       logger.debug("Speedtest result unavailable", { error });
@@ -165,7 +172,7 @@ export class EeroClient {
 
   private async requestAsync(
     path: string,
-    options: { method?: "GET" | "POST"; body?: Record<string, unknown>; userToken?: string },
+    options: { method?: "GET" | "POST"; body?: Record<string, unknown>; userToken?: string; timeoutMs?: number },
   ) {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
@@ -181,7 +188,7 @@ export class EeroClient {
       method: options.method ?? "GET",
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
-      timeout: REQUEST_TIMEOUT_MS,
+      timeout: options.timeoutMs ?? REQUEST_TIMEOUT_MS,
     });
 
     if (response.status === 401 || response.status === 403) {
@@ -209,6 +216,15 @@ const extractFirstArray = (body: unknown): unknown[] | null => {
 const toConnectionType = (connectionType: string | undefined): "wired" | "wireless" | "unknown" => {
   if (connectionType === undefined) return "unknown";
   return connectionType.toLowerCase() === "wired" ? "wired" : "wireless";
+};
+
+const toBackhaulType = (
+  wired: boolean | undefined,
+  backhaulType: string | undefined,
+): "wired" | "wireless" | "unknown" => {
+  if (typeof wired === "boolean") return wired ? "wired" : "wireless";
+  if (backhaulType === undefined) return "unknown";
+  return backhaulType.toLowerCase() === "wired" ? "wired" : "wireless";
 };
 
 const extractNodeId = (source: { url?: string; location?: string } | undefined): string | null => {

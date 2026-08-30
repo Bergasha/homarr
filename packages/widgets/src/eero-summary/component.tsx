@@ -10,7 +10,6 @@ import { IntegrationErrorIndicator } from "../common/integration-error-indicator
 import { getUsableWidgetQueryData } from "../common/query-state";
 import type { WidgetComponentProps } from "../definition";
 import { getEeroSummaryLayout } from "./layout";
-import { DevicesListSection } from "./sections/devices-list";
 import { NodesGridSection } from "./sections/nodes-grid";
 import { SpeedtestSection } from "./sections/speedtest-section";
 import { SummaryCardSection } from "./sections/summary-card";
@@ -30,9 +29,7 @@ export default function EeroSummaryWidget({
   );
 
   const layout = getEeroSummaryLayout({ width, height, displayMode, options });
-  const needsDetails = layout.visibleSections.some(
-    (section) => section === "devices" || section === "nodes" || section === "speedtest",
-  );
+  const needsDetails = layout.visibleSections.some((section) => section === "nodes" || section === "speedtest");
   const detailsQuery = clientApi.widget.eero.details.useQuery({ integrationIds }, { enabled: needsDetails });
   const detailsResults = needsDetails
     ? isAdvanced
@@ -87,12 +84,12 @@ export default function EeroSummaryWidget({
   const sectionContent: Record<(typeof layout.visibleSections)[number], ReactNode> = {
     summary: <SummaryCardSection summary={summary} />,
     speedtest: <SpeedtestSection result={details?.latestSpeedtest ?? null} />,
-    nodes: <NodesGridSection nodes={details?.nodes ?? []} />,
-    devices: (
-      <DevicesListSection
+    nodes: (
+      <NodesGridSection
+        nodes={details?.nodes ?? []}
         devices={details?.devices ?? []}
-        showOffline={options.showOfflineDevices}
-        limit={layout.deviceRowLimit}
+        showOfflineDevices={options.showOfflineDevices}
+        deviceLimit={layout.deviceRowLimit}
       />
     ),
   };

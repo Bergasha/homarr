@@ -27,6 +27,9 @@ export const sortEeroDevices = (devices: EeroDevice[], showOffline: boolean, lim
 export const sortEeroNodes = (nodes: EeroNode[]): EeroNode[] =>
   nodes.toSorted((a, b) => Number(b.isGateway) - Number(a.isGateway));
 
+export const getDevicesForNode = (devices: EeroDevice[], nodeId: string): EeroDevice[] =>
+  devices.filter((device) => device.nodeId === nodeId);
+
 export const formatEeroSpeedValue = (mbps: number | null): string => (mbps === null ? "—" : `${Math.round(mbps)} Mbps`);
 
 export const formatEeroPing = (ms: number | null): string => (ms === null ? "—" : `${Math.round(ms)} ms`);

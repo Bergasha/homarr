@@ -4636,7 +4636,6 @@
       },
       "section": {
         "summary": "Network status",
-        "devices": "Devices",
         "nodes": "Nodes",
         "speedtest": "Speedtest"
       },
@@ -4652,7 +4651,11 @@
       "node": {
         "gateway": "Gateway",
         "clients": "{count} clients",
-        "empty": "No nodes found"
+        "empty": "No nodes found",
+        "backhaul": {
+          "wired": "Wired backhaul",
+          "wireless": "Wireless backhaul"
+        }
       },
       "speedtest": {
         "download": "Download",
@@ -4665,14 +4668,11 @@
         "showSummaryCard": {
           "label": "Show network status summary"
         },
-        "showDevices": {
-          "label": "Show devices"
-        },
         "showOfflineDevices": {
-          "label": "Show offline devices"
+          "label": "Show offline devices in node popups"
         },
         "deviceLimit": {
-          "label": "Device list limit"
+          "label": "Device list limit per node"
         },
         "showNodes": {
           "label": "Show nodes"

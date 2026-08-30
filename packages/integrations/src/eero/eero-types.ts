@@ -81,6 +81,14 @@ export const eeroNodeItemSchema = z
     is_gateway: z.boolean().optional(),
     connected_clients_count: z.number().optional(),
     model_number: z.string().optional(),
+    wired: z.boolean().optional(),
+    backhaul: z
+      .object({
+        type: z.string().optional(),
+      })
+      .partial()
+      .optional()
+      .catch(undefined),
   })
   .partial()
   .catch({});
@@ -142,6 +150,7 @@ export interface EeroNode {
   isGateway: boolean;
   connectedClientCount: number | null;
   model: string | null;
+  backhaulType: "wired" | "wireless" | "unknown";
 }
 
 export interface EeroSpeedtestResult {
