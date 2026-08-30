@@ -124,6 +124,12 @@ export interface WidgetDefinition {
     >
   >;
   contextActions?: (props: WidgetContextActionProps) => WidgetContextMenuAction[];
+  /**
+   * Given this widget's latest query data, returns whether it should count as "active" for
+   * features like a container's auto-expand-when-active option. Widgets that don't implement this
+   * simply aren't selectable as an auto-expand trigger.
+   */
+  activitySignal?: (data: unknown) => boolean;
 }
 
 export const supportsAdvancedFocus = (definition: object) =>

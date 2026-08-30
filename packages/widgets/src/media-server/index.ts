@@ -23,4 +23,14 @@ export const { componentLoader, definition } = createWidgetDefinition("mediaServ
     }));
   },
   supportedIntegrations: getIntegrationKindsByCategory("mediaService"),
+  activitySignal: (data) =>
+    Array.isArray(data) &&
+    data.some(
+      (pair) =>
+        typeof pair === "object" &&
+        pair !== null &&
+        "sessions" in pair &&
+        Array.isArray(pair.sessions) &&
+        pair.sessions.length > 0,
+    ),
 }).withDynamicImport(() => import("./component"));

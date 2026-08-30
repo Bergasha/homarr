@@ -27,6 +27,7 @@ export const BoardContainerMenu = ({ section }: { section: ContainerSectionItem 
 
   const openEditModal = () => {
     openModal({
+      sectionId: section.id,
       value: section.options,
       onSuccessfulEdit: (options) => updateContainer({ containerId: section.id, newOptions: options }),
     });

@@ -1994,6 +1994,10 @@
       "scrollable": {
         "label": "Scrollable",
         "description": "Keep this container at its set size and scroll its contents instead of growing to fit them."
+      },
+      "autoExpand": {
+        "label": "Auto-expand when active",
+        "description": "Automatically reveal this container when a widget inside it goes active, and hide it again once it's not."
       }
     },
     "action": {
@@ -2020,6 +2024,16 @@
         },
         "borderColor": {
           "label": "Border color"
+        },
+        "autoExpand": {
+          "item": {
+            "label": "Widget to watch",
+            "placeholder": "Select a widget"
+          },
+          "inactiveDisplay": {
+            "collapsed": "Collapsed",
+            "hidden": "Hidden"
+          }
         }
       },
       "remove": {

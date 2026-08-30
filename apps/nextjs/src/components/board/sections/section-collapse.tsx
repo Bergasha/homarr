@@ -8,11 +8,13 @@ import { useSession } from "@homarr/auth/client";
 import { useRequiredBoard } from "@homarr/boards/context";
 import { useEditMode } from "@homarr/boards/edit-mode";
 
+import { AutoExpandWatcher } from "./auto-expand/auto-expand-watcher";
 import { readSectionCollapsedFromStorage, writeSectionCollapsedToStorage } from "./section-collapse-storage";
 
 interface SectionCollapseContextValue {
   collapsedSectionIds: ReadonlySet<string>;
   visuallyCollapsedSectionIds: ReadonlySet<string>;
+  autoExpandedSectionIds: ReadonlySet<string>;
   setCollapsed: (sectionId: string, collapsed: boolean) => void;
   expandForEditing: (sectionIds: ReadonlySet<string>) => void;
 }
@@ -31,7 +33,39 @@ export const BoardSectionCollapseProvider = ({ children }: PropsWithChildren) =>
   );
   const collapsedByIdRef = useRef(collapsedById);
   const [temporarilyExpandedIds, setTemporarilyExpandedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [activeBySectionId, setActiveBySectionId] = useState<Record<string, boolean>>({});
   collapsedByIdRef.current = collapsedById;
+
+  const autoExpandTargets = useMemo(() => {
+    const targets: {
+      sectionId: string;
+      itemId: string;
+      kind: (typeof board.items)[number]["kind"];
+      options: Record<string, unknown>;
+      integrationIds: string[];
+    }[] = [];
+    for (const section of board.sections) {
+      if (section.kind !== "container" || !section.options.autoExpand.enabled || !section.options.autoExpand.itemId) {
+        continue;
+      }
+      const item = board.items.find((candidate) => candidate.id === section.options.autoExpand.itemId);
+      if (!item) continue;
+      targets.push({
+        sectionId: section.id,
+        itemId: item.id,
+        kind: item.kind,
+        options: item.options,
+        integrationIds: item.integrationIds,
+      });
+    }
+    return targets;
+  }, [board.items, board.sections]);
+
+  const handleActiveChange = useCallback((sectionId: string, active: boolean) => {
+    setActiveBySectionId((previous) =>
+      previous[sectionId] === active ? previous : { ...previous, [sectionId]: active },
+    );
+  }, []);
 
   useEffect(() => {
     if (!isEditMode) setTemporarilyExpandedIds((current) => (current.size === 0 ? current : new Set()));
@@ -108,17 +142,41 @@ export const BoardSectionCollapseProvider = ({ children }: PropsWithChildren) =>
         .filter(([, collapsed]) => collapsed)
         .map(([sectionId]) => sectionId),
     );
+    const autoExpandedSectionIds = new Set(
+      Object.entries(activeBySectionId)
+        .filter(([, active]) => active)
+        .map(([sectionId]) => sectionId),
+    );
     return {
       collapsedSectionIds,
       visuallyCollapsedSectionIds: new Set(
-        [...collapsedSectionIds].filter((sectionId) => !isEditMode || !temporarilyExpandedIds.has(sectionId)),
+        [...collapsedSectionIds].filter(
+          (sectionId) =>
+            (!isEditMode || !temporarilyExpandedIds.has(sectionId)) && !autoExpandedSectionIds.has(sectionId),
+        ),
       ),
+      autoExpandedSectionIds,
       setCollapsed,
       expandForEditing,
     };
-  }, [collapsedById, expandForEditing, isEditMode, setCollapsed, temporarilyExpandedIds]);
+  }, [activeBySectionId, collapsedById, expandForEditing, isEditMode, setCollapsed, temporarilyExpandedIds]);
 
-  return <SectionCollapseContext.Provider value={value}>{children}</SectionCollapseContext.Provider>;
+  return (
+    <SectionCollapseContext.Provider value={value}>
+      {autoExpandTargets.map((target) => (
+        <AutoExpandWatcher
+          key={target.sectionId}
+          boardId={board.id}
+          itemId={target.itemId}
+          kind={target.kind}
+          options={target.options}
+          integrationIds={target.integrationIds}
+          onActiveChange={(active) => handleActiveChange(target.sectionId, active)}
+        />
+      ))}
+      {children}
+    </SectionCollapseContext.Provider>
+  );
 };
 
 export const useSectionCollapse = ({ sectionId, collapsible }: { sectionId: string; collapsible: boolean }) => {
@@ -156,4 +214,14 @@ export const useExpandSectionsForEditing = () => {
   }
 
   return context.expandForEditing;
+};
+
+export const useIsAutoExpanded = (sectionId: string) => {
+  const context = useContext(SectionCollapseContext);
+
+  if (!context) {
+    throw new Error("BoardSectionCollapseProvider is required");
+  }
+
+  return context.autoExpandedSectionIds.has(sectionId);
 };

@@ -9,7 +9,7 @@ import { useI18n } from "@homarr/translation/client";
 
 import type { ContainerSectionItem } from "~/app/[locale]/boards/_types";
 import { SectionGrid } from "./grid/section-grid";
-import { useSectionCollapse } from "./section-collapse";
+import { useIsAutoExpanded, useSectionCollapse } from "./section-collapse";
 import { useOpenSectionApps } from "./use-open-section-apps";
 import classes from "./item.module.css";
 
@@ -36,10 +36,15 @@ export const BoardContainerSection = ({ section }: Props) => {
     sectionId: section.id,
     collapsible: options.collapsible,
   });
+  const isAutoExpanded = useIsAutoExpanded(section.id);
   const label = options.title.trim() || t("untitled");
   const contentId = `board-container-${section.id}-content`;
   const labelLeft = 8;
   const labelRight = isEditMode ? 48 : options.showOpenAll ? 40 : 8;
+
+  if (options.autoExpand.enabled && options.autoExpand.inactiveDisplay === "hidden" && !isAutoExpanded && !isEditMode) {
+    return null;
+  }
 
   return (
     <Box className="board-grid-item-content" data-grid-item-content w="100%" h="100%" style={{ overflow: "visible" }}>
