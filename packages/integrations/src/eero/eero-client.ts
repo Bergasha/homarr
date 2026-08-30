@@ -83,7 +83,11 @@ export class EeroClient {
     options: { method?: "GET" | "POST"; body?: Record<string, unknown>; userToken?: string },
   ) {
     const url = `${this.baseUrl}${path}`;
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "User-Agent": "eero-ios/3.47.0",
+    };
     if (options.userToken) {
       headers.Cookie = `s=${options.userToken}`;
     }
