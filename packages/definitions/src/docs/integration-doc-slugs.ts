@@ -31,7 +31,6 @@ export const integrationDocSlugs: Record<IntegrationKind, string | null> = {
   proxmox: "proxmox",
   nextcloud: "nextcloud",
   unifiController: "unifi-controller",
-  eero: null,
   opnsense: "opnsense",
   ntfy: "ntfy",
   gotify: "gotify",

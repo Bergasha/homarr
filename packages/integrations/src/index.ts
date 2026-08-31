@@ -46,7 +46,6 @@ export { PeaNutIntegration } from "./peanut/peanut-integration";
 export { BazarrIntegration } from "./bazarr/bazarr-integration";
 export { TraefikIntegration } from "./traefik/traefik-integration";
 export { mockWidgetData } from "./mock/widget-data";
-export { EeroClient, EERO_BASE_URL } from "./eero/eero-client";
 
 // Types
 export type { IntegrationInput } from "./base/integration";

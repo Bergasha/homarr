@@ -24,7 +24,6 @@ export const widgetKinds = [
   "minecraftServerStatus",
   "networkControllerSummary",
   "networkControllerStatus",
-  "eeroSummary",
   "rssFeed",
   "bookmarks",
   "indexerManager",

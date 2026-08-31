@@ -13,7 +13,6 @@ import { IntegrationAvatar } from "@homarr/ui";
 
 import { NewIntegrationForm } from "~/app/[locale]/manage/integrations/new/_integration-new-form";
 import type { CreatedIntegrationResult } from "~/app/[locale]/manage/integrations/new/_integration-new-form";
-import { EeroLoginFlow } from "./eero-login-flow";
 import { IntegrationSelectGrid } from "./integration-select-grid";
 import { IntegrationCompletionModal } from "./integration-completion-modal";
 
@@ -90,17 +89,13 @@ export const IntegrationSelectModal = createModal<IntegrationSelectModalProps>((
             <Title order={4}>{getIntegrationName(selectedKind)}</Title>
           </Group>
         </UnstyledButton>
-        {selectedKind === "eero" ? (
-          <EeroLoginFlow onSuccess={handleSuccess} onCancel={handleFormBack} />
-        ) : (
-          <NewIntegrationForm
-            kind={selectedKind}
-            initialUrl={innerProps.initialUrl}
-            initialName={innerProps.initialName}
-            onSuccess={handleSuccess}
-            onCancel={handleFormBack}
-          />
-        )}
+        <NewIntegrationForm
+          kind={selectedKind}
+          initialUrl={innerProps.initialUrl}
+          initialName={innerProps.initialName}
+          onSuccess={handleSuccess}
+          onCancel={handleFormBack}
+        />
       </ScrollArea.Autosize>
     );
   }

@@ -32,7 +32,6 @@ export const widgetRouter = createTRPCRouter({
   options: lazy(() => import("./options").then((mod) => mod.optionsRouter)),
   releases: lazy(() => import("./releases").then((mod) => mod.releasesRouter)),
   networkController: lazy(() => import("./network-controller").then((mod) => mod.networkControllerRouter)),
-  eero: lazy(() => import("./eero").then((mod) => mod.eeroRouter)),
   firewall: lazy(() => import("./firewall").then((mod) => mod.firewallRouter)),
   notifications: lazy(() => import("./notifications").then((mod) => mod.notificationsRouter)),
   timetable: lazy(() => import("./timetable").then((mod) => mod.timetableRouter)),

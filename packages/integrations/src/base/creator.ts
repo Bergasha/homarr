@@ -7,7 +7,6 @@ import { AnchorIntegration } from "../anchor/anchor-integration";
 import { AudiobookshelfIntegration } from "../audiobookshelf/audiobookshelf-integration";
 import { CoolifyIntegration } from "../coolify/coolify-integration";
 import { DashDotIntegration } from "../dashdot/dashdot-integration";
-import { EeroIntegration } from "../eero/eero-integration";
 import { Aria2Integration } from "../download-client/aria2/aria2-integration";
 import { DelugeIntegration } from "../download-client/deluge/deluge-integration";
 import { NzbGetIntegration } from "../download-client/nzbget/nzbget-integration";
@@ -110,7 +109,6 @@ export const integrationCreators = {
   emby: EmbyIntegration,
   nextcloud: NextcloudIntegration,
   unifiController: UnifiControllerIntegration,
-  eero: EeroIntegration,
   opnsense: OPNsenseIntegration,
   ical: ICalIntegration,
   ntfy: NTFYIntegration,

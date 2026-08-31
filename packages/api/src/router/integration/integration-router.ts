@@ -39,7 +39,6 @@ import { mediaRequestOptionsSchema, mediaRequestRequestSchema } from "@homarr/va
 
 import { createOneIntegrationMiddleware } from "../../middlewares/integration";
 import { createTRPCRouter, permissionRequiredProcedure, protectedProcedure, publicProcedure } from "../../trpc";
-import { eeroLoginRouter } from "./eero-login-router";
 import { throwIfActionForbiddenAsync } from "./integration-access";
 import { MissingSecretError, testConnectionAsync } from "./integration-test-connection";
 import { mapTestConnectionError } from "./map-test-connection-error";
@@ -48,7 +47,6 @@ const logger = createLogger({ module: "integrationRouter" });
 const mediaRequestSearchKinds = getIntegrationKindsByCategory("mediaSearch");
 
 export const integrationRouter = createTRPCRouter({
-  eero: eeroLoginRouter,
   getKinds: publicProcedure
     .meta({
       mcp: {
