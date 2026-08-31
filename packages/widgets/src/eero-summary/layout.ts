@@ -10,7 +10,7 @@ interface EeroSummaryLayoutInput {
   options: EeroSummaryOptions;
 }
 
-export type EeroSummarySection = "summary" | "speedtest" | "nodes";
+export type EeroSummarySection = "summary" | "nodes";
 
 export interface EeroSummaryLayout {
   isAdvanced: boolean;
@@ -31,12 +31,9 @@ export const getEeroSummaryLayout = ({
   const wantedSections: EeroSummarySection[] = [
     ...(options.showSummaryCard ? (["summary"] as const) : []),
     ...(options.showNodes ? (["nodes"] as const) : []),
-    ...(options.showSpeedtest ? (["speedtest"] as const) : []),
   ];
 
-  const visibleSections = isCompact
-    ? wantedSections.filter((section) => section === "summary" || section === "speedtest")
-    : wantedSections;
+  const visibleSections = isCompact ? wantedSections.filter((section) => section === "summary") : wantedSections;
 
   return {
     isAdvanced,

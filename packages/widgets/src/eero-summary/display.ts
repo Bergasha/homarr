@@ -1,4 +1,4 @@
-import type { EeroDevice, EeroNetworkSummary, EeroNode, EeroSpeedtestResult } from "@homarr/integrations/types";
+import type { EeroDevice, EeroNetworkSummary, EeroNode } from "@homarr/integrations/types";
 
 export type EeroStatKey = "mesh" | "wan" | "guestNetwork" | "devices";
 
@@ -29,10 +29,3 @@ export const sortEeroNodes = (nodes: EeroNode[]): EeroNode[] =>
 
 export const getDevicesForNode = (devices: EeroDevice[], nodeId: string): EeroDevice[] =>
   devices.filter((device) => device.nodeId === nodeId);
-
-export const formatEeroSpeedValue = (mbps: number | null): string => (mbps === null ? "—" : `${Math.round(mbps)} Mbps`);
-
-export const formatEeroPing = (ms: number | null): string => (ms === null ? "—" : `${Math.round(ms)} ms`);
-
-export const hasEeroSpeedtestResult = (result: EeroSpeedtestResult | null): result is EeroSpeedtestResult =>
-  result !== null && (result.downloadMbps !== null || result.uploadMbps !== null || result.pingMs !== null);

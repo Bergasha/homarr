@@ -4650,8 +4650,7 @@
       },
       "section": {
         "summary": "Network status",
-        "nodes": "Nodes",
-        "speedtest": "Speedtest"
+        "nodes": "Nodes"
       },
       "device": {
         "connectionType": {
@@ -4663,20 +4662,7 @@
         "empty": "No devices found"
       },
       "node": {
-        "gateway": "Gateway",
-        "clients": "{count} clients",
-        "empty": "No nodes found",
-        "backhaul": {
-          "wired": "Wired backhaul",
-          "wireless": "Wireless backhaul"
-        }
-      },
-      "speedtest": {
-        "download": "Download",
-        "upload": "Upload",
-        "ping": "Ping",
-        "lastRun": "Last run {timestamp}",
-        "never": "Never run"
+        "empty": "No nodes found"
       },
       "option": {
         "showSummaryCard": {
@@ -4690,9 +4676,6 @@
         },
         "showNodes": {
           "label": "Show nodes"
-        },
-        "showSpeedtest": {
-          "label": "Show speedtest"
         }
       },
       "empty": {

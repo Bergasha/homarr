@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Card, Group, Modal, SimpleGrid, Stack, Text, UnstyledButton } from "@mantine/core";
-import { IconPlugConnected, IconRouter, IconWifi } from "@tabler/icons-react";
+import { Group, Image, Modal, Stack, Text, UnstyledButton } from "@mantine/core";
 
 import type { EeroDevice, EeroNode } from "@homarr/integrations/types";
 import { useI18n } from "@homarr/translation/client";
@@ -16,6 +15,11 @@ const statusColor: Record<EeroNode["status"], string> = {
   offline: "red",
   unknown: "gray",
 };
+
+// Same icon already used for the eero integration itself (packages/definitions/src/integration.ts)
+// - no dedicated eero-brand icon is available on the dashboard-icons CDN, so this generic router
+// glyph is the closest "looks like a physical node" option without introducing a new asset source.
+const NODE_ICON_URL = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons@master/svg/router.svg";
 
 export function NodesGridSection({
   nodes,
@@ -46,58 +50,40 @@ export function NodesGridSection({
   return (
     <Stack gap={4}>
       <SectionLabel>{t("section.nodes")}</SectionLabel>
-      <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="xs">
+      <Group gap={6}>
         {sortEeroNodes(nodes).map((node) => (
-          <UnstyledButton key={node.id} onClick={() => setOpenNodeId(node.id)}>
-            <Card withBorder p="xs" radius="md" bg="transparent">
-              <Stack gap={4}>
-                <Group gap={4} wrap="nowrap" justify="space-between">
-                  <Group gap={4} wrap="nowrap" miw={0}>
-                    <IconRouter size={14} aria-hidden />
-                    <Text size="sm" fw={600} truncate>
-                      {node.name}
-                    </Text>
-                  </Group>
-                  <span
-                    aria-hidden
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      backgroundColor: `var(--mantine-color-${statusColor[node.status]}-6)`,
-                      flexShrink: 0,
-                    }}
-                  />
-                </Group>
-                <Group gap={4} wrap="wrap">
-                  {node.isGateway && (
-                    <Badge size="xs" variant="light">
-                      {t("node.gateway")}
-                    </Badge>
-                  )}
-                  {node.connectedClientCount !== null && (
-                    <Badge size="xs" variant="outline" color="gray">
-                      {t("node.clients", { count: node.connectedClientCount })}
-                    </Badge>
-                  )}
-                </Group>
-                {!node.isGateway && node.backhaulType !== "unknown" && (
-                  <Group gap={4} wrap="nowrap">
-                    {node.backhaulType === "wired" ? (
-                      <IconPlugConnected size={12} aria-hidden style={{ flexShrink: 0 }} />
-                    ) : (
-                      <IconWifi size={12} aria-hidden style={{ flexShrink: 0 }} />
-                    )}
-                    <Text size="xs" c="dimmed">
-                      {t(`node.backhaul.${node.backhaulType}`)}
-                    </Text>
-                  </Group>
-                )}
-              </Stack>
-            </Card>
+          <UnstyledButton
+            key={node.id}
+            onClick={() => setOpenNodeId(node.id)}
+            title={node.name}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              maxWidth: "100%",
+              padding: "3px 10px 3px 4px",
+              borderRadius: 999,
+              border: `1px solid var(--mantine-color-${node.isGateway ? "blue-light-color" : "default-border"})`,
+              backgroundColor: `var(--mantine-color-${node.isGateway ? "blue-light" : "default"})`,
+            }}
+          >
+            <Image src={NODE_ICON_URL} alt="" w={14} h={14} fit="contain" style={{ flexShrink: 0 }} />
+            <Text size="xs" fw={600} truncate maw={110}>
+              {node.name}
+            </Text>
+            <span
+              aria-hidden
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: `var(--mantine-color-${statusColor[node.status]}-6)`,
+                flexShrink: 0,
+              }}
+            />
           </UnstyledButton>
         ))}
-      </SimpleGrid>
+      </Group>
       <Modal opened={openNode !== null} onClose={() => setOpenNodeId(null)} title={openNode?.name} centered>
         {openNode && (
           <NodeDevicesList

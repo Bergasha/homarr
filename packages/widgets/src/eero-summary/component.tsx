@@ -11,7 +11,6 @@ import { getUsableWidgetQueryData } from "../common/query-state";
 import type { WidgetComponentProps } from "../definition";
 import { getEeroSummaryLayout } from "./layout";
 import { NodesGridSection } from "./sections/nodes-grid";
-import { SpeedtestSection } from "./sections/speedtest-section";
 import { SummaryCardSection } from "./sections/summary-card";
 
 export default function EeroSummaryWidget({
@@ -29,7 +28,7 @@ export default function EeroSummaryWidget({
   );
 
   const layout = getEeroSummaryLayout({ width, height, displayMode, options });
-  const needsDetails = layout.visibleSections.some((section) => section === "nodes" || section === "speedtest");
+  const needsDetails = layout.visibleSections.some((section) => section === "nodes");
   const detailsQuery = clientApi.widget.eero.details.useQuery({ integrationIds }, { enabled: needsDetails });
   const detailsResults = needsDetails
     ? isAdvanced
@@ -83,7 +82,6 @@ export default function EeroSummaryWidget({
 
   const sectionContent: Record<(typeof layout.visibleSections)[number], ReactNode> = {
     summary: <SummaryCardSection summary={summary} />,
-    speedtest: <SpeedtestSection result={details?.latestSpeedtest ?? null} />,
     nodes: (
       <NodesGridSection
         nodes={details?.nodes ?? []}

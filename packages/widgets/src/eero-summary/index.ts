@@ -16,7 +16,6 @@ export const { definition, componentLoader } = createWidgetDefinition("eeroSumma
         showNodes: factory.switch({ defaultValue: true }),
         showOfflineDevices: factory.switch({ defaultValue: false }),
         deviceLimit: factory.number({ defaultValue: 20, validate: z.number().int().min(1).max(100) }),
-        showSpeedtest: factory.switch({ defaultValue: true }),
       }),
       {
         showOfflineDevices: { shouldHide: (options) => !options.showNodes },
