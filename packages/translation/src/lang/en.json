@@ -4650,7 +4650,7 @@
       },
       "section": {
         "summary": "Network status",
-        "nodes": "Nodes"
+        "nodes": "eero"
       },
       "device": {
         "connectionType": {

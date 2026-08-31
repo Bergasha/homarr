@@ -68,7 +68,7 @@ export function NodesGridSection({
             }}
           >
             <Image src={NODE_ICON_URL} alt="" w={14} h={14} fit="contain" style={{ flexShrink: 0 }} />
-            <Text size="xs" fw={600} truncate maw={110}>
+            <Text size="xs" fw={600} truncate w={90}>
               {node.name}
             </Text>
             <span
