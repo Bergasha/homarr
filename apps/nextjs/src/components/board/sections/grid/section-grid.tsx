@@ -34,6 +34,10 @@ interface SectionGridProps {
   section: Exclude<Section, { kind: "container" }> | ContainerSectionItem;
   columnCount: number;
   requestedRowCount?: number;
+  /** Forces the visible viewport to this many rows, bypassing the scrollable/content-grow formula
+   * below entirely - used when a container is collapsed, so its own inner content always agrees
+   * with the collapsed size its parent already allocated for it. */
+  viewportRowCountOverride?: number;
   label: string;
   railPlacement?: "main" | "left" | "right";
   className?: string;
@@ -43,6 +47,7 @@ export const SectionGrid = ({
   section,
   columnCount,
   requestedRowCount = 0,
+  viewportRowCountOverride,
   label,
   railPlacement = "main",
   className,
@@ -69,6 +74,8 @@ export const SectionGrid = ({
     () =>
       [...items, ...innerSections].map((item): SectionGridPlacement => {
         const minimum = item.type === "section" ? minimumBySectionId.get(item.id) : undefined;
+        const isNonScrollableContainer = item.type === "section" && !item.options.scrollable;
+        const height = isNonScrollableContainer && minimum ? Math.max(item.height, minimum.height) : item.height;
         return normalizeGridPlacement(
           {
             id: item.id,
@@ -76,7 +83,7 @@ export const SectionGrid = ({
             x: item.xOffset,
             y: item.yOffset,
             w: item.width,
-            h: item.height,
+            h: height,
             minW: minimum?.width,
             minH: minimum?.height,
           },
@@ -158,7 +165,8 @@ export const SectionGrid = ({
   // A scrollable container isn't forced to grow with its content - it scrolls internally instead
   // of expanding to fit every widget, so its viewport height is capped independently of rowCount.
   const isScrollableContainer = section.kind === "container" && section.options.scrollable;
-  const viewportRowCount = isScrollableContainer ? Math.max(requestedRowCount, 1) : rowCount;
+  const viewportRowCount =
+    viewportRowCountOverride ?? (isScrollableContainer ? Math.max(requestedRowCount, 1) : rowCount);
   // A container's own visible card is inset from its allocated board cell by the board's
   // standard per-item gap (see the base, non-container `.staticItem[data-type="item"] >
   // .contentMount` rule in section-grid.module.css - a container is placed as an "item" like
