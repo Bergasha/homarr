@@ -208,27 +208,40 @@ export const SectionGrid = ({
   // describe the real visible card size in both cases (they equal the non-scrollable values when
   // rowCount and viewportRowCount are the same), so use those instead.
   const fullViewportHeight = getLogicalGridSize(viewportRowCount);
-  // A uniform zoom is required (not a non-uniform transform scale(x, y)) - --board-canvas-ui-scale
-  // is a single scalar that every icon/text/custom-CSS size compensation in the app multiplies
-  // by, so a non-uniform stretch can never be captured by it correctly. That means one axis can
-  // be left with a small amount of unfilled slack when width/height need different ratios to
-  // exactly fit - centered below so it's even on both sides rather than left-aligned.
   // logicalWidth/viewportHeight can go non-positive for a narrow (e.g. single-column) container
   // on a heavily zoomed-out board, where outerCardInset (which grows as canvasScale shrinks) can
-  // exceed the container's own un-inset size. Floor the scale well above 0 so it can never reach
-  // zero or negative - combinedUiScale divides by this value, and this value is also used as
-  // zoom directly, both of which break (Infinity/NaN, or invalid/collapsed content) otherwise.
-  const containerContentScale =
-    section.kind === "container" && fullGridWidth > 0 && fullViewportHeight > 0
-      ? Math.max(0.01, Math.min(logicalWidth / fullGridWidth, viewportHeight / fullViewportHeight, 1))
+  // exceed the container's own un-inset size. Floor scales well above 0 so they can never reach
+  // zero or negative - combinedUiScale divides by them, and they're also used as zoom/transform
+  // directly, both of which break (Infinity/NaN, or invalid/collapsed content) otherwise.
+  // A scrollable container can legitimately hold more content than its visible viewport (that's
+  // the point of scrolling), so forcing its content to exactly fill the viewport on both axes
+  // isn't meaningful the same way - keep a single uniform zoom there, centered on whichever axis
+  // has slack, exactly as before. A non-scrollable container's declared size *is* meant to be
+  // fully occupied, so stretch each axis independently rather than uniformly, trading a uniform
+  // --board-canvas-ui-scale compensation (below) for zero dead space - the icon/text scale ends up
+  // an approximation of two different real ratios rather than exactly matching either one, which
+  // in practice reads as unnoticeable next to a visible empty gap.
+  const widthScale =
+    section.kind === "container" && fullGridWidth > 0 ? Math.max(0.01, Math.min(logicalWidth / fullGridWidth, 1)) : 1;
+  const heightScale =
+    section.kind === "container" && fullViewportHeight > 0
+      ? Math.max(0.01, Math.min(viewportHeight / fullViewportHeight, 1))
       : 1;
+  // Scrollable containers use one uniform zoom (both axes scaled together, centered on whichever
+  // axis has slack); non-scrollable containers stretch each axis independently instead so their
+  // declared size is always fully occupied, with no centered dead space.
+  const usesNonUniformStretch = section.kind === "container" && !isScrollableContainer;
+  const uniformContentScale = Math.min(widthScale, heightScale);
   // Compute the combined value in JS rather than a CSS calc() referencing the existing
   // --board-canvas-ui-scale: custom properties declared on the *same* element don't have a
   // sequential/temporal order the way normal variables do, so any calc() on this element that
   // both reads and writes --board-canvas-ui-scale (even indirectly, through another property)
   // is a circular reference - CSS invalidates the whole group rather than using "the old value",
   // silently breaking every icon/text/custom-CSS size that compensates off it for descendants.
-  const combinedUiScale = calculateBoardUiScale(canvasScale) / containerContentScale;
+  // The non-uniform case has no single "correct" ratio to compensate for - use the geometric mean
+  // of the two axis scales, which minimizes the worst-case error on either axis.
+  const effectiveContentScale = usesNonUniformStretch ? Math.sqrt(widthScale * heightScale) : uniformContentScale;
+  const combinedUiScale = calculateBoardUiScale(canvasScale) / effectiveContentScale;
   // A collapsed container's compact coordinates are display-only. Its own
   // nested grid stays inactive until an explicit edit interaction expands it.
   const isInteractionDisabled = section.kind === "container" && collapsedSectionIds.has(section.id);
@@ -325,6 +338,16 @@ export const SectionGrid = ({
             width: logicalWidth,
             height: `var(--board-grid-drag-height, ${viewportHeight}px)`,
             marginTop: collapsibleHeaderInset || undefined,
+            // transform: scale() (used below for non-scrollable containers) paints outside this
+            // box's own layout size rather than shrinking it, unlike zoom - clip here to guard
+            // against sub-pixel rounding in widthScale/heightScale leaking a sliver past this
+            // already-correctly-sized card. Only when actually stretching (scale < 1 on some
+            // axis) - otherwise leave the base class's own overflow: visible in place, since a
+            // widget's hover/edit overlays rely on being able to escape the container's box
+            // (e.g. a settings button positioned partly outside its own widget), and clipping
+            // unconditionally would cut those off even when no stretch is happening at all.
+            // Scrollable containers keep the base class's own overflow-y: auto untouched.
+            overflow: usesNonUniformStretch && (widthScale < 1 || heightScale < 1) ? "clip" : undefined,
             "--board-item-radius": `var(--mantine-radius-${board.itemRadius})`,
           } as CSSProperties
         }
@@ -342,9 +365,18 @@ export const SectionGrid = ({
             {
               width: fullGridWidth,
               height: fullGridHeight,
-              zoom: containerContentScale,
-              margin: containerContentScale < 1 ? "0 auto" : undefined,
-              ...(containerContentScale < 1 ? { "--board-canvas-ui-scale": combinedUiScale } : {}),
+              ...(usesNonUniformStretch
+                ? {
+                    transform: `scale(${widthScale}, ${heightScale})`,
+                    transformOrigin: "top left",
+                  }
+                : {
+                    zoom: uniformContentScale,
+                    margin: uniformContentScale < 1 ? "0 auto" : undefined,
+                  }),
+              ...((usesNonUniformStretch ? widthScale < 1 || heightScale < 1 : uniformContentScale < 1)
+                ? { "--board-canvas-ui-scale": combinedUiScale }
+                : {}),
             } as CSSProperties
           }
           data-grid-section-id={section.id}
