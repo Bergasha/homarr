@@ -42,6 +42,9 @@ export const getEeroSummaryLayout = ({
     isAdvanced,
     isCompact,
     visibleSections,
-    deviceRowLimit: isAdvanced ? options.deviceLimit : Math.min(options.deviceLimit, 4),
+    // Only ever consumed by the click-to-open node devices modal, which is a full popup with
+    // its own scrollable area regardless of the widget tile's own display mode - so it should
+    // always respect the user's configured limit, not the tile's compact/advanced state.
+    deviceRowLimit: options.deviceLimit,
   };
 };
