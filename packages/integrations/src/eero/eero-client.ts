@@ -2,7 +2,7 @@ import { ResponseError } from "@homarr/common/server";
 import { fetchWithTrustedCertificatesAsync } from "@homarr/core/infrastructure/http";
 import { createLogger } from "@homarr/core/infrastructure/logs";
 
-import { toEeroStatus } from "./eero-status";
+import { toEeroStatusWithFallback } from "./eero-status";
 
 import {
   eeroDeviceItemSchema,
@@ -136,14 +136,17 @@ export class EeroClient {
         return {
           id: extractTrailingSegment(parsed.url) ?? parsed.serial_number ?? parsed.nickname ?? crypto.randomUUID(),
           name: parsed.nickname ?? parsed.location ?? "Unknown node",
-          status: toEeroStatus(parsed.status),
+          status: toEeroStatusWithFallback(parsed.status, parsed.connected),
           isGateway: parsed.is_gateway ?? false,
           connectedClientCount: parsed.connected_clients_count ?? null,
           model: parsed.model_number ?? null,
           backhaulType: toBackhaulType(parsed.wired, parsed.backhaul?.type),
         };
       });
-      logger.debug("Parsed eero nodes", { nodeIds: nodes.map((node) => node.id) });
+      logger.warn("Parsed eero nodes", {
+        nodes: nodes.map((node) => ({ id: node.id, status: node.status })),
+        rawStatuses: rawNodes.map((node) => (node as { status?: unknown }).status),
+      });
       return nodes;
     } catch (error) {
       logger.warn("Nodes list unavailable", { error });

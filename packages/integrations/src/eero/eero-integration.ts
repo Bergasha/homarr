@@ -11,12 +11,16 @@ import type { EeroNetworkDetails, EeroNetworkSummary, EeroSpeedtestResult } from
 
 const NETWORK_ID_TTL_SECONDS = 60 * 60;
 const SPEEDTEST_CACHE_TTL_SECONDS = 60 * 60 * 6;
+const SPEEDTEST_PENDING_TTL_SECONDS = 60;
 
 @HandleIntegrationErrors([])
 export class EeroIntegration extends Integration implements EeroSummaryIntegration {
   private readonly client = new EeroClient(EERO_BASE_URL);
   private readonly networkIdStore = createSessionStore<{ networkId: string }>(this.integration);
   private readonly speedtestStore = createSessionStore<EeroSpeedtestResult>({ id: `${this.integration.id}:speedtest` });
+  private readonly speedtestPendingStore = createSessionStore<{ startedAt: string }>({
+    id: `${this.integration.id}:speedtest-pending`,
+  });
 
   protected async testingAsync(_input: IntegrationTestingInput): Promise<TestingResult> {
     try {
@@ -91,18 +95,29 @@ export class EeroIntegration extends Integration implements EeroSummaryIntegrati
     return networkId;
   }
 
-  /**
-   * Runs eero's speedtest at most once per SPEEDTEST_CACHE_TTL_SECONDS so the widget can show a
-   * "last result" without a manual trigger, without hammering an endpoint that can take 10-30s+.
-   */
   private async resolveLatestSpeedtestAsync(userToken: string, networkId: string): Promise<EeroSpeedtestResult | null> {
     const cached = await this.speedtestStore.getAsync();
     if (cached) return cached;
 
-    const result = await this.client.runSpeedtestAsync(userToken, networkId);
-    if (result) {
-      await this.speedtestStore.setAsync(result, { ttlSeconds: SPEEDTEST_CACHE_TTL_SECONDS });
+    const pending = await this.speedtestPendingStore.getAsync();
+    if (!pending) {
+      await this.speedtestPendingStore.setAsync(
+        { startedAt: new Date().toISOString() },
+        { ttlSeconds: SPEEDTEST_PENDING_TTL_SECONDS },
+      );
+      void this.runSpeedtestInBackgroundAsync(userToken, networkId);
     }
-    return result;
+    return null;
+  }
+
+  private async runSpeedtestInBackgroundAsync(userToken: string, networkId: string): Promise<void> {
+    try {
+      const result = await this.client.runSpeedtestAsync(userToken, networkId);
+      if (result) {
+        await this.speedtestStore.setAsync(result, { ttlSeconds: SPEEDTEST_CACHE_TTL_SECONDS });
+      }
+    } catch {
+      /* empty */
+    }
   }
 }

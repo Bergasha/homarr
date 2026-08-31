@@ -29,7 +29,7 @@ export function NodeDevicesList({
   }
 
   return (
-    <ScrollArea.Autosize mah={320}>
+    <ScrollArea h="min(60vh, 420px)" type="auto" offsetScrollbars>
       <Stack gap={2}>
         {visibleDevices.map((device) => (
           <Group key={device.id} justify="space-between" wrap="nowrap" gap="xs" p={4}>
@@ -56,6 +56,6 @@ export function NodeDevicesList({
           </Group>
         ))}
       </Stack>
-    </ScrollArea.Autosize>
+    </ScrollArea>
   );
 }

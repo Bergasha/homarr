@@ -30,8 +30,8 @@ export const getEeroSummaryLayout = ({
 
   const wantedSections: EeroSummarySection[] = [
     ...(options.showSummaryCard ? (["summary"] as const) : []),
-    ...(options.showSpeedtest ? (["speedtest"] as const) : []),
     ...(options.showNodes ? (["nodes"] as const) : []),
+    ...(options.showSpeedtest ? (["speedtest"] as const) : []),
   ];
 
   const visibleSections = isCompact

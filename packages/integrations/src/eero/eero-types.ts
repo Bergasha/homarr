@@ -78,6 +78,7 @@ export const eeroNodeItemSchema = z
     location: z.string().optional(),
     nickname: z.string().optional(),
     status: z.string().optional(),
+    connected: z.boolean().optional(),
     is_gateway: z.boolean().optional(),
     connected_clients_count: z.number().optional(),
     model_number: z.string().optional(),
