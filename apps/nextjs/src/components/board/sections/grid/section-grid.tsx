@@ -227,10 +227,13 @@ export const SectionGrid = ({
     section.kind === "container" && fullViewportHeight > 0
       ? Math.max(0.01, Math.min(viewportHeight / fullViewportHeight, 1))
       : 1;
-  // Scrollable containers use one uniform zoom (both axes scaled together, centered on whichever
-  // axis has slack); non-scrollable containers stretch each axis independently instead so their
-  // declared size is always fully occupied, with no centered dead space.
-  const usesNonUniformStretch = section.kind === "container" && !isScrollableContainer;
+  // Scrollable containers, and non-scrollable ones that haven't opted into fillContent, use one
+  // uniform zoom (both axes scaled together, centered on whichever axis has slack). A non-
+  // scrollable container with fillContent enabled stretches each axis independently instead so
+  // its declared size is always fully occupied, with no centered dead space - opt-in since that
+  // trades a possible non-uniform visual skew (most noticeable on icons/logos) for the gap.
+  const usesNonUniformStretch =
+    section.kind === "container" && !isScrollableContainer && section.options.fillContent;
   const uniformContentScale = Math.min(widthScale, heightScale);
   // Compute the combined value in JS rather than a CSS calc() referencing the existing
   // --board-canvas-ui-scale: custom properties declared on the *same* element don't have a

@@ -1995,6 +1995,10 @@
         "label": "Scrollable",
         "description": "Keep this container at its set size and scroll its contents instead of growing to fit them."
       },
+      "fillContent": {
+        "label": "Fill container completely",
+        "description": "Stretch content to fill this container with no gap, instead of leaving empty space when its shape doesn't perfectly match. May slightly skew icons or logos."
+      },
       "autoExpand": {
         "label": "Auto-expand when active",
         "description": "Automatically reveal this container when a widget inside it goes active, and hide it again once it's not."
