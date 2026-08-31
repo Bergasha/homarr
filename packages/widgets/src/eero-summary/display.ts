@@ -1,22 +1,4 @@
-import type { EeroDevice, EeroNetworkSummary, EeroNode } from "@homarr/integrations/types";
-
-export type EeroStatKey = "mesh" | "wan" | "guestNetwork" | "devices";
-
-export interface EeroStat {
-  key: EeroStatKey;
-  status: "online" | "offline" | "unknown";
-}
-
-export const getEeroStats = (summary: EeroNetworkSummary): EeroStat[] => [
-  { key: "mesh", status: summary.meshStatus },
-  { key: "wan", status: summary.wanStatus },
-  {
-    key: "guestNetwork",
-    status: summary.guestNetworkEnabled === null ? "unknown" : summary.guestNetworkEnabled ? "online" : "offline",
-  },
-];
-
-export const formatEeroDeviceCount = (count: number | null) => (count === null ? "—" : count.toString());
+import type { EeroDevice, EeroNode } from "@homarr/integrations/types";
 
 export const sortEeroDevices = (devices: EeroDevice[], showOffline: boolean, limit: number): EeroDevice[] =>
   devices
@@ -29,3 +11,6 @@ export const sortEeroNodes = (nodes: EeroNode[]): EeroNode[] =>
 
 export const getDevicesForNode = (devices: EeroDevice[], nodeId: string): EeroDevice[] =>
   devices.filter((device) => device.nodeId === nodeId);
+
+export const getOfflineNodeCount = (nodes: EeroNode[]): number =>
+  nodes.filter((node) => node.status !== "online").length;

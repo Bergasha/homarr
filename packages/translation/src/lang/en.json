@@ -4642,15 +4642,11 @@
       }
     },
     "eeroSummary": {
-      "card": {
-        "mesh": "Mesh",
-        "wan": "WAN",
-        "guestNetwork": "Guest network",
-        "devices": "Devices"
-      },
-      "section": {
-        "summary": "Network status",
-        "nodes": "eero"
+      "title": "eero",
+      "subtitle": "Network overview",
+      "status": {
+        "allOnline": "All online",
+        "nOffline": "{count} offline"
       },
       "device": {
         "connectionType": {
@@ -4662,11 +4658,17 @@
         "empty": "No devices found"
       },
       "node": {
-        "empty": "No nodes found"
+        "empty": "No nodes found",
+        "deviceCount": "{count} devices",
+        "devicesConnected": "{count} devices connected",
+        "backhaul": {
+          "wired": "Wired backhaul",
+          "wireless": "WiFi backhaul"
+        }
       },
       "option": {
         "showSummaryCard": {
-          "label": "Show network status summary"
+          "label": "Show network overview header"
         },
         "showOfflineDevices": {
           "label": "Show offline devices in node popups"

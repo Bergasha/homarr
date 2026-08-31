@@ -10,8 +10,8 @@ import { IntegrationErrorIndicator } from "../common/integration-error-indicator
 import { getUsableWidgetQueryData } from "../common/query-state";
 import type { WidgetComponentProps } from "../definition";
 import { getEeroSummaryLayout } from "./layout";
+import { NetworkOverviewHeader } from "./sections/network-header";
 import { NodesGridSection } from "./sections/nodes-grid";
-import { SummaryCardSection } from "./sections/summary-card";
 
 export default function EeroSummaryWidget({
   integrationIds,
@@ -65,8 +65,6 @@ export default function EeroSummaryWidget({
     );
   }
 
-  const summary = firstSummary.summary;
-
   if (layout.visibleSections.length === 0) {
     return (
       <Stack h="100%" gap={0}>
@@ -81,7 +79,9 @@ export default function EeroSummaryWidget({
   }
 
   const sectionContent: Record<(typeof layout.visibleSections)[number], ReactNode> = {
-    summary: <SummaryCardSection summary={summary} />,
+    // Only the sections that need node details ("nodes" itself) fetch them - pass an empty array
+    // here otherwise so the header's badge simply doesn't render rather than firing an extra query.
+    summary: <NetworkOverviewHeader nodes={needsDetails ? (details?.nodes ?? []) : []} />,
     nodes: (
       <NodesGridSection
         nodes={details?.nodes ?? []}
