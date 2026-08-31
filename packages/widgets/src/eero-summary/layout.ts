@@ -17,6 +17,7 @@ export interface EeroSummaryLayout {
   isCompact: boolean;
   visibleSections: EeroSummarySection[];
   deviceRowLimit: number;
+  nodeColumns: number;
 }
 
 export const getEeroSummaryLayout = ({
@@ -35,6 +36,11 @@ export const getEeroSummaryLayout = ({
 
   const visibleSections = isCompact ? wantedSections.filter((section) => section === "summary") : wantedSections;
 
+  // Node cards need real room (icon + name + device badge + backhaul row) to stay legible -
+  // driven off the widget's own actual pixel width, not Mantine's SimpleGrid breakpoint props,
+  // which key off viewport width and don't shrink correctly for a narrow widget on a wide screen.
+  const nodeColumns = width < 200 ? 1 : width < 340 ? 2 : 3;
+
   return {
     isAdvanced,
     isCompact,
@@ -43,5 +49,6 @@ export const getEeroSummaryLayout = ({
     // its own scrollable area regardless of the widget tile's own display mode - so it should
     // always respect the user's configured limit, not the tile's compact/advanced state.
     deviceRowLimit: options.deviceLimit,
+    nodeColumns,
   };
 };

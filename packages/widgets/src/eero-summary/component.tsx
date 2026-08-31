@@ -88,24 +88,26 @@ export default function EeroSummaryWidget({
         devices={details?.devices ?? []}
         showOfflineDevices={options.showOfflineDevices}
         deviceLimit={layout.deviceRowLimit}
+        columns={layout.nodeColumns}
       />
     ),
   };
 
   if (!isAdvanced) {
+    // The node cards can need more room than a small/medium board tile actually has (icon + name
+    // + device badge + backhaul row per node) - scroll internally instead of Center-ing content
+    // into a fixed h="100%" box, which would silently clip or overlap instead of ever showing it.
     return (
-      <Box h="100%" p="sm" pos="relative">
+      <ScrollArea h="100%" p="sm" pos="relative">
         <Box pos="absolute" top={4} right={8} style={{ zIndex: 2 }}>
           {queryIndicators}
         </Box>
-        <Center h="100%">
-          <Stack gap="sm" w="100%">
-            {layout.visibleSections.map((section) => (
-              <Box key={section}>{sectionContent[section]}</Box>
-            ))}
-          </Stack>
-        </Center>
-      </Box>
+        <Stack gap="sm" w="100%" justify="center" mih="100%">
+          {layout.visibleSections.map((section) => (
+            <Box key={section}>{sectionContent[section]}</Box>
+          ))}
+        </Stack>
+      </ScrollArea>
     );
   }
 

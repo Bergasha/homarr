@@ -22,11 +22,13 @@ export function NodesGridSection({
   devices,
   showOfflineDevices,
   deviceLimit,
+  columns,
 }: {
   nodes: EeroNode[];
   devices: EeroDevice[];
   showOfflineDevices: boolean;
   deviceLimit: number;
+  columns: number;
 }) {
   const t = useI18n("widget.eeroSummary");
   const [openNodeId, setOpenNodeId] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export function NodesGridSection({
 
   return (
     <Stack gap="sm">
-      <SimpleGrid cols={{ base: 2, xs: 3 }} spacing="sm">
+      <SimpleGrid cols={columns} spacing="sm">
         {sortEeroNodes(nodes).map((node) => (
           <UnstyledButton
             key={node.id}
