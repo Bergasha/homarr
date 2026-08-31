@@ -78,7 +78,6 @@ export const containerSectionOptionsDefaults = {
   collapsible: false,
   showOpenAll: false,
   scrollable: false,
-  fillContent: false,
   autoExpand: containerAutoExpandOptionsDefaults,
 } as const;
 
@@ -91,13 +90,6 @@ export const containerSectionOptionsSchema = z
     collapsible: z.boolean().default(containerSectionOptionsDefaults.collapsible),
     showOpenAll: z.boolean().default(containerSectionOptionsDefaults.showOpenAll),
     scrollable: z.boolean().default(containerSectionOptionsDefaults.scrollable),
-    // Only relevant while !scrollable - a non-scrollable container's content normally uses a
-    // uniform (both-axes-together) zoom to fit its card, which can leave a centered dead-space
-    // gap when the container's cell-grid aspect ratio doesn't match its card's aspect ratio.
-    // Enabling this stretches each axis independently instead to close that gap completely, at
-    // the cost of a possible slight, non-uniform visual skew (most noticeable on icons/logos) -
-    // opt-in per container rather than a default, since that tradeoff isn't always wanted.
-    fillContent: z.boolean().default(containerSectionOptionsDefaults.fillContent),
     autoExpand: containerAutoExpandOptionsSchema,
   })
   .default(containerSectionOptionsDefaults);

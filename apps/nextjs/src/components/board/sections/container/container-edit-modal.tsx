@@ -86,13 +86,6 @@ export const ContainerEditModal = createModal<ModalProps>(({ actions, innerProps
           description={tSection("option.scrollable.description")}
           {...form.getInputProps("scrollable", { type: "checkbox" })}
         />
-        {!form.values.scrollable && (
-          <Switch
-            label={tSection("option.fillContent.label")}
-            description={tSection("option.fillContent.description")}
-            {...form.getInputProps("fillContent", { type: "checkbox" })}
-          />
-        )}
         <Switch
           label={tSection("option.autoExpand.label")}
           description={tSection("option.autoExpand.description")}
