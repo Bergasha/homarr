@@ -272,6 +272,7 @@ const SystemCharts = ({
               hasShadow={options.hasShadow}
               labelDisplayMode={labelDisplayMode}
               advanced={isAdvanced}
+              height={chartHeight}
             />
           </Box>
         )}
@@ -283,6 +284,7 @@ const SystemCharts = ({
               hasShadow={options.hasShadow}
               labelDisplayMode={labelDisplayMode}
               advanced={isAdvanced}
+              height={chartHeight}
             />
           </Box>
         )}
@@ -293,6 +295,7 @@ const SystemCharts = ({
               hasShadow={options.hasShadow}
               labelDisplayMode={labelDisplayMode}
               advanced={isAdvanced}
+              height={chartHeight}
             />
           </Box>
         )}
@@ -305,6 +308,7 @@ const SystemCharts = ({
                 hasShadow={options.hasShadow}
                 labelDisplayMode={labelDisplayMode}
                 advanced={isAdvanced}
+                height={chartHeight}
               />
               <NetworkTrafficChart
                 usageOverTime={networkItems.map((network) => network.up)}
@@ -312,6 +316,7 @@ const SystemCharts = ({
                 hasShadow={options.hasShadow}
                 labelDisplayMode={labelDisplayMode}
                 advanced={isAdvanced}
+                height={chartHeight}
               />
             </Group>
           ) : (
@@ -321,6 +326,7 @@ const SystemCharts = ({
                 hasShadow={options.hasShadow}
                 labelDisplayMode={labelDisplayMode}
                 advanced={isAdvanced}
+                height={chartHeight}
               />
             </Box>
           ))}

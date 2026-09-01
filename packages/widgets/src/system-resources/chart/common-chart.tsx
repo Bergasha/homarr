@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { AreaChartSeries } from "@mantine/charts";
 import { AreaChart, LineChart } from "@mantine/charts";
 import { Card, Center, Group, Stack, Text, Tooltip, useComputedColorScheme, useMantineTheme } from "@mantine/core";
-import { useElementSize, useHover, useMergedRef } from "@mantine/hooks";
+import { useHover, useMergedRef } from "@mantine/hooks";
 import type { YAxisProps } from "recharts";
 
 import { useRequiredBoard } from "@homarr/boards/context";
@@ -12,6 +12,7 @@ import { zoomCompensatedSize } from "@homarr/ui";
 import type { TablerIcon } from "@homarr/ui";
 
 import type { LabelDisplayModeOption } from "..";
+import { useZoomStableHeight } from "./use-zoom-stable-height";
 
 export const CommonChart = ({
   data,
@@ -25,6 +26,7 @@ export const CommonChart = ({
   lastValue,
   chartType = "line",
   advanced = false,
+  height: targetHeight,
 }: {
   data: Record<string, any>[];
   dataKey: string;
@@ -40,13 +42,16 @@ export const CommonChart = ({
   lastValue?: string;
   chartType?: "line" | "area";
   advanced?: boolean;
+  // The caller's intended (pre-zoom, logical) pixel height for this chart - see
+  // use-zoom-stable-height.ts for why this can't just be measured off the DOM directly.
+  height: number;
 }) => {
-  const { ref: elementSizeRef, height } = useElementSize();
+  const { ref: zoomStableRef, height, style: zoomStableStyle } = useZoomStableHeight(targetHeight);
   const theme = useMantineTheme();
   const colorScheme = useComputedColorScheme("light");
   const board = useRequiredBoard();
   const { hovered, ref: hoverRef } = useHover();
-  const ref = useMergedRef(elementSizeRef, hoverRef);
+  const ref = useMergedRef(zoomStableRef, hoverRef);
 
   // Cap the compact card's alpha so it stays a translucent overlay instead of a flat
   // opaque box at higher board opacity settings, matching the rest of the board's theme.
@@ -91,9 +96,9 @@ export const CommonChart = ({
     <Tooltip.Floating label={resolvedTooltipLabel} disabled={data.length <= 1 || !resolvedTooltipLabel}>
       <Card
         ref={ref}
-        h={"100%"}
+        h={height}
         pos={"relative"}
-        style={cardStyle}
+        style={{ ...cardStyle, ...zoomStableStyle }}
         p={0}
         bg={backgroundColor}
         radius={board.itemRadius}
