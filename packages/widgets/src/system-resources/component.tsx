@@ -238,8 +238,13 @@ const SystemCharts = ({
   const chartColumns = useMemo(() => (isAdvanced ? getAdvancedChartColumns(width) : 1), [isAdvanced, width]);
   const compactChartGap = 8;
   const compactRowHeight = 56;
+  // Advanced mode's charts wrap across chartColumns, so the available height needs dividing by
+  // row count (not chart count) - a fixed 110px here previously ignored the widget's actual
+  // height entirely, wasting space on a tall focus view and never adapting to a short one.
+  const advancedChartGap = 10; // matches the Stack/SimpleGrid "xs" spacing token used below
+  const chartRows = Math.max(1, Math.ceil(chartCount / chartColumns));
   const chartHeight = isAdvanced
-    ? 110
+    ? Math.max(90, Math.floor((height - Math.max(0, chartRows - 1) * advancedChartGap) / chartRows))
     : Math.max(
         28,
         Math.min(compactRowHeight, (height - Math.max(0, chartCount - 1) * compactChartGap) / Math.max(1, chartCount)),
