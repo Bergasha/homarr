@@ -10,13 +10,11 @@ export const SystemResourceCPUChart = ({
   hasShadow,
   labelDisplayMode,
   advanced = false,
-  height,
 }: {
   cpuUsageOverTime: number[];
   hasShadow: boolean;
   labelDisplayMode: LabelDisplayModeOption;
   advanced?: boolean;
-  height: number;
 }) => {
   const chartData = cpuUsageOverTime.map((usage, index) => ({ index, usage }));
 
@@ -37,7 +35,6 @@ export const SystemResourceCPUChart = ({
       yAxisProps={{ domain: [0, 100] }}
       labelDisplayMode={labelDisplayMode}
       advanced={advanced}
-      height={height}
       tooltipLabel={(index) => `${Math.round(cpuUsageOverTime[index] ?? 0)}%`}
     />
   );

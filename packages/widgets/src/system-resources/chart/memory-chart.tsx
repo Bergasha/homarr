@@ -12,14 +12,12 @@ export const SystemResourceMemoryChart = ({
   hasShadow,
   labelDisplayMode,
   advanced = false,
-  height,
 }: {
   memoryUsageOverTime: number[];
   totalCapacityInBytes: number;
   hasShadow: boolean;
   labelDisplayMode: LabelDisplayModeOption;
   advanced?: boolean;
-  height: number;
 }) => {
   const chartData = memoryUsageOverTime.map((usage, index) => ({
     index,
@@ -56,7 +54,6 @@ export const SystemResourceMemoryChart = ({
       yAxisProps={{ domain: [0, totalCapacityInBytes] }}
       lastValue={percentageUsed !== undefined ? `${Math.round(percentageUsed * 100)}%` : undefined}
       chartType={hasShadow ? "area" : "line"}
-      height={height}
       tooltipLabel={tooltipLabel}
     />
   );

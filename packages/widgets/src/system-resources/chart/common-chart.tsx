@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { AreaChartSeries } from "@mantine/charts";
 import { AreaChart, LineChart } from "@mantine/charts";
 import { Card, Center, Group, Stack, Text, Tooltip, useComputedColorScheme, useMantineTheme } from "@mantine/core";
-import { useHover, useMergedRef } from "@mantine/hooks";
+import { useElementSize, useHover, useMergedRef } from "@mantine/hooks";
 import type { YAxisProps } from "recharts";
 
 import { useRequiredBoard } from "@homarr/boards/context";
@@ -12,7 +12,6 @@ import { zoomCompensatedSize } from "@homarr/ui";
 import type { TablerIcon } from "@homarr/ui";
 
 import type { LabelDisplayModeOption } from "..";
-import { useZoomStableHeight } from "./use-zoom-stable-height";
 
 export const CommonChart = ({
   data,
@@ -26,7 +25,6 @@ export const CommonChart = ({
   lastValue,
   chartType = "line",
   advanced = false,
-  height: targetHeight,
 }: {
   data: Record<string, any>[];
   dataKey: string;
@@ -42,16 +40,13 @@ export const CommonChart = ({
   lastValue?: string;
   chartType?: "line" | "area";
   advanced?: boolean;
-  // The caller's intended (pre-zoom, logical) pixel height for this chart - see
-  // use-zoom-stable-height.ts for why this can't just be measured off the DOM directly.
-  height: number;
 }) => {
-  const { ref: zoomStableRef, height, style: zoomStableStyle } = useZoomStableHeight(targetHeight);
+  const { ref: elementSizeRef, height } = useElementSize();
   const theme = useMantineTheme();
   const colorScheme = useComputedColorScheme("light");
   const board = useRequiredBoard();
   const { hovered, ref: hoverRef } = useHover();
-  const ref = useMergedRef(zoomStableRef, hoverRef);
+  const ref = useMergedRef(elementSizeRef, hoverRef);
 
   // Cap the compact card's alpha so it stays a translucent overlay instead of a flat
   // opaque box at higher board opacity settings, matching the rest of the board's theme.
@@ -96,13 +91,9 @@ export const CommonChart = ({
     <Tooltip.Floating label={resolvedTooltipLabel} disabled={data.length <= 1 || !resolvedTooltipLabel}>
       <Card
         ref={ref}
+        h={"100%"}
         pos={"relative"}
-        // A literal px string, not Mantine's numeric h prop - h={number} converts through
-        // rem() and multiplies by --mantine-scale (this board's own separate scale-compensation
-        // variable, tied to the same zoom factor), which would double up with the zoom
-        // correction below. A plain pixel string bypasses that conversion entirely, leaving
-        // CSS zoom as the only distortion source left for useZoomStableHeight's math to cancel.
-        style={{ ...cardStyle, ...zoomStableStyle, height: `${height}px` }}
+        style={cardStyle}
         p={0}
         bg={backgroundColor}
         radius={board.itemRadius}

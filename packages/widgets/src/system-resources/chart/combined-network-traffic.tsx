@@ -12,7 +12,6 @@ export const CombinedNetworkTrafficChart = ({
   hasShadow,
   labelDisplayMode,
   advanced = false,
-  height,
 }: {
   usageOverTime: {
     up: number;
@@ -21,7 +20,6 @@ export const CombinedNetworkTrafficChart = ({
   hasShadow: boolean;
   labelDisplayMode: LabelDisplayModeOption;
   advanced?: boolean;
-  height: number;
 }) => {
   const chartData = usageOverTime.map((usage, index) => ({
     index,
@@ -64,7 +62,6 @@ export const CombinedNetworkTrafficChart = ({
       chartType={hasShadow ? "area" : "line"}
       labelDisplayMode={labelDisplayMode}
       advanced={advanced}
-      height={height}
       tooltipLabel={tooltipLabel}
     />
   );
