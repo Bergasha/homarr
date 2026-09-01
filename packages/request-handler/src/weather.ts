@@ -15,15 +15,7 @@ dayjs.extend(timezone);
 const HOURLY_FORECAST_LENGTH = 24;
 const DAILY_FORECAST_LENGTH = 7;
 
-const AUSTRALIA_BOUNDS = { minLatitude: -44, maxLatitude: -9, minLongitude: 112, maxLongitude: 154 };
-
-const isWithinAustralia = (latitude: number, longitude: number): boolean =>
-  latitude >= AUSTRALIA_BOUNDS.minLatitude &&
-  latitude <= AUSTRALIA_BOUNDS.maxLatitude &&
-  longitude >= AUSTRALIA_BOUNDS.minLongitude &&
-  longitude <= AUSTRALIA_BOUNDS.maxLongitude;
-
-const buildForecastUrl = (input: { latitude: number; longitude: number }, models?: string): URL => {
+const buildForecastUrl = (input: { latitude: number; longitude: number }): URL => {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", input.latitude.toString());
   url.searchParams.set("longitude", input.longitude.toString());
@@ -75,32 +67,19 @@ const buildForecastUrl = (input: { latitude: number; longitude: number }, models
   url.searchParams.set("timezone", "auto");
   url.searchParams.set("forecast_hours", HOURLY_FORECAST_LENGTH.toString());
   url.searchParams.set("forecast_days", DAILY_FORECAST_LENGTH.toString());
-  if (models) url.searchParams.set("models", models);
   return url;
 };
 
-const fetchForecastAsync = async (url: URL) => {
+const requestWeatherAsync = async (input: { latitude: number; longitude: number }): Promise<Weather> => {
+  const url = buildForecastUrl(input);
+
   const res = await withTimeoutAsync(async (signal) => {
     return await fetchWithTrustedCertificatesAsync(url.toString(), { signal });
   });
   if (!res.ok) throw new ResponseError(res);
 
   const json: unknown = await res.json();
-  return await atLocationOutput.parseAsync(json);
-};
-
-const requestWeatherAsync = async (input: { latitude: number; longitude: number }): Promise<Weather> => {
-  let weather: z.infer<typeof atLocationOutput>;
-  if (isWithinAustralia(input.latitude, input.longitude)) {
-    try {
-      weather = await fetchForecastAsync(buildForecastUrl(input, "bom_access_global"));
-    } catch {
-      weather = await fetchForecastAsync(buildForecastUrl(input));
-    }
-  } else {
-    weather = await fetchForecastAsync(buildForecastUrl(input));
-  }
-
+  const weather = await atLocationOutput.parseAsync(json);
   const currentLocalDate = weather.current.time.slice(0, 10);
   const matchedCurrentDayIndex = weather.daily.time.indexOf(currentLocalDate);
   const currentDayIndex = matchedCurrentDayIndex < 0 ? 0 : matchedCurrentDayIndex;
