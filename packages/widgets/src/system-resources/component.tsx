@@ -243,23 +243,13 @@ const SystemCharts = ({
   const advancedChartGap = 10; // matches the Stack/SimpleGrid "xs" spacing token used below
   const chartRows = Math.max(1, Math.ceil(chartCount / chartColumns));
   // Compact mode (chartColumns is always 1, so chartRows === chartCount here) previously capped
-  // each row at a fixed 56px regardless of how tall the widget's own tile actually was - the
-  // same class of bug as advanced mode's fixed 110px, just with a ceiling instead of an exact
-  // value. Resizing the tile taller on the board left all that extra height unused.
-  // A single sparkline still only needs so much vertical detail though - letting it grow
-  // unbounded on a very tall tile just produces a mostly-empty box, so cap it well above the
-  // old 56px/110px values (generous enough to look properly filled-in) rather than removing
-  // the ceiling entirely.
-  const maxChartHeight = 220;
+  // each row at a fixed 56px regardless of how tall the widget's own tile actually was. The goal
+  // is for every visible chart row to always fill the tile edge-to-edge (e.g. cpu/memory/network
+  // all visible should divide the full height evenly between exactly those 3 rows, at any tile
+  // size) - so this only floors chartHeight, it never caps it.
   const chartHeight = isAdvanced
-    ? Math.min(
-        maxChartHeight,
-        Math.max(90, Math.floor((height - Math.max(0, chartRows - 1) * advancedChartGap) / chartRows)),
-      )
-    : Math.min(
-        maxChartHeight,
-        Math.max(28, Math.floor((height - Math.max(0, chartCount - 1) * compactChartGap) / Math.max(1, chartCount))),
-      );
+    ? Math.max(90, Math.floor((height - Math.max(0, chartRows - 1) * advancedChartGap) / chartRows))
+    : Math.max(28, Math.floor((height - Math.max(0, chartCount - 1) * compactChartGap) / Math.max(1, chartCount)));
 
   return (
     <Stack gap={isAdvanced ? "xs" : compactChartGap} h="auto" miw={0}>
