@@ -96,9 +96,13 @@ export const CommonChart = ({
     <Tooltip.Floating label={resolvedTooltipLabel} disabled={data.length <= 1 || !resolvedTooltipLabel}>
       <Card
         ref={ref}
-        h={height}
         pos={"relative"}
-        style={{ ...cardStyle, ...zoomStableStyle }}
+        // A literal px string, not Mantine's numeric h prop - h={number} converts through
+        // rem() and multiplies by --mantine-scale (this board's own separate scale-compensation
+        // variable, tied to the same zoom factor), which would double up with the zoom
+        // correction below. A plain pixel string bypasses that conversion entirely, leaving
+        // CSS zoom as the only distortion source left for useZoomStableHeight's math to cancel.
+        style={{ ...cardStyle, ...zoomStableStyle, height: `${height}px` }}
         p={0}
         bg={backgroundColor}
         radius={board.itemRadius}
