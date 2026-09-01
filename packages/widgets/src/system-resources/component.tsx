@@ -239,13 +239,13 @@ const SystemCharts = ({
   const chartGap = isAdvanced ? "xs" : 8;
 
   return (
-    // h={`${height}px`}, not h={height} (a number) - Mantine's h prop only runs numbers through
-    // rem() * var(--mantine-scale) (this board's own separate scale-compensation variable); a
-    // literal pixel *string* passes straight through untouched. Every earlier attempt at this
-    // (including v1's own working version, which only ever used percentage/calc() strings here)
-    // fed a raw number through h= somewhere in this chain and got silently rescaled again on top
-    // of the board's own zoom - see git history for the two failed attempts this ported from.
-    <Stack gap={chartGap} h={`${height}px`} miw={0}>
+    // style={{height}}, not h={`${height}px`} - confirmed by reading Mantine's own rem()
+    // converter (units-converters/rem.ts): it strips a "px" suffix from ANY string before
+    // checking if it's a parseable number, so a pixel string gets the exact same
+    // rem() * var(--mantine-scale) treatment as a raw number. Only calc()/percentage/non-numeric
+    // strings skip that path - a literal style.height bypasses Mantine's h-prop pipeline
+    // entirely, which is the only way to actually avoid it.
+    <Stack gap={chartGap} style={{ height: `${height}px` }} miw={0}>
       {showTitle && (
         <Text size="sm" fw={600} truncate="end">
           {integrationName}
