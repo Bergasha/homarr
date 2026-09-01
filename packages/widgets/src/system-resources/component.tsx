@@ -237,19 +237,18 @@ const SystemCharts = ({
   const chartCount = visibleCharts.length;
   const chartColumns = useMemo(() => (isAdvanced ? getAdvancedChartColumns(width) : 1), [isAdvanced, width]);
   const compactChartGap = 8;
-  // Advanced mode's charts wrap across chartColumns, so the available height needs dividing by
-  // row count (not chart count) - a fixed 110px here previously ignored the widget's actual
-  // height entirely, wasting space on a tall focus view and never adapting to a short one.
-  const advancedChartGap = 10; // matches the Stack/SimpleGrid "xs" spacing token used below
-  const chartRows = Math.max(1, Math.ceil(chartCount / chartColumns));
-  // Compact mode (chartColumns is always 1, so chartRows === chartCount here) previously capped
-  // each row at a fixed 56px regardless of how tall the widget's own tile actually was. The goal
-  // is for every visible chart row to always fill the tile edge-to-edge (e.g. cpu/memory/network
-  // all visible should divide the full height evenly between exactly those 3 rows, at any tile
-  // size) - so this only floors chartHeight, it never caps it.
+  const compactRowHeight = 56;
+  // Reverted the height-scaling experiment from this session: letting chartHeight grow with the
+  // widget's actual height (instead of these fixed values) surfaced what looks like a chart-
+  // library/CSS-zoom interaction bug - each chart's rendered SVG ballooned far past the height
+  // it was actually given, badly overflowing the widget. That needs its own investigation before
+  // touching this again; these fixed values are the last known-safe state.
   const chartHeight = isAdvanced
-    ? Math.max(90, Math.floor((height - Math.max(0, chartRows - 1) * advancedChartGap) / chartRows))
-    : Math.max(28, Math.floor((height - Math.max(0, chartCount - 1) * compactChartGap) / Math.max(1, chartCount)));
+    ? 110
+    : Math.max(
+        28,
+        Math.min(compactRowHeight, (height - Math.max(0, chartCount - 1) * compactChartGap) / Math.max(1, chartCount)),
+      );
 
   return (
     <Stack gap={isAdvanced ? "xs" : compactChartGap} h="auto" miw={0}>
