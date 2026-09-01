@@ -236,27 +236,28 @@ const SystemCharts = ({
   const labelDisplayMode = isAdvanced ? "textWithIcon" : options.labelDisplayMode;
   const chartCount = visibleCharts.length;
   const chartColumns = useMemo(() => (isAdvanced ? getAdvancedChartColumns(width) : 1), [isAdvanced, width]);
-  const chartGap = isAdvanced ? "xs" : 8;
+  const compactChartGap = 8;
+  const compactRowHeight = 56;
+  // Reverted the height-scaling experiment from this session: letting chartHeight grow with the
+  // widget's actual height (instead of these fixed values) surfaced what looks like a chart-
+  // library/CSS-zoom interaction bug - each chart's rendered SVG ballooned far past the height
+  // it was actually given, badly overflowing the widget. That needs its own investigation before
+  // touching this again; these fixed values are the last known-safe state.
+  const chartHeight = isAdvanced
+    ? 110
+    : Math.max(
+        28,
+        Math.min(compactRowHeight, (height - Math.max(0, chartCount - 1) * compactChartGap) / Math.max(1, chartCount)),
+      );
 
   return (
-    // h={height}, not "100%" - the multi-integration path's own outer grid cell is content-sized,
-    // not a definite height "100%" could resolve against. height is already correctly computed
-    // by the caller for both the single- and multi-integration cases (renderCharts in
-    // component.tsx above), same as every other widget's own sizing convention - only the *rows
-    // within* this now divide evenly via pure CSS (flex + grid-auto-rows: 1fr) below.
-    <Stack gap={chartGap} h={height} miw={0}>
+    <Stack gap={isAdvanced ? "xs" : compactChartGap} h="auto" miw={0}>
       {showTitle && (
         <Text size="sm" fw={600} truncate="end">
           {integrationName}
         </Text>
       )}
-      {/* Divide the remaining height evenly across however many rows chartColumns wraps the
-          charts into, purely via CSS grid-auto-rows: 1fr - no JS pixel measurement involved,
-          unlike the chartHeight-in-JS approach this replaces. That approach kept getting
-          corrupted by a CSS-zoom/ResizeObserver/Mantine-scale interaction on this board (see
-          git history) that pure percentage/fr-based CSS layout is naturally immune to - v1 used
-          the same trick (a CSS calc() percentage string) for exactly this reason. */}
-      <SimpleGrid cols={chartColumns} spacing={chartGap} style={{ flex: 1, minHeight: 0, gridAutoRows: "1fr" }}>
+      <SimpleGrid cols={chartColumns} spacing={isAdvanced ? "xs" : compactChartGap}>
         {chartCount === 0 && (
           <Center h="100%">
             <Text size="sm" c="dimmed">
@@ -265,7 +266,7 @@ const SystemCharts = ({
           </Center>
         )}
         {visibleCharts.includes("cpu") && (
-          <Box h="100%">
+          <Box h={chartHeight}>
             <SystemResourceCPUChart
               cpuUsageOverTime={items.map((item) => item.cpu)}
               hasShadow={options.hasShadow}
@@ -275,7 +276,7 @@ const SystemCharts = ({
           </Box>
         )}
         {visibleCharts.includes("memory") && (
-          <Box h="100%">
+          <Box h={chartHeight}>
             <SystemResourceMemoryChart
               memoryUsageOverTime={items.map((item) => item.memory)}
               totalCapacityInBytes={memoryCapacityInBytes}
@@ -286,7 +287,7 @@ const SystemCharts = ({
           </Box>
         )}
         {visibleCharts.includes("gpu") && (
-          <Box h="100%">
+          <Box h={chartHeight}>
             <SystemResourceGPUChart
               gpuUsageOverTime={items.map((item) => item.gpu)}
               hasShadow={options.hasShadow}
@@ -297,7 +298,7 @@ const SystemCharts = ({
         )}
         {showNetwork &&
           (width >= 300 ? (
-            <Group h="100%" gap="xs" grow wrap="nowrap">
+            <Group h={chartHeight} gap="xs" grow wrap="nowrap">
               <NetworkTrafficChart
                 usageOverTime={networkItems.map((network) => network.down)}
                 isUp={false}
@@ -314,7 +315,7 @@ const SystemCharts = ({
               />
             </Group>
           ) : (
-            <Box h="100%">
+            <Box h={chartHeight}>
               <CombinedNetworkTrafficChart
                 usageOverTime={networkItems}
                 hasShadow={options.hasShadow}
