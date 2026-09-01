@@ -146,108 +146,112 @@ export const AdvancedWeather = ({ height, options, weather, width }: AdvancedWea
   return (
     <ScrollArea h="100%" w="100%">
       <Stack className={classes.advancedRoot} gap="md" p="md">
-        <Group justify="space-between" align="flex-start" gap="md" wrap="wrap">
-          <Group gap="md" wrap="nowrap">
-            <AnimatedWeatherIcon
-              animated={options.animateIcons}
-              code={weather.current.weatherCode}
-              isDay={weather.current.isDay}
-              size={56}
-            />
-            <Stack gap={2}>
-              <Text fz={32} fw={700} lh={1}>
-                {getPreferredUnit(
-                  weather.current.temperature,
-                  options.isFormatFahrenheit,
-                  options.disableTemperatureDecimals,
-                )}
-              </Text>
-              <WeatherDescription weatherOnly weatherCode={weather.current.weatherCode} />
-              <Text size="sm" c="dimmed">
-                {t("advanced.feelsLike", {
-                  temperature: getPreferredUnit(
-                    weather.current.apparentTemperature,
+        {!options.showOnlyForecast && (
+          <Group justify="space-between" align="flex-start" gap="md" wrap="wrap">
+            <Group gap="md" wrap="nowrap">
+              <AnimatedWeatherIcon
+                animated={options.animateIcons}
+                code={weather.current.weatherCode}
+                isDay={weather.current.isDay}
+                size={56}
+              />
+              <Stack gap={2}>
+                <Text fz={32} fw={700} lh={1}>
+                  {getPreferredUnit(
+                    weather.current.temperature,
                     options.isFormatFahrenheit,
                     options.disableTemperatureDecimals,
-                  ),
+                  )}
+                </Text>
+                <WeatherDescription weatherOnly weatherCode={weather.current.weatherCode} />
+                <Text size="sm" c="dimmed">
+                  {t("advanced.feelsLike", {
+                    temperature: getPreferredUnit(
+                      weather.current.apparentTemperature,
+                      options.isFormatFahrenheit,
+                      options.disableTemperatureDecimals,
+                    ),
+                  })}
+                </Text>
+              </Stack>
+            </Group>
+            <Stack gap={2} align="flex-end" className={classes.locationSummary}>
+              <Group gap={5} wrap="nowrap" maw="100%">
+                <IconMapPin size="var(--mantine-font-size-md)" aria-hidden />
+                <Text size="sm" fw={600} truncate>
+                  {options.location.name}
+                </Text>
+              </Group>
+              <Text size="xs" c="dimmed">
+                {t("advanced.observedAt", {
+                  time: getPreferredTime(weather.current.observedAt, locale, weather.timezone),
                 })}
               </Text>
+              {today && (
+                <Text size="sm">
+                  {t("advanced.highLow", {
+                    maximum: getPreferredUnit(
+                      today.maxTemperature,
+                      options.isFormatFahrenheit,
+                      options.disableTemperatureDecimals,
+                    ),
+                    minimum: getPreferredUnit(
+                      today.minTemperature,
+                      options.isFormatFahrenheit,
+                      options.disableTemperatureDecimals,
+                    ),
+                  })}
+                </Text>
+              )}
             </Stack>
           </Group>
-          <Stack gap={2} align="flex-end" className={classes.locationSummary}>
-            <Group gap={5} wrap="nowrap" maw="100%">
-              <IconMapPin size="var(--mantine-font-size-md)" aria-hidden />
-              <Text size="sm" fw={600} truncate>
-                {options.location.name}
-              </Text>
-            </Group>
-            <Text size="xs" c="dimmed">
-              {t("advanced.observedAt", {
-                time: getPreferredTime(weather.current.observedAt, locale, weather.timezone),
-              })}
-            </Text>
-            {today && (
-              <Text size="sm">
-                {t("advanced.highLow", {
-                  maximum: getPreferredUnit(
-                    today.maxTemperature,
-                    options.isFormatFahrenheit,
-                    options.disableTemperatureDecimals,
-                  ),
-                  minimum: getPreferredUnit(
-                    today.minTemperature,
-                    options.isFormatFahrenheit,
-                    options.disableTemperatureDecimals,
-                  ),
-                })}
-              </Text>
-            )}
-          </Stack>
-        </Group>
+        )}
 
-        <SimpleGrid cols={layout.metricColumns} spacing="xs">
-          <MetricCard
-            icon={<IconDroplets style={iconSizes.lg} aria-hidden />}
-            label={t("advanced.nextHourPrecipitation")}
-            value={t("advanced.precipitationValue", {
-              amount: nextHour?.precipitation?.toFixed(1) ?? "?",
-              probability: nextHour?.precipitationProbability ?? "?",
-            })}
-          />
-          {options.showHumidity && (
+        {!options.showOnlyForecast && (
+          <SimpleGrid cols={layout.metricColumns} spacing="xs">
             <MetricCard
               icon={<IconDroplets style={iconSizes.lg} aria-hidden />}
-              label={t("advanced.currentHumidity")}
-              value={`${weather.current.relativeHumidity}%`}
+              label={t("advanced.nextHourPrecipitation")}
+              value={t("advanced.precipitationValue", {
+                amount: nextHour?.precipitation?.toFixed(1) ?? "?",
+                probability: nextHour?.precipitationProbability ?? "?",
+              })}
             />
-          )}
-          <MetricCard
-            icon={<IconWind style={iconSizes.lg} aria-hidden />}
-            label={t("advanced.currentWind")}
-            value={t("advanced.windValue", {
-              gusts: getPreferredWindSpeed(weather.current.windGusts, options.useImperialSpeed),
-              speed: getPreferredWindSpeed(weather.current.windSpeed, options.useImperialSpeed),
-              unit: speedUnit,
-            })}
-          />
-          <MetricCard
-            icon={<IconSunHigh style={iconSizes.lg} aria-hidden />}
-            label={t("advanced.todayUv")}
-            value={today?.uvIndex?.toFixed(1) ?? "?"}
-          />
-          <MetricCard
-            icon={<IconSunrise style={iconSizes.lg} aria-hidden />}
-            label={t("dailyForecast.sunrise")}
-            value={getPreferredTime(today?.sunriseAt, locale, weather.timezone)}
-          />
-          <MetricCard
-            icon={<IconSunset style={iconSizes.lg} aria-hidden />}
-            label={t("dailyForecast.sunset")}
-            value={getPreferredTime(today?.sunsetAt, locale, weather.timezone)}
-          />
-        </SimpleGrid>
+            {options.showHumidity && (
+              <MetricCard
+                icon={<IconDroplets style={iconSizes.lg} aria-hidden />}
+                label={t("advanced.currentHumidity")}
+                value={`${weather.current.relativeHumidity}%`}
+              />
+            )}
+            <MetricCard
+              icon={<IconWind style={iconSizes.lg} aria-hidden />}
+              label={t("advanced.currentWind")}
+              value={t("advanced.windValue", {
+                gusts: getPreferredWindSpeed(weather.current.windGusts, options.useImperialSpeed),
+                speed: getPreferredWindSpeed(weather.current.windSpeed, options.useImperialSpeed),
+                unit: speedUnit,
+              })}
+            />
+            <MetricCard
+              icon={<IconSunHigh style={iconSizes.lg} aria-hidden />}
+              label={t("advanced.todayUv")}
+              value={today?.uvIndex?.toFixed(1) ?? "?"}
+            />
+            <MetricCard
+              icon={<IconSunrise style={iconSizes.lg} aria-hidden />}
+              label={t("dailyForecast.sunrise")}
+              value={getPreferredTime(today?.sunriseAt, locale, weather.timezone)}
+            />
+            <MetricCard
+              icon={<IconSunset style={iconSizes.lg} aria-hidden />}
+              label={t("dailyForecast.sunset")}
+              value={getPreferredTime(today?.sunsetAt, locale, weather.timezone)}
+            />
+          </SimpleGrid>
+        )}
 
-        {chartData.length > 0 && (
+        {!options.showOnlyForecast && chartData.length > 0 && (
           <Box component="figure" m={0} aria-labelledby={chartId}>
             <Text id={chartId} component="figcaption" size="sm" fw={600} mb="xs">
               {t("advanced.hourlyForecast")}

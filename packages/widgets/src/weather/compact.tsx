@@ -26,9 +26,10 @@ export const CompactWeather = ({ height, isEditMode, options, weather, width }: 
   const locale = useCurrentIntlLocale();
   const t = useI18n("widget.weather");
   const tCommon = useI18n("common");
+  const hasForecast = options.hasForecast || options.showOnlyForecast;
   const layout = useMemo(
-    () => getCompactWeatherLayout(width, height, options.hasForecast, options.forecastDayCount),
-    [height, options.forecastDayCount, options.hasForecast, width],
+    () => getCompactWeatherLayout(width, height, hasForecast, options.forecastDayCount),
+    [hasForecast, height, options.forecastDayCount, width],
   );
   const today = weather.daily[0];
   const speedUnit = options.useImperialSpeed
@@ -48,35 +49,37 @@ export const CompactWeather = ({ height, isEditMode, options, weather, width }: 
       w="100%"
       p={contentPadding}
     >
-      <Group className="weather-day-group" gap={layout.tier === "micro" ? 2 : "xs"} wrap="nowrap" justify="center">
-        <Popover position="bottom" withArrow shadow="md">
-          <Popover.Target>
-            <UnstyledButton className={classes.detailsButton} aria-label={t("details")} disabled={isEditMode}>
-              <AnimatedWeatherIcon
-                animated={options.animateIcons}
-                code={weather.current.weatherCode}
-                isDay={weather.current.isDay}
-                style={zoomCompensatedSize(layout.tier === "micro" ? 18 : 32)}
-              />
-            </UnstyledButton>
-          </Popover.Target>
-          <Popover.Dropdown>
-            <WeatherDescription weatherOnly weatherCode={weather.current.weatherCode} />
-          </Popover.Dropdown>
-        </Popover>
-        <Stack gap={0} align={layout.tier === "micro" ? "center" : "flex-start"}>
-          <Text fz={layout.tier === "micro" ? 22 : 30} fw={600} lh={1.05}>
-            {getPreferredUnit(
-              weather.current.temperature,
-              options.isFormatFahrenheit,
-              options.disableTemperatureDecimals,
-            )}
-          </Text>
-          {layout.showCondition && <WeatherDescription weatherOnly weatherCode={weather.current.weatherCode} />}
-        </Stack>
-      </Group>
+      {!options.showOnlyForecast && (
+        <Group className="weather-day-group" gap={layout.tier === "micro" ? 2 : "xs"} wrap="nowrap" justify="center">
+          <Popover position="bottom" withArrow shadow="md">
+            <Popover.Target>
+              <UnstyledButton className={classes.detailsButton} aria-label={t("details")} disabled={isEditMode}>
+                <AnimatedWeatherIcon
+                  animated={options.animateIcons}
+                  code={weather.current.weatherCode}
+                  isDay={weather.current.isDay}
+                  style={zoomCompensatedSize(layout.tier === "micro" ? 18 : 32)}
+                />
+              </UnstyledButton>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <WeatherDescription weatherOnly weatherCode={weather.current.weatherCode} />
+            </Popover.Dropdown>
+          </Popover>
+          <Stack gap={0} align={layout.tier === "micro" ? "center" : "flex-start"}>
+            <Text fz={layout.tier === "micro" ? 22 : 30} fw={600} lh={1.05}>
+              {getPreferredUnit(
+                weather.current.temperature,
+                options.isFormatFahrenheit,
+                options.disableTemperatureDecimals,
+              )}
+            </Text>
+            {layout.showCondition && <WeatherDescription weatherOnly weatherCode={weather.current.weatherCode} />}
+          </Stack>
+        </Group>
+      )}
 
-      {layout.showHighLow && today && (
+      {!options.showOnlyForecast && layout.showHighLow && today && (
         <Group className="weather-max-min-temp-group" gap="sm" wrap="nowrap">
           <Group gap={3} wrap="nowrap">
             <IconArrowUpRight size="var(--mantine-font-size-md)" aria-hidden />
@@ -93,7 +96,7 @@ export const CompactWeather = ({ height, isEditMode, options, weather, width }: 
         </Group>
       )}
 
-      {layout.showSecondary && !options.hasForecast && (
+      {!options.showOnlyForecast && layout.showSecondary && !options.hasForecast && (
         <Group className={classes.compactMetrics} gap="sm" justify="center" wrap="wrap">
           {options.showHumidity && (
             <Group className="weather-humidity-group" gap={4} wrap="nowrap">
@@ -165,7 +168,7 @@ export const CompactWeather = ({ height, isEditMode, options, weather, width }: 
         </Group>
       )}
 
-      {layout.showCity && options.showCity && (
+      {!options.showOnlyForecast && layout.showCity && options.showCity && (
         <Group className="weather-city-group" gap={4} wrap="nowrap" maw="100%">
           <IconMapPin size="var(--mantine-font-size-sm)" aria-hidden />
           <Text size="sm" truncate>

@@ -58,11 +58,32 @@ export const { definition, componentLoader } = createWidgetDefinition("weather",
           step: 1,
           withDescription: true,
         }),
+        showOnlyForecast: factory.switch({ defaultValue: false }),
       }),
       {
         forecastDayCount: {
-          shouldHide({ hasForecast }) {
-            return !hasForecast;
+          shouldHide({ hasForecast, showOnlyForecast }) {
+            return !hasForecast && !showOnlyForecast;
+          },
+        },
+        hasForecast: {
+          shouldHide({ showOnlyForecast }) {
+            return showOnlyForecast;
+          },
+        },
+        showHumidity: {
+          shouldHide({ showOnlyForecast }) {
+            return showOnlyForecast;
+          },
+        },
+        showCurrentWindSpeed: {
+          shouldHide({ showOnlyForecast }) {
+            return showOnlyForecast;
+          },
+        },
+        showCity: {
+          shouldHide({ showOnlyForecast }) {
+            return showOnlyForecast;
           },
         },
       },
