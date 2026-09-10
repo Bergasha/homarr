@@ -1,4 +1,5 @@
 import { fetchApi } from "@homarr/api/client";
+import { isRecord } from "@homarr/common";
 import {
   customWidgetDefinitionSchema,
   getCustomWidgetDefaultOptions,
@@ -11,6 +12,8 @@ import type { CustomWidgetFormValues } from "@homarr/custom-widgets/workbench";
 import type { UseFormReturnType } from "@mantine/form";
 
 export type CustomWidgetWorkbenchForm = UseFormReturnType<CustomWidgetFormValues>;
+
+export { isRecord };
 
 const PREVIEW_QUERY_CONCURRENCY = 4;
 
@@ -76,14 +79,11 @@ export function parseSources(value: string): Array<CustomWidgetSource & { id: st
 
 export function parseJson(value: string): unknown {
   try {
-    return JSON.parse(value) as unknown;
+    const parsed: unknown = JSON.parse(value);
+    return parsed;
   } catch {
     return null;
   }
-}
-
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 export function getCustomWidgetPreviewOptionIssues(definition: HomarrCustomWidgetV2, options: Record<string, unknown>) {

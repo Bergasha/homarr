@@ -27,11 +27,11 @@
         "review": "Review"
       },
       "welcome": {
-        "title": "Make home feel organized.",
+        "title": "Welcome home.",
         "description": "Welcome to Homarr v{version}. We’ll guide you through the essentials and help you build your first board.",
         "start": "Get started",
         "restore": "Restore backup",
-        "restoreTitle": "Restore this Homarr",
+        "restoreTitle": "Restore from backup",
         "restoreDescription": "A full SQLite backup restores boards, people, apps, integrations, and settings. Homarr validates it before replacing anything.",
         "errorTitle": "Setup could not start",
         "errorDescription": "Your setup choices are still here. Try again, or reload the page if this continues."
@@ -282,6 +282,14 @@
       },
       "pingIconsEnabled": {
         "label": "Use icons for pings"
+      },
+      "byteUnitSystem": {
+        "label": "Data size units",
+        "description": "Choose how Homarr displays byte sizes and byte rates. Bit rates always use decimal units.",
+        "options": {
+          "binary": "Binary",
+          "decimal": "Decimal"
+        }
       },
       "enableRightClickOnWidgets": {
         "label": "Enable right-click on widgets",
@@ -738,6 +746,8 @@
         "multiple": "Add {count}",
         "selectedCount": "{count, plural, one {# selected} other {# selected}}",
         "appsSelected": "{count, plural, one {# app selected} other {# apps selected}}",
+        "selectMultiple": "Select multiple",
+        "cancelMultiple": "Exit multi-select",
         "customApplication": "Custom application",
         "application": "Application"
       },
@@ -1204,9 +1214,14 @@
     "importCss": "Import CSS from Workshop",
     "importCssConfirm": "Replace the current custom CSS with \"{title}\"? Nothing is saved until you save the board settings.",
     "screenshotAlt": "{title} screenshot {count, number}",
+    "screenshotViewer": "{title} screenshot viewer",
+    "screenshotsLabel": "{title} screenshots",
     "zoomScreenshot": "View full size",
     "previousScreenshot": "Previous screenshot",
     "nextScreenshot": "Next screenshot",
+    "showScreenshotThumbnails": "Show screenshot thumbnails",
+    "hideScreenshotThumbnails": "Hide screenshot thumbnails",
+    "closeScreenshotViewer": "Close screenshot viewer",
     "technicalDetails": "Technical details",
     "sourceCode": "Workshop entry",
     "export": "Export",
@@ -1245,7 +1260,7 @@
       "screenshots": "Screenshots",
       "screenshotsDescription": "Up to five PNG, JPEG, or WebP images",
       "screenshotsPlaceholder": "Choose screenshots",
-      "invalidScreenshot": "Use PNG, JPEG, or WebP images no larger than 5 MB each.",
+      "invalidScreenshot": "Use PNG, JPEG, or WebP images no larger than {maxSize} each.",
       "privateSourceWarning": "This widget contains private source URLs for: {sources}. Replace personal hosts or IP addresses with safe service placeholders before publishing.",
       "reviewSourcesTitle": "Review private source URLs",
       "privateSourceConfirmation": "I reviewed these source URLs and they do not expose private infrastructure details",
@@ -1707,8 +1722,10 @@
     "plural": "Medias",
     "search": "Find a media",
     "field": {
+      "preview": "Preview",
       "size": "Size",
-      "creator": "Creator"
+      "creator": "Creator",
+      "actions": "Actions"
     },
     "action": {
       "upload": {
@@ -1736,10 +1753,12 @@
         }
       },
       "copy": {
-        "label": "Copy URL"
+        "label": "Copy URL",
+        "labelNamed": "Copy URL for {name}"
       },
       "open": {
-        "label": "Open media"
+        "label": "Open media",
+        "labelNamed": "Open {name}"
       }
     },
     "noResults": {
@@ -1785,6 +1804,9 @@
       "copy": "Copy",
       "copied": "Copied",
       "refresh": "Refresh"
+    },
+    "pagination": {
+      "pageOf": "Page {page} of {totalPages}"
     },
     "here": "here",
     "serviceUrlTemplate": {
@@ -2285,6 +2307,9 @@
         },
         "withBorder": {
           "label": "Show border"
+        },
+        "grow": {
+          "label": "Expand cards to fill row"
         },
         "customUrls": {
           "label": "Custom links"
@@ -2787,6 +2812,9 @@
         "directionRtl": "Set text direction right to left",
         "blockquote": "Blockquote",
         "horizontalLine": "Horizontal line",
+        "details": "Toggle collapsible section",
+        "expandDetails": "Expand collapsible section",
+        "collapseDetails": "Collapse collapsible section",
         "bulletList": "Bullet list",
         "orderedList": "Ordered list",
         "checkList": "Check list",
@@ -2795,16 +2823,20 @@
         "link": "Link",
         "unlink": "Remove link",
         "image": "Embed Image",
-        "addTable": "Add table",
-        "deleteTable": "Delete Table",
+        "insertTable": "Insert table",
+        "insertTableSize": "Insert {columns} × {rows} table",
+        "deleteTable": "Delete table",
         "colorCell": "Color Cell",
-        "mergeCell": "Toggle cell merging",
+        "mergeCells": "Merge cells",
+        "splitCell": "Split cell",
         "addColumnLeft": "Add column before",
         "addColumnRight": "Add column after",
         "deleteColumn": "Delete column",
         "addRowTop": "Add row before",
         "addRowBelow": "Add row after",
-        "deleteRow": "Delete row"
+        "deleteRow": "Delete row",
+        "toggleHeaderRow": "Toggle header row",
+        "toggleHeaderColumn": "Toggle header column"
       },
       "align": {
         "left": "Left",
@@ -2815,8 +2847,6 @@
         "clearColor": "Clear color",
         "source": "Source",
         "widthPlaceholder": "Value in % or pixels",
-        "columns": "Columns",
-        "rows": "Rows",
         "width": "Width",
         "height": "Height"
       },
@@ -3127,6 +3157,7 @@
         }
       },
       "currentWindSpeed": "{currentWindSpeed} {unit}",
+      "disabled": "Weather data is unavailable because outbound connections are disabled",
       "dailyForecast": {
         "sunrise": "Sunrise",
         "sunset": "Sunset",
@@ -3251,8 +3282,8 @@
       "popover": {
         "information": "Information",
         "processor": "Processor: {cpuModelName}",
-        "memory": "Memory: {memory}GiB",
-        "memoryAvailable": "Available: {memoryAvailable}GiB ({percent}%)",
+        "memory": "Memory: {memory}",
+        "memoryAvailable": "Available: {memoryAvailable} ({percent}%)",
         "version": "Version: {version}",
         "uptime": "Uptime: {months} Months, {days} Days, {hours} Hours, {minutes} Minutes",
         "loadAverage": "Load average:",
@@ -3264,6 +3295,12 @@
         "updatesAvailable": "{count, plural, one {# update available} other {# updates available}}",
         "rebootRequired": "Reboot required",
         "rebootNotRequired": "No reboot required"
+      },
+      "gauge": {
+        "cpuUsage": "CPU usage",
+        "cpuTemperature": "CPU temperature",
+        "memoryUsage": "Memory usage",
+        "gpuUsage": "{name} GPU usage"
       },
       "error": {
         "internalServerError": "Failed to fetch health status"
@@ -4076,7 +4113,7 @@
           "label": "Show Miscellaneous entries marked as completed"
         },
         "activeTorrentThreshold": {
-          "label": "Hide completed torrent under this threshold (in kiB/s)"
+          "label": "Hide completed torrent under this threshold"
         },
         "categoryFilter": {
           "label": "Categories/labels to filter"
@@ -4249,7 +4286,11 @@
     },
     "mediaRequests-requestList": {
       "name": "Media Requests List",
-      "description": "See a list of all media requests from your Overseerr or Jellyseerr instance",
+      "description": "See a list of all media requests from your Seerr, Overseerr, or Jellyseerr instance",
+      "empty": {
+        "title": "No media requests yet",
+        "description": "Search for a movie or show to start a request."
+      },
       "option": {
         "linksTargetNewTab": {
           "label": "Open links in new tab"
@@ -4289,6 +4330,10 @@
     "mediaRequests-requestStats": {
       "name": "Media Requests Stats",
       "description": "Statistics about your media requests",
+      "empty": {
+        "title": "No request activity yet",
+        "description": "Stats will appear after the first media request."
+      },
       "titles": {
         "stats": {
           "main": "Media Stats",
@@ -4694,12 +4739,6 @@
       "noSectionsEnabled": "Enable at least one section in widget options.",
       "error": {
         "internalServerError": "Failed to fetch speedtest data"
-      },
-      "range": {
-        "twelveHours": "12h",
-        "oneDay": "24h",
-        "all": "All",
-        "lastThirty": "Last 30"
       }
     },
     "uptimeKuma": {
@@ -4891,7 +4930,7 @@
               "label": "Percentage (e.g., 76%)"
             },
             "absolute": {
-              "label": "Absolute values (e.g., 800GB / 1TB)"
+              "label": "Absolute values"
             },
             "free": {
               "label": "Free space percentage (e.g., 24% free)"
@@ -5446,7 +5485,7 @@
           "title": "Layout",
           "responsive": {
             "title": "Responsive layouts",
-            "description": "Each layout keeps its own widget positions and sizes. Mobile and Base are always available; add custom layouts for widths in between.",
+            "description": "Each layout keeps its own widget positions and sizes. Mobile and Base are always available; add custom layouts at any additional breakpoint.",
             "action": {
               "add": "Add layout"
             }
@@ -5990,6 +6029,7 @@
             "groups": {
               "identity": "Identity",
               "appearance": "Appearance",
+              "customCss": "Custom CSS",
               "authentication": "Authentication"
             },
             "identity": {
@@ -6035,6 +6075,10 @@
                 "lg": "Rounded",
                 "xl": "Soft"
               }
+            },
+            "customCss": {
+              "label": "Global custom CSS",
+              "description": "Applied to every page. Board custom CSS can override it."
             },
             "authVisibility": {
               "description": "Choose what appears on every authentication page.",
@@ -6249,6 +6293,11 @@
               "label": "Pings"
             }
           },
+          "action": {
+            "run": "Run {name} now",
+            "enable": "Enable {name}",
+            "disable": "Disable {name}"
+          },
           "interval": {
             "seconds": "Every {interval, plural, =1 {second} other {# seconds}}",
             "minutes": "Every {interval, plural, =1 {minute} other {# minutes}}",
@@ -6390,7 +6439,13 @@
               },
               "availableTools": {
                 "title": "Available Tools",
-                "description": "{count} tools available. Expand a category to see individual tools and their descriptions."
+                "description": "{count} tools available. Expand a category to see individual tools and their descriptions.",
+                "filteredDescription": "{count} matching tools across expanded categories.",
+                "search": "Search tools",
+                "noResults": {
+                  "title": "No tools match this search",
+                  "description": "No MCP tool matches \"{search}\". Try a namespace, tool name, or description."
+                }
               }
             }
           }
@@ -6417,7 +6472,7 @@
           "restore": {
             "dropzone": {
               "title": "Drop your backup ZIP here",
-              "description": "Accepts .zip files from a Homarr SQLite backup (max 256 MB)"
+              "description": "Accepts .zip files from a Homarr SQLite backup (max {maxSize})"
             },
             "analyzing": "Analyzing backup...",
             "changeFile": "Change file",
@@ -6450,7 +6505,8 @@
             },
             "progress": {
               "title": "Restoring database...",
-              "restarting": "Restarting server"
+              "restarting": "Restarting server",
+              "relogin": "Restoring the database invalidated your current session. Homarr will send you to sign in when the server is ready."
             },
             "timeout": {
               "title": "Server did not come back online",
@@ -7180,6 +7236,13 @@
                 "children": {
                   "detail": {
                     "title": "Select the first day of the week"
+                  }
+                }
+              },
+              "byteUnitSystem": {
+                "children": {
+                  "detail": {
+                    "title": "Select your data size units"
                   }
                 }
               },

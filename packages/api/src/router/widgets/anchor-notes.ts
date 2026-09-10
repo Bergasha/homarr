@@ -1,17 +1,15 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
+import { isRecord } from "@homarr/common";
 import { ResponseError } from "@homarr/common/server";
 import { createLogger } from "@homarr/core/infrastructure/logs";
-import {
-  anchorNotesListInputSchema,
-  anchorNoteUpdateInputSchema,
-  createIntegrationAsync,
-  mockWidgetData,
-} from "@homarr/integrations";
+import { mockWidgetData } from "@homarr/integrations";
+import { anchorNotesListInputSchema, anchorNoteUpdateInputSchema } from "@homarr/integrations/anchor";
+import { createIntegrationAsync } from "@homarr/integrations/factory";
 import { anchorNoteRequestHandler, anchorNotesListRequestHandler } from "@homarr/request-handler/anchor-notes";
 
-import { createOneIntegrationMiddleware } from "../../middlewares/integration";
+import { createOneWidgetIntegrationMiddleware } from "../../middlewares/integration";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../../trpc";
 
 const noteIdInput = z.object({
@@ -29,7 +27,7 @@ const assertMockNoteExists = (noteId: string) => {
 const isJsonDeltaString = (value: string) => {
   try {
     const parsed: unknown = JSON.parse(value);
-    return typeof parsed === "object" && parsed !== null && Array.isArray((parsed as { ops?: unknown }).ops);
+    return isRecord(parsed) && Array.isArray(parsed.ops);
   } catch {
     return false;
   }
@@ -51,7 +49,7 @@ const normalizeAnchorContent = (content: string | undefined) => {
 
 export const anchorNotesRouter = createTRPCRouter({
   listNotes: publicProcedure
-    .concat(createOneIntegrationMiddleware("query", "anchor", "mock"))
+    .concat(createOneWidgetIntegrationMiddleware("query", "anchorNote"))
     .input(anchorNotesListInputSchema)
     .query(async ({ ctx, input }) => {
       if (ctx.integration.kind === "mock") {
@@ -73,7 +71,7 @@ export const anchorNotesRouter = createTRPCRouter({
       return data;
     }),
   getNote: publicProcedure
-    .concat(createOneIntegrationMiddleware("query", "anchor", "mock"))
+    .concat(createOneWidgetIntegrationMiddleware("query", "anchorNote"))
     .input(noteIdInput)
     .query(async ({ ctx, input }) => {
       if (ctx.integration.kind === "mock") {
@@ -91,7 +89,7 @@ export const anchorNotesRouter = createTRPCRouter({
       return data;
     }),
   updateNote: protectedProcedure
-    .concat(createOneIntegrationMiddleware("interact", "anchor", "mock"))
+    .concat(createOneWidgetIntegrationMiddleware("interact", "anchorNote"))
     .input(anchorNoteUpdateInputSchema)
     .mutation(async ({ ctx, input }) => {
       const normalizedContent = normalizeAnchorContent(input.content);
@@ -115,6 +113,8 @@ export const anchorNotesRouter = createTRPCRouter({
           ...(input.title !== undefined ? { title: input.title } : {}),
           ...(normalizedContent !== undefined ? { content: normalizedContent } : {}),
         });
+        anchorNotesListRequestHandler.invalidateCache();
+        await anchorNoteRequestHandler.invalidateCacheAsync([ctx.integration.id]);
 
         return updatedNote;
       } catch (error) {

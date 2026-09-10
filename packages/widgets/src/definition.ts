@@ -1,16 +1,16 @@
 import type React from "react";
-import type { LoaderComponent } from "next/dynamic";
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
 import { hashKey } from "@tanstack/react-query";
 import type { DefaultErrorData } from "@trpc/server/unstable-core-do-not-import";
 
+import { isRecord } from "@homarr/common";
 import type { IntegrationKind, WidgetKind } from "@homarr/definitions";
 import type { ServerSettings } from "@homarr/server-settings";
 import type { SettingsContextProps } from "@homarr/settings/creator";
 import type { stringOrTranslation } from "@homarr/translation";
 import type { TablerIcon } from "@homarr/ui";
 
-import type { WidgetImports } from ".";
+import type { WidgetImports } from "./registry";
 import type { inferOptionsFromCreator, WidgetOptionsRecord } from "./options";
 
 export interface WidgetContextMenuAction {
@@ -75,7 +75,7 @@ export interface WidgetContextActionProps {
 
 const createWithDynamicImport =
   <TKind extends WidgetKind, TDefinition extends WidgetDefinition>(kind: TKind, definition: TDefinition) =>
-  (componentLoader: () => LoaderComponent<WidgetComponentProps<TKind>>) => ({
+  (componentLoader: () => Promise<{ default: React.ComponentType<WidgetComponentProps<TKind>> }>) => ({
     definition: {
       ...definition,
       kind,
@@ -84,11 +84,11 @@ const createWithDynamicImport =
     componentLoader,
   });
 
-export type PrefetchLoader<TKind extends WidgetKind> = () => Promise<{ default: Prefetch<TKind> }>;
-export type Prefetch<TKind extends WidgetKind> = (
+export type PrefetchLoader = () => Promise<{ default: Prefetch }>;
+export type Prefetch = (
   queryClient: QueryClient,
   items: {
-    options: inferOptionsFromCreator<WidgetOptionsRecordOf<TKind>>;
+    options: Record<string, unknown>;
     integrationIds: string[];
   }[],
 ) => Promise<void>;
@@ -169,9 +169,6 @@ export const widgetQueryInputMatches = (input: unknown, expected: Record<string,
   isRecord(input) && Object.entries(expected).every(([key, value]) => widgetQueryValueEquals(input[key], value));
 
 export const widgetQueryValueEquals = (left: unknown, right: unknown) => hashKey([left]) === hashKey([right]);
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === "object" && !Array.isArray(value);
 
 export interface WidgetProps<TKind extends WidgetKind> {
   options: inferOptionsFromCreator<WidgetOptionsRecordOf<TKind>>;

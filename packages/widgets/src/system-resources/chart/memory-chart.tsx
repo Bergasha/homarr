@@ -1,6 +1,6 @@
 import { IconBrain } from "@tabler/icons-react";
 
-import { formatBytesPair } from "@homarr/common";
+import { useByteFormatter } from "@homarr/settings";
 import { useI18n } from "@homarr/translation/client";
 
 import type { LabelDisplayModeOption } from "..";
@@ -24,6 +24,7 @@ export const SystemResourceMemoryChart = ({
     usage,
   }));
   const t = useI18n("widget.systemResources.card");
+  const { formatBytesPair } = useByteFormatter();
 
   const percentageUsed =
     memoryUsageOverTime.length > 0 && totalCapacityInBytes > 0
@@ -37,7 +38,7 @@ export const SystemResourceMemoryChart = ({
     const percent = totalCapacityInBytes > 0 ? Math.round((used / totalCapacityInBytes) * 100) : 0;
     return t("memoryTooltip", {
       used: memory.used,
-      available: memory.available,
+      available: memory.total,
       percent,
     });
   };

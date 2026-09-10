@@ -1,3 +1,6 @@
+import { isRecord } from "@homarr/common";
+import { normalizeCustomWidgetLifecycleToolInput } from "@homarr/custom-widgets/core";
+
 interface AssistantToolCallInput {
   toolName: string;
   input: string;
@@ -95,7 +98,7 @@ const repairMultilineToolInput = <T extends AssistantToolCallInput>(toolCall: T)
   if (customWidgetNoInputToolNames.has(toolCall.toolName)) {
     try {
       const input = JSON.parse(toolCall.input) as unknown;
-      if (typeof input === "object" && input !== null && !Array.isArray(input) && Object.keys(input).length === 0) {
+      if (isRecord(input) && Object.keys(input).length === 0) {
         return null;
       }
     } catch {
@@ -114,5 +117,19 @@ const repairMultilineToolInput = <T extends AssistantToolCallInput>(toolCall: T)
   }
 };
 
+const repairCustomWidgetLifecycleInput = <T extends AssistantToolCallInput>(toolCall: T): T | null => {
+  if (!toolCall.toolName.startsWith("customWidget_")) return null;
+  let input: unknown;
+  try {
+    input = JSON.parse(toolCall.input);
+  } catch {
+    return null;
+  }
+  if (!isRecord(input)) return null;
+  const normalized = normalizeCustomWidgetLifecycleToolInput(toolCall.toolName, input);
+  if (normalized === input) return null;
+  return { ...toolCall, input: JSON.stringify(normalized) };
+};
+
 export const repairAssistantToolInput = <T extends AssistantToolCallInput>(toolCall: T): T | null =>
-  repairIconSearchInput(toolCall) ?? repairMultilineToolInput(toolCall);
+  repairIconSearchInput(toolCall) ?? repairCustomWidgetLifecycleInput(toolCall) ?? repairMultilineToolInput(toolCall);

@@ -1,7 +1,7 @@
 import { IconDownload } from "@tabler/icons-react";
 import { z } from "zod/v4";
 
-import { getIntegrationKindsByCategory } from "@homarr/definitions";
+import { getIntegrationKindsByCategory, getWidgetIntegrationConfig } from "@homarr/definitions";
 
 import { createWidgetDefinition, widgetQueryInputMatches } from "../definition";
 import { optionsBuilder } from "../options";
@@ -66,6 +66,7 @@ export const { definition, componentLoader } = createWidgetDefinition("downloads
           validate: z.number().min(0),
           defaultValue: 0,
           step: 1,
+          storedUnit: "kibibytesPerSecond",
         }),
         categoryFilter: factory.multiText({
           defaultValue: [] as string[],
@@ -111,5 +112,5 @@ export const { definition, componentLoader } = createWidgetDefinition("downloads
       },
     );
   },
-  supportedIntegrations: getIntegrationKindsByCategory("downloadClient"),
+  ...getWidgetIntegrationConfig("downloads"),
 }).withDynamicImport(() => import("./component"));

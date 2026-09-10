@@ -7,6 +7,7 @@ import { IconPlugConnectedX, IconServerOff } from "@tabler/icons-react";
 import { clientApi } from "@homarr/api/client";
 import { invariantTechnicalLabels } from "@homarr/definitions";
 import type { BeszelContainerStatsRecord, BeszelSystemStatsRecord } from "@homarr/integrations/types";
+import { useByteFormatter } from "@homarr/settings";
 import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
 import { zoomCompensatedSize } from "@homarr/ui";
 
@@ -16,32 +17,27 @@ import type { BeszelTimePeriod } from "./chart";
 import {
   BeszelChartPanel,
   CPU_Y_AXIS_DOMAIN,
+  normalizeBeszelByteRate,
   useContainerNames,
   useDiskChartData,
   useDockerChartData,
   useSystemChartData,
 } from "./chart";
-import { chartAxisFormatters, formatByteRate, formatGB, formatPercent, formatStorageBytes } from "./format";
+import { createByteChartAxisFormatters, formatPercent } from "./format";
 import { makeTooltipProps } from "./tooltip";
 import { useLiveStats } from "./use-live-stats";
 
 const CHART_HEIGHT = 180;
-const MB = 1024 * 1024;
-const tooltips = {
-  percent: makeTooltipProps(formatPercent),
-  gigabytes: makeTooltipProps(formatGB, true),
-  rate: makeTooltipProps(formatByteRate, true),
-  percentTotal: makeTooltipProps(formatPercent, true),
-  bytesTotal: makeTooltipProps(formatStorageBytes, true),
-};
+const MEBIBYTE = 1024 * 1024;
+const GIBIBYTE = 1024 * MEBIBYTE;
 
-const ChartSkeleton = () => (
+const ChartSkeleton = ({ height }: { height: number }) => (
   <Stack gap={4} style={{ minWidth: 0 }}>
     <Group gap="xs">
       <Skeleton h={14} w={72} radius="sm" />
       <Skeleton h={10} w={110} radius="sm" />
     </Group>
-    <Skeleton h={CHART_HEIGHT} radius="sm" />
+    <Skeleton h={height} radius="sm" />
   </Stack>
 );
 
@@ -67,7 +63,7 @@ interface BeszelStatsViewProps {
 }
 
 const MIN_CHART_HEIGHT = 100;
-const PANEL_ROW_OVERHEAD = 28;
+const PANEL_ROW_OVERHEAD = 25;
 const GRID_ROW_GAP = 16;
 
 const computeChartHeight = (availableHeight: number | undefined, rowCount: number) => {
@@ -90,6 +86,21 @@ export function BeszelStatsView({
   const t = useI18n("widget.beszelSystemStats");
   const tBeszel = useI18n("widget.beszel");
   const locale = useCurrentIntlLocale();
+  const { formatByteRate, formatBytes } = useByteFormatter();
+  const byteAxisFormatters = useMemo(
+    () => createByteChartAxisFormatters(formatBytes, formatByteRate),
+    [formatByteRate, formatBytes],
+  );
+  const tooltips = useMemo(
+    () => ({
+      percent: makeTooltipProps(formatPercent),
+      bytes: makeTooltipProps(formatBytes, true),
+      rate: makeTooltipProps(formatByteRate, true),
+      percentTotal: makeTooltipProps(formatPercent, true),
+      bytesTotal: makeTooltipProps(formatBytes, true),
+    }),
+    [formatByteRate, formatBytes],
+  );
   const showDocker = visibility.dockerCpu || visibility.dockerMemory || visibility.dockerNetwork;
   const isLive = timePeriod === "1m";
   const historicalQuery = clientApi.widget.beszel.getSystemStats.useQuery(
@@ -108,16 +119,16 @@ export function BeszelStatsView({
     () => ({
       cpu: (s: { cpu: number }) => ({ [invariantTechnicalLabels.cpu]: s.cpu }),
       memory: (s: { mu: number; mb: number }) => ({
-        [t("chart.memory.series")]: s.mu,
-        [t("chart.memory.cache")]: s.mb ?? 0,
+        [t("chart.memory.series")]: s.mu * GIBIBYTE,
+        [t("chart.memory.cache")]: (s.mb ?? 0) * GIBIBYTE,
       }),
-      diskIO: (s: { dr?: number; dw?: number }) => ({
-        [t("chart.diskIO.read")]: (s.dr ?? 0) * MB,
-        [t("chart.diskIO.write")]: (s.dw ?? 0) * MB,
+      diskIO: (s: { dr?: number; dw?: number; dio?: [number, number] }) => ({
+        [t("chart.diskIO.read")]: normalizeBeszelByteRate(s.dio?.[0], s.dr),
+        [t("chart.diskIO.write")]: normalizeBeszelByteRate(s.dio?.[1], s.dw),
       }),
       network: (s: { ns?: number; nr?: number; b?: [number, number] }) => ({
-        [t("chart.network.sent")]: s.b?.[0] ?? s.ns ?? 0,
-        [t("chart.network.recv")]: s.b?.[1] ?? s.nr ?? 0,
+        [t("chart.network.sent")]: normalizeBeszelByteRate(s.b?.[0], s.ns),
+        [t("chart.network.recv")]: normalizeBeszelByteRate(s.b?.[1], s.nr),
       }),
     }),
     [t],
@@ -238,10 +249,13 @@ export function BeszelStatsView({
 
   if (!activeStats) {
     const visibleChartCount = Object.values(visibility).filter(Boolean).length;
+    const effectiveColumns = Math.min(columns, Math.max(1, visibleChartCount)) as 1 | 2;
+    const rowCount = Math.ceil(visibleChartCount / effectiveColumns);
+    const chartHeight = computeChartHeight(availableHeight, rowCount);
     return (
-      <SimpleGrid cols={columns} spacing="md" aria-label={t("name")}>
+      <SimpleGrid cols={effectiveColumns} spacing="md" aria-label={t("name")}>
         {Array.from({ length: visibleChartCount }, (_, index) => (
-          <ChartSkeleton key={index} />
+          <ChartSkeleton key={index} height={chartHeight} />
         ))}
       </SimpleGrid>
     );
@@ -285,7 +299,7 @@ export function BeszelStatsView({
             h: chartHeight,
             data: cpuData,
             series: series.cpu,
-            yAxisFormatter: chartAxisFormatters.percent,
+            yAxisFormatter: formatPercent,
             yAxisDomain: CPU_Y_AXIS_DOMAIN,
             tooltipProps: tooltips.percent,
           }}
@@ -300,8 +314,8 @@ export function BeszelStatsView({
             data: memoryData,
             type: "stacked",
             series: series.memory,
-            yAxisFormatter: chartAxisFormatters.gb,
-            tooltipProps: tooltips.gigabytes,
+            yAxisFormatter: byteAxisFormatters.bytes,
+            tooltipProps: tooltips.bytes,
           }}
         />
       )}
@@ -314,8 +328,8 @@ export function BeszelStatsView({
             data: diskData,
             type: "stacked",
             series: diskSeries,
-            yAxisFormatter: chartAxisFormatters.gb,
-            tooltipProps: tooltips.gigabytes,
+            yAxisFormatter: byteAxisFormatters.bytes,
+            tooltipProps: tooltips.bytes,
           }}
         />
       )}
@@ -327,7 +341,7 @@ export function BeszelStatsView({
             h: chartHeight,
             data: diskIOData,
             series: series.diskIO,
-            yAxisFormatter: chartAxisFormatters.rate,
+            yAxisFormatter: byteAxisFormatters.rate,
             tooltipProps: tooltips.rate,
           }}
         />
@@ -340,7 +354,7 @@ export function BeszelStatsView({
             h: chartHeight,
             data: networkData,
             series: series.network,
-            yAxisFormatter: chartAxisFormatters.rate,
+            yAxisFormatter: byteAxisFormatters.rate,
             tooltipProps: tooltips.rate,
           }}
         />
@@ -356,7 +370,7 @@ export function BeszelStatsView({
                 data: dockerCpuData,
                 type: "stacked",
                 series: containerSeries,
-                yAxisFormatter: chartAxisFormatters.percent,
+                yAxisFormatter: formatPercent,
                 tooltipProps: tooltips.percentTotal,
               }}
             />
@@ -370,7 +384,7 @@ export function BeszelStatsView({
                 data: dockerMemoryData,
                 type: "stacked",
                 series: containerSeries,
-                yAxisFormatter: chartAxisFormatters.bytes,
+                yAxisFormatter: byteAxisFormatters.bytes,
                 tooltipProps: tooltips.bytesTotal,
               }}
             />
@@ -383,7 +397,7 @@ export function BeszelStatsView({
                 h: chartHeight,
                 data: dockerNetworkData,
                 series: containerSeries,
-                yAxisFormatter: chartAxisFormatters.rate,
+                yAxisFormatter: byteAxisFormatters.rate,
                 tooltipProps: tooltips.rate,
               }}
             />

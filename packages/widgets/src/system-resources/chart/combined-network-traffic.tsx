@@ -1,7 +1,7 @@
 import { Box, Group, Stack, Text } from "@mantine/core";
 import { IconNetwork } from "@tabler/icons-react";
 
-import { formatByteRate } from "@homarr/common";
+import { useByteFormatter } from "@homarr/settings";
 import { useI18n } from "@homarr/translation/client";
 
 import type { LabelDisplayModeOption } from "..";
@@ -27,6 +27,7 @@ export const CombinedNetworkTrafficChart = ({
     down: usage.down,
   }));
   const t = useI18n("widget.systemResources.card");
+  const { formatByteRate } = useByteFormatter();
 
   const tooltipLabel = (index: number) => {
     const point = usageOverTime[index];

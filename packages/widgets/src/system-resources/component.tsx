@@ -239,18 +239,22 @@ const SystemCharts = ({
   const chartGap = isAdvanced ? "xs" : 8;
 
   return (
-    // style={{height}}, not h={`${height}px`} - confirmed by reading Mantine's own rem()
-    // converter (units-converters/rem.ts): it strips a "px" suffix from ANY string before
-    // checking if it's a parseable number, so a pixel string gets the exact same
-    // rem() * var(--mantine-scale) treatment as a raw number. Only calc()/percentage/non-numeric
-    // strings skip that path - a literal style.height bypasses Mantine's h-prop pipeline
-    // entirely, which is the only way to actually avoid it.
+    // style={{height}}, not h={height} or h={`${height}px`} - Mantine's h prop runs numbers
+    // (and even pixel *strings*, since its rem() converter strips a "px" suffix before checking
+    // whether the remainder is a parseable number) through rem() * var(--mantine-scale), which
+    // silently rescales the value again on top of the board's own zoom. Only calc()/percentage/
+    // non-numeric strings skip that path (why h="100%" below is safe) - a literal style.height
+    // is the only way to set an exact pixel value that isn't run through it.
     <Stack gap={chartGap} style={{ height: `${height}px` }} miw={0}>
       {showTitle && (
         <Text size="sm" fw={600} truncate="end">
           {integrationName}
         </Text>
       )}
+      {/* Divide the available height evenly across however many rows chartColumns wraps the
+          charts into via CSS grid-auto-rows: 1fr, rather than computing a per-chart pixel height
+          in JS - keeps every chart's own sizing untouched (still h="100%" of its grid cell) and
+          needs no board-zoom-aware math of its own. */}
       <SimpleGrid cols={chartColumns} spacing={chartGap} style={{ flex: 1, minHeight: 0, gridAutoRows: "1fr" }}>
         {chartCount === 0 && (
           <Center h="100%">

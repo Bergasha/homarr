@@ -20,7 +20,7 @@ const publicCatalogPath = resolve(repositoryRoot, "apps/docs/static/custom-widge
 
 // Keep a reviewed ceiling close to the generated artifact so accidental metadata
 // duplication must receive explicit review.
-const MAX_CATALOG_BYTES = 800 * 1024;
+const MAX_CATALOG_BYTES = 850 * 1024;
 
 describe("Custom JSX authoring catalog", () => {
   test("is versioned against the installed authoring surface", async () => {
@@ -86,10 +86,17 @@ describe("Custom JSX authoring catalog", () => {
     expect(label && getCustomJsxPropType(label)).toContain("ReactNode");
     expect(label?.required).toBe(false);
     expect(label?.description).toBeTruthy();
-    expect(textInput?.bind).toEqual({ type: "string", initialProp: "defaultValue" });
+    expect(textInput?.bind).toEqual({ type: "string", initialProp: "defaultValue", resetProp: "resetKey" });
 
     const switchComponent = customJsxAuthoringCatalog.components.find(({ name }) => name === "Switch");
-    expect(switchComponent?.bind).toEqual({ type: "boolean", initialProp: "defaultChecked" });
+    expect(switchComponent?.bind).toEqual({
+      type: "boolean",
+      initialProp: "defaultChecked",
+      resetProp: "resetKey",
+    });
+
+    const refreshButton = customJsxAuthoringCatalog.components.find(({ name }) => name === "RefreshButton");
+    expect(refreshButton?.props).toEqual(expect.arrayContaining([expect.objectContaining({ name: "requestId" })]));
 
     expect(customJsxAuthoringCatalog.components.some(({ name }) => name === "RecursiveList")).toBe(false);
 

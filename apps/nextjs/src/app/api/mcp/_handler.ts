@@ -7,21 +7,24 @@ import { z } from "zod/v4";
 import type { McpTool } from "@homarr/api/mcp";
 import { createTRPCContext, mcpRouter } from "@homarr/api/mcp";
 import { API_KEY_HEADER_NAME, getSessionFromApiKeyAsync } from "@homarr/auth/api-key";
-import { extractBaseUrlFromHeaders } from "@homarr/common";
+import { removeTrailingSlash } from "@homarr/common";
 import { ipAddressFromHeaders } from "@homarr/common/server";
 import { createLogger } from "@homarr/core/infrastructure/logs";
 import { buildCustomWidgetMcpPrompt } from "@homarr/custom-widgets/authoring-prompt";
 import {
+  CUSTOM_WIDGET_SKILL_REFERENCE_NAMES,
   getCustomWidgetComponent,
   getCustomWidgetComponentCatalog,
   getCustomWidgetExample,
-  getCustomWidgetSkillContent,
+  getCustomWidgetSkillEntrypoint,
+  getCustomWidgetSkillReference,
 } from "@homarr/custom-widgets/authoring-resources";
 import { customJsxExamples, getCustomWidgetJsonSchema } from "@homarr/custom-widgets/core";
 import { db } from "@homarr/db";
 
 import { getPackageVersion } from "~/versions/package-reader";
 import { getSafeAssistantToolError } from "../assistant/chat/assistant-tool-error";
+import { getMcpBaseUrl } from "./_base-url";
 import { extractMcpTools } from "./_extract-tools";
 import { createMcpProtocolHandler } from "./_protocol";
 
@@ -80,24 +83,16 @@ function clearAuthFailures(ip: string | null) {
   authFailures.delete(ip ?? "unknown");
 }
 
-let toolsCache: McpTool[] | null = null;
-
-function getTools() {
-  if (!toolsCache) {
-    toolsCache = extractMcpTools();
-    logger.info(`Extracted ${toolsCache.length} MCP tools`);
-  }
-  return toolsCache;
-}
-
-const getVisibleTools = (isAdmin: boolean) =>
-  isAdmin ? getTools() : getTools().filter((tool) => !tool.name.startsWith("customWidget_"));
+const getVisibleTools = (tools: McpTool[], isAdmin: boolean) => {
+  if (isAdmin) return tools;
+  return tools.filter((tool) => !tool.name.startsWith("customWidget_"));
+};
 
 function registerCustomWidgetAuthoring(server: McpServer) {
   server.registerPrompt(
     "homarr-custom-widget-author",
     {
-      description: "Author and iterate on one Homarr Custom JSX v2 widget.",
+      description: "Author and iterate on one or more Homarr Custom JSX v2 widgets.",
       argsSchema: z.object({
         request: z.string().optional().describe("The widget the user wants."),
         documentationUrl: z.string().optional().describe("External API documentation URL."),
@@ -146,9 +141,20 @@ function registerCustomWidgetAuthoring(server: McpServer) {
     "homarr://custom-widgets/skill",
     { mimeType: "text/markdown" },
     (uri) => ({
-      contents: [{ uri: uri.href, mimeType: "text/markdown", text: getCustomWidgetSkillContent() }],
+      contents: [{ uri: uri.href, mimeType: "text/markdown", text: getCustomWidgetSkillEntrypoint().skillMd }],
     }),
   );
+
+  for (const name of CUSTOM_WIDGET_SKILL_REFERENCE_NAMES) {
+    server.registerResource(
+      `Custom Widget reference: ${name}`,
+      `homarr://custom-widgets/references/${name}`,
+      { mimeType: "text/markdown" },
+      (uri) => ({
+        contents: [{ uri: uri.href, mimeType: "text/markdown", text: getCustomWidgetSkillReference(name).content }],
+      }),
+    );
+  }
 
   for (const example of customJsxExamples) {
     server.registerResource(
@@ -218,49 +224,11 @@ function sanitizeErrorMessage(error: unknown, toolName: string): string {
   return "Tool execution failed";
 }
 
-const SERVER_INSTRUCTIONS = `You are connected to Homarr, a self-hosted homelab dashboard.
+const SERVER_INSTRUCTIONS = `You are connected to Homarr, a self-hosted homelab dashboard. Use the listed tools and their descriptions for live data and actions; never invent resources, IDs, state, or results.
 
-## Key Concepts
+Integrations connect Homarr to services, boards contain widgets, and apps are visual links. Discover an integration before passing its integrationId to another tool. Returned permissions are authoritative: use access permits reads, interact access permits service actions, and full access permits configuration changes. Explain denied or unavailable access without suggesting a bypass.
 
-**Integrations** are connections to external self-hosted services (Sonarr, Radarr, Plex, Overseerr, Pi-hole, Home Assistant, etc.). Each integration has an \`id\` (integrationId) and a \`kind\` (e.g. "sonarr", "radarr", "overseerr"). Use \`integration_all\` to list them. Many tools require an \`integrationId\` — always fetch it from \`integration_all\` or \`integration_search\` first.
-
-**Boards** are customizable dashboards containing widgets that display data from integrations. Users can have multiple boards.
-
-**Apps** are links/bookmarks to self-hosted services displayed on boards. They are separate from integrations — an app is a visual shortcut, an integration is a data connection.
-
-**Permissions**: Each integration result includes a \`permissions\` object:
-- \`hasUseAccess: true\` means you can read data from this integration
-- \`hasInteractAccess: true\` means you can perform actions (start/stop, request media, etc.)
-- \`hasFullAccess: true\` means you can modify/delete the integration config
-If \`hasUseAccess\` is false, the API key owner lacks permission for that integration — this is normal, not an error. Simply skip integrations where you lack the required permission level.
-
-## Common Workflows
-
-**"What's coming this week?"** → Use \`calendar_findAllEvents\` to get upcoming media releases from Sonarr (TV), Radarr (movies), Lidarr (music), and Readarr (books).
-
-**"Search and request a movie/show"** → Use \`integration_searchMediaRequests\` to search across Overseerr/Jellyseerr, then \`integration_requestMedia\` to submit a request. Use \`integration_getMediaRequestOptions\` first for TV shows to pick seasons.
-
-**"What's streaming right now?"** → Use \`mediaServer_getCurrentStreams\` to see active Plex/Jellyfin/Emby streams.
-
-**"Check server health"** → Use \`healthMonitoring_getSystemHealthStatus\` for NAS/server metrics or \`healthMonitoring_getClusterHealthStatus\` for Proxmox clusters.
-
-**"Check Beszel systems"** → Call \`integration_all\` to get Beszel integrationIds, then use \`beszel_getSystems\` to list all monitored systems with CPU/memory/disk/network status. Use \`beszel_getAlerts\` for active alerts and history. Use \`beszel_getSystemStats\` for historical metrics of a specific system (requires systemId from \`beszel_getSystems\`).
-
-**"Manage Docker containers"** → Use \`docker_getContainers\` to list containers with status/CPU/memory, then \`docker_startAll\`/\`docker_stopAll\`/\`docker_restartAll\` with \`targets\` containing the endpointId and id returned for each container.
-
-**"Control smart home"** → Use \`smartHome_entityState\` to check a Home Assistant entity, \`smartHome_switchEntity\` to toggle it, or \`smartHome_executeAutomation\` to trigger an automation.
-
-**"Block/unblock ads"** → Use \`dnsHole_summary\` for Pi-hole/AdGuard stats, \`dnsHole_disable\` to temporarily disable blocking, \`dnsHole_enable\` to re-enable.
-
-**"Check downloads"** → Use \`downloads_getJobsAndStatuses\` for queue status, \`downloads_pause\`/\`downloads_resume\` to control queues.
-
-**"Pending media requests"** → Use \`mediaRequests_getLatestRequests\` to see pending/approved/declined requests, \`mediaRequests_answerRequest\` to approve or decline.
-
-## Tips
-- Always call \`integration_all\` first to discover available integrations and their IDs before using integration-dependent tools.
-- The \`integrationId\` parameter in widget tools accepts the ID from \`integration_all\`, not the integration name or kind.
-- If a tool returns empty results, the user may not have the required integration configured.
-- Docker and Kubernetes tools work only if the Homarr instance has access to the Docker socket or Kubernetes cluster.`;
+Read current state when it matters, reuse results across a batch, and complete the requested work before summarizing. Load optional resources only when the task needs them. For Custom JSX authoring, start with the compact Custom Widget skill resource or prompt, then fetch only the live schema and named references or component documentation required by the design.`;
 
 function extractApiKeyValue(req: NextRequest): string | null {
   const apiKeyHeader = req.headers.get(API_KEY_HEADER_NAME);
@@ -278,6 +246,12 @@ function jsonErrorResponse(status: number, body: Record<string, string>, extraHe
     headers: { "Content-Type": "application/json", ...extraHeaders },
   });
 }
+
+const getOAuthChallenge = (req: NextRequest) => {
+  const baseUrl = getMcpBaseUrl(req.headers);
+  const resourcePath = removeTrailingSlash(new URL(req.url).pathname);
+  return `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource${resourcePath}"`;
+};
 
 export const handleMcpRequest = async (req: NextRequest) => {
   const pathname = new URL(req.url).pathname;
@@ -302,30 +276,37 @@ export const handleMcpRequest = async (req: NextRequest) => {
 
   if (!apiKeyValue) {
     recordAuthFailure(ipAddress);
-    const baseUrl = extractBaseUrlFromHeaders(req.headers);
     return jsonErrorResponse(
       401,
       {
         error: "unauthorized",
         hint: "Authenticate with an ApiKey header or via OAuth at /.well-known/oauth-authorization-server",
       },
-      { "WWW-Authenticate": `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource"` },
+      { "WWW-Authenticate": getOAuthChallenge(req) },
     );
   }
 
   if (!apiKeyValue.includes(".")) {
     recordAuthFailure(ipAddress);
-    return jsonErrorResponse(401, { error: "invalid_token", hint: "The token must be in the format '<id>.<token>'." });
+    return jsonErrorResponse(
+      401,
+      { error: "invalid_token", hint: "The token must be in the format '<id>.<token>'." },
+      { "WWW-Authenticate": getOAuthChallenge(req) },
+    );
   }
 
   const session = await getSessionFromApiKeyAsync(db, apiKeyValue, ipAddress, ua);
 
   if (!session) {
     recordAuthFailure(ipAddress);
-    return jsonErrorResponse(401, {
-      error: "invalid_token",
-      hint: "The API key was not found or the token is incorrect.",
-    });
+    return jsonErrorResponse(
+      401,
+      {
+        error: "invalid_token",
+        hint: "The API key was not found or the token is incorrect.",
+      },
+      { "WWW-Authenticate": getOAuthChallenge(req) },
+    );
   }
 
   clearAuthFailures(ipAddress);
@@ -336,7 +317,7 @@ export const handleMcpRequest = async (req: NextRequest) => {
   const isAdmin = session.user.permissions.includes("admin");
   const protocolHandler = createMcpProtocolHandler({
     caller,
-    tools: getVisibleTools(isAdmin),
+    tools: getVisibleTools(extractMcpTools(), isAdmin),
     version: getPackageVersion(),
     instructions: SERVER_INSTRUCTIONS,
     configureServer: isAdmin ? registerCustomWidgetAuthoring : undefined,

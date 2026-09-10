@@ -21,7 +21,7 @@ describe("item actions create-item", () => {
       .build();
     const baseLayout = board.layouts.find((layout) => layout.role === "base");
 
-    const result = createItemCallback({ kind: "mediaMissing" })(board);
+    const result = createItemCallback({ kind: "downloads" })(board);
 
     const createdItem = result.items.at(0);
     expect(createdItem?.layouts.find((layout) => layout.layoutId === "mobile")?.width).toBe(3);
@@ -63,14 +63,14 @@ describe("item actions create-item", () => {
           {
             layoutId,
             height: 1,
-            width: 1,
+            width: 2,
             ...emptyPosition,
             sectionId: firstSectionId,
           },
         ],
       }),
     );
-    expect(emptyPositionSpy).toHaveBeenCalledWith([], layout.columnCount, undefined, { height: 1, width: 1 });
+    expect(emptyPositionSpy).toHaveBeenCalledWith([], layout.columnCount, undefined, { height: 1, width: 2 });
   });
   test("should correctly pass containers and items to getFirstEmptyPosition", () => {
     // Arrange
@@ -118,14 +118,14 @@ describe("item actions create-item", () => {
     expect(createdItem).toEqual(
       expect.objectContaining({
         kind: itemKind,
-        layouts: [{ ...emptyPosition, height: 1, width: 1, sectionId: firstSectionId, layoutId }],
+        layouts: [{ ...emptyPosition, height: 1, width: 2, sectionId: firstSectionId, layoutId }],
       }),
     );
     expect(spy).toHaveBeenCalledWith(
       [expect.objectContaining(itemAndSectionPosition), expect.objectContaining(itemAndSectionPosition)],
       layout.columnCount,
       undefined,
-      { height: 1, width: 1 },
+      { height: 1, width: 2 },
     );
   });
 
@@ -165,7 +165,7 @@ describe("item actions create-item", () => {
     const result = createItemCallback({ id: "calendar", kind: "mediaMissing", targetSectionId: "media" })(board);
 
     expect(result.items.find((item) => item.id === "calendar")?.layouts).toEqual([
-      expect.objectContaining({ layoutId: "layout", sectionId: "media", width: 4 }),
+      expect.objectContaining({ layoutId: "layout", sectionId: "media", width: 2 }),
     ]);
   });
 
@@ -262,7 +262,7 @@ describe("item actions create-item", () => {
         layoutId: layout.id,
         sectionId: "canvas",
         width: 1,
-        height: 3,
+        height: 2,
         xOffset: 0,
         yOffset: 1,
       }),

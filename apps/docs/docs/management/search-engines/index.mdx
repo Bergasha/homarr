@@ -14,13 +14,15 @@ The default **Search** mode lists every configured search engine as a fallback a
 engines by shortcut, switch to **Web** with `!`. DuckDuckGo bang discovery is intentionally limited to Web mode so an
 ordinary search term never expands into similarly named bang providers.
 
+![The Search engines management page](../img/search-engines.png)
+
 You can add any search engine that has a search URL that accepts a search term as a parameter.
 
 ## Create search engine
 
 To create a custom search engine, you can click the button at the top of the page.
 
-![](./img/create-search-engine.png)
+![New search engine form with name, shortcut, icon, and URL template fields](./img/create-search-engine.png)
 
 ### Name
 
@@ -39,7 +41,7 @@ In the configuration section you can select between two options.
 
 #### Search template
 
-The template must be a valid URL that incldues the `%s` placeholder.
+The template must be a valid URL that includes the `%s` placeholder.
 Homarr will replace the `%s` with the term that the user entered.
 
 ##### Examples

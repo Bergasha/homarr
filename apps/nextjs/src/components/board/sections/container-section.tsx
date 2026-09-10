@@ -10,7 +10,7 @@ import { useI18n } from "@homarr/translation/client";
 import type { ContainerSectionItem } from "~/app/[locale]/boards/_types";
 import { COLLAPSED_SECTION_ROW_COUNT } from "~/components/board/layout";
 import { SectionGrid } from "./grid/section-grid";
-import { useIsAutoExpanded, useSectionCollapse } from "./section-collapse";
+import { useSectionCollapse } from "./section-collapse";
 import { useOpenSectionApps } from "./use-open-section-apps";
 import classes from "./item.module.css";
 
@@ -37,10 +37,6 @@ export const BoardContainerSection = ({ section }: Props) => {
     sectionId: section.id,
     collapsible: options.collapsible,
   });
-  const isAutoExpanded = useIsAutoExpanded(section.id);
-  const isHiddenInactive =
-    options.autoExpand.enabled && options.autoExpand.inactiveDisplay === "hidden" && !isAutoExpanded && !isEditMode;
-  const effectivelyCollapsed = isVisuallyCollapsed || isHiddenInactive;
   const label = options.title.trim() || t("untitled");
   const contentId = `board-container-${section.id}-content`;
   const labelLeft = 8;
@@ -53,11 +49,11 @@ export const BoardContainerSection = ({ section }: Props) => {
           classes.itemCard,
           classes.containerCard,
           options.customCssClasses.join(" "),
-          effectivelyCollapsed && classes.collapsedContainerCard,
+          isVisuallyCollapsed && classes.collapsedContainerCard,
         )}
         w="100%"
         h="100%"
-        data-board-container-collapsed={effectivelyCollapsed ? "true" : "false"}
+        data-board-container-collapsed={isVisuallyCollapsed ? "true" : "false"}
         styles={{
           root: {
             overflow: "visible",
@@ -68,7 +64,7 @@ export const BoardContainerSection = ({ section }: Props) => {
         radius={board.itemRadius}
         p={0}
       >
-        {options.collapsible && !isHiddenInactive && (
+        {options.collapsible && (
           <Button
             className={classes.containerToggle}
             pos="absolute"
@@ -107,7 +103,7 @@ export const BoardContainerSection = ({ section }: Props) => {
             )}
           </Button>
         )}
-        {!isVisuallyCollapsed && !options.collapsible && !isHiddenInactive && options.showLabel && options.title && (
+        {!isVisuallyCollapsed && !options.collapsible && options.showLabel && options.title && (
           <Badge
             className={classes.containerLabel}
             pos="absolute"
@@ -128,7 +124,7 @@ export const BoardContainerSection = ({ section }: Props) => {
             {options.title}
           </Badge>
         )}
-        {options.showOpenAll && !isEditMode && !isHiddenInactive && (
+        {options.showOpenAll && !isEditMode && (
           <ActionIcon
             className={classes.containerAction}
             pos="absolute"
@@ -150,15 +146,15 @@ export const BoardContainerSection = ({ section }: Props) => {
           className={classes.containerBody}
           h="100%"
           data-board-container-body
-          data-collapsed={effectivelyCollapsed ? "true" : "false"}
-          aria-hidden={effectivelyCollapsed}
-          inert={effectivelyCollapsed}
+          data-collapsed={isVisuallyCollapsed ? "true" : "false"}
+          aria-hidden={isVisuallyCollapsed}
+          inert={isVisuallyCollapsed}
         >
           <SectionGrid
             section={section}
             columnCount={section.width}
             requestedRowCount={section.height}
-            viewportRowCountOverride={effectivelyCollapsed ? COLLAPSED_SECTION_ROW_COUNT : undefined}
+            viewportRowCountOverride={isVisuallyCollapsed ? COLLAPSED_SECTION_ROW_COUNT : undefined}
             label={label}
           />
         </Box>

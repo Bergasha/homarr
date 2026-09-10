@@ -8,6 +8,7 @@ import { IconAlertTriangle, IconArrowRight, IconFileZip, IconUpload, IconX } fro
 
 import "@mantine/dropzone/styles.css"; // oxlint-disable-line import/no-unassigned-import
 
+import { useByteFormatter } from "@homarr/settings";
 import { useI18n } from "@homarr/translation/client";
 
 import type { RestoreStep } from "./types";
@@ -26,6 +27,7 @@ const DEFAULT_RESTART_DELAY_MS = 500;
 const RESTART_READINESS_TIMEOUT_MS = 45_000;
 const RESTART_POLL_INTERVAL_MS = 750;
 const RESTART_REQUEST_TIMEOUT_MS = 5_000;
+const MAX_BACKUP_FILE_BYTES = 256 * 1024 * 1024;
 
 export type ServerReadinessResult = "ready" | "timedOut" | "aborted";
 
@@ -105,6 +107,7 @@ export const waitForServerReadinessAsync = async ({
 export const DatabaseRestoreFlow = ({ variant = "card", onRestoreComplete }: DatabaseRestoreFlowProps) => {
   const t = useI18n("management.page.tool.backup.restore");
   const tCommon = useI18n("common");
+  const { formatBytes } = useByteFormatter();
   const [file, setFile] = useState<FileWithPath | null>(null);
   const [step, setStep] = useState<RestoreStep>("upload");
   const [importError, setImportError] = useState<string | null>(null);
@@ -204,8 +207,12 @@ export const DatabaseRestoreFlow = ({ variant = "card", onRestoreComplete }: Dat
     }
 
     onRestoreComplete?.();
-    const destination =
-      variant === "standalone" && homeBoardName ? `/boards/${encodeURIComponent(homeBoardName)}` : null;
+    let destination: string | null = null;
+    if (variant === "standalone" && homeBoardName) {
+      destination = `/boards/${encodeURIComponent(homeBoardName)}`;
+    } else if (variant === "card") {
+      destination = "/auth/login";
+    }
     startReadinessCheck(restartAfterMs, destination);
   }, [file, onRestoreComplete, startReadinessCheck, t, variant]);
 
@@ -217,7 +224,7 @@ export const DatabaseRestoreFlow = ({ variant = "card", onRestoreComplete }: Dat
         rejectColor="red.6"
         accept={[MIME_TYPES.zip, "application/x-zip-compressed"]}
         multiple={false}
-        maxSize={1024 * 1024 * 256}
+        maxSize={MAX_BACKUP_FILE_BYTES}
         radius="md"
       >
         <Group justify="center" gap="xl" mih={variant === "standalone" ? 200 : 160} style={{ pointerEvents: "none" }}>
@@ -241,7 +248,7 @@ export const DatabaseRestoreFlow = ({ variant = "card", onRestoreComplete }: Dat
               {t("dropzone.title")}
             </Text>
             <Text size="sm" c="dimmed" inline mt={7}>
-              {t("dropzone.description")}
+              {t("dropzone.description", { maxSize: formatBytes(MAX_BACKUP_FILE_BYTES) })}
             </Text>
           </div>
         </Group>
@@ -260,7 +267,7 @@ export const DatabaseRestoreFlow = ({ variant = "card", onRestoreComplete }: Dat
                 {file?.name}
               </Text>
               <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }}>
-                {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : ""}
+                {file ? formatBytes(file.size) : ""}
               </Text>
             </Group>
           </Group>
@@ -317,6 +324,7 @@ export const DatabaseRestoreFlow = ({ variant = "card", onRestoreComplete }: Dat
       <RestoreProgressPanel
         active
         status={restoreStatus}
+        reloginRequired={variant === "card"}
         onRetry={() => startReadinessCheck(0)}
         onReload={() => window.location.reload()}
       />

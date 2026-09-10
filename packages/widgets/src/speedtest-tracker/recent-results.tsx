@@ -4,13 +4,16 @@ import { useMemo } from "react";
 import { AreaChart, ChartTooltip } from "@mantine/charts";
 import { Stack, useMantineTheme } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
-import { ReferenceLine, XAxis } from "recharts";
+import { XAxis } from "recharts";
 
 import { useRequiredBoard } from "@homarr/boards/context";
+import { formatBitRate } from "@homarr/common";
 import type { SpeedtestTrackerResult } from "@homarr/integrations/types";
 import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
 
 import { SectionLabel } from "./section-label";
+
+const formatChartBitRate = (value: number) => formatBitRate(value);
 
 interface XAxisTicks {
   midnightTs: number | null;
@@ -182,11 +185,8 @@ function SpeedHistoryChart({ results, height }: { results: SpeedtestTrackerResul
         .filter((result) => (result.download_bits ?? 0) > 0)
         .map((result) => ({
           ts: result.created_at.getTime(),
-          Download: parseFloat(((result.download_bits ?? 0) / 1_000_000).toFixed(2)),
-          Upload:
-            result.upload_bits != null && result.upload_bits > 0
-              ? parseFloat((result.upload_bits / 1_000_000).toFixed(2))
-              : 0,
+          Download: result.download_bits ?? 0,
+          Upload: result.upload_bits != null && result.upload_bits > 0 ? result.upload_bits : 0,
         })),
     [results],
   );
@@ -194,8 +194,8 @@ function SpeedHistoryChart({ results, height }: { results: SpeedtestTrackerResul
   const yConfig = useMemo(
     () =>
       buildYAxisConfig(Math.max(...data.map((item) => Math.max(item.Download, item.Upload)), 0), [
-        { threshold: 400, step: 100 },
-        { threshold: Infinity, step: 200 },
+        { threshold: 400_000_000, step: 100_000_000 },
+        { threshold: Infinity, step: 200_000_000 },
       ]),
     [data],
   );
@@ -221,7 +221,7 @@ function SpeedHistoryChart({ results, height }: { results: SpeedtestTrackerResul
       withLegend
       fillOpacity={0.2}
       styles={{ root: { padding: 5, borderRadius: theme.radius[board.itemRadius] } }}
-      valueFormatter={(val: number) => `${val} Mbps`}
+      valueFormatter={formatChartBitRate}
       xAxisProps={{
         type: "number",
         domain: ["dataMin", "dataMax"],
@@ -233,10 +233,17 @@ function SpeedHistoryChart({ results, height }: { results: SpeedtestTrackerResul
       yAxisProps={{
         ticks: yConfig.ticks,
         domain: yConfig.domain,
-        tickFormatter: (val: number) => `${val}`,
-        width: 50,
+        tickFormatter: formatChartBitRate,
+        width: 70,
         tick: { fontSize: 10 },
       }}
+      referenceLines={xTicks.map((tickTs) => ({
+        x: tickTs,
+        yAxisId: "left",
+        stroke: "var(--mantine-color-dimmed)",
+        strokeDasharray: "3 3",
+        strokeOpacity: 0.35,
+      }))}
       tooltipProps={{
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content: (props: any) => {
@@ -250,7 +257,7 @@ function SpeedHistoryChart({ results, height }: { results: SpeedtestTrackerResul
             <ChartTooltip
               label={formatTooltipDate(label, locale)}
               payload={payload}
-              valueFormatter={(val: number) => `${val} Mbps`}
+              valueFormatter={formatChartBitRate}
             />
           );
         },
@@ -269,16 +276,6 @@ function SpeedHistoryChart({ results, height }: { results: SpeedtestTrackerResul
         tickLine={false}
         interval={0}
       />
-      {xTicks.map((tickTs) => (
-        <ReferenceLine
-          key={tickTs}
-          x={tickTs}
-          yAxisId="left"
-          stroke="var(--mantine-color-dimmed)"
-          strokeDasharray="3 3"
-          strokeOpacity={0.35}
-        />
-      ))}
     </AreaChart>
   );
 }
@@ -349,6 +346,13 @@ function PingHistoryChart({ results, height }: { results: SpeedtestTrackerResult
         width: 50,
         tick: { fontSize: 10 },
       }}
+      referenceLines={xTicks.map((tickTs) => ({
+        x: tickTs,
+        yAxisId: "left",
+        stroke: "var(--mantine-color-dimmed)",
+        strokeDasharray: "3 3",
+        strokeOpacity: 0.35,
+      }))}
       tooltipProps={{
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content: (props: any) => {
@@ -367,17 +371,6 @@ function PingHistoryChart({ results, height }: { results: SpeedtestTrackerResult
           );
         },
       }}
-    >
-      {xTicks.map((tickTs) => (
-        <ReferenceLine
-          key={tickTs}
-          x={tickTs}
-          yAxisId="left"
-          stroke="var(--mantine-color-dimmed)"
-          strokeDasharray="3 3"
-          strokeOpacity={0.35}
-        />
-      ))}
-    </AreaChart>
+    />
   );
 }

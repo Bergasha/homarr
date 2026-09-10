@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 
 import "@gfazioli/mantine-onboarding-tour/styles.css";
 import "@homarr/notifications/styles.css";
+import "@mantine/lightbox/styles.css";
 import "@homarr/spotlight/styles.css";
 import "@homarr/ui/styles.css";
 import "flag-icons/css/flag-icons.min.css";
@@ -114,12 +115,15 @@ export default async function Layout(props: {
         })
       : null,
   );
-  const assistantAvailabilityPromise: Promise<AssistantAvailability> = sessionPromise.then((session) => {
+  const assistantAvailabilityPromise = sessionPromise.then(async (session): Promise<AssistantAvailability> => {
     if (!session) return "unauthenticated";
-    return api.assistant
-      .getAvailability()
-      .then((availability) => (availability.enabled ? "enabled" : "unconfigured"))
-      .catch(() => "error");
+
+    try {
+      const availability = await api.assistant.getAvailability();
+      return availability.enabled ? "enabled" : "unconfigured";
+    } catch {
+      return "error";
+    }
   });
   const [session, user, serverSettings, colorScheme, assistantAvailability] = await Promise.all([
     sessionPromise,
@@ -196,6 +200,7 @@ export default async function Layout(props: {
         ) : null}
         <SearchEngineOptimization />
         <CrowdinLiveTranslation locale={locale} />
+        <style data-homarr-global-custom-css>{serverSettings.branding.customCss}</style>
       </head>
       <body className={[fontSans.className, fontSans.variable].join(" ")} suppressHydrationWarning>
         <Analytics enabled={serverSettings.analytics.enableGeneral} />

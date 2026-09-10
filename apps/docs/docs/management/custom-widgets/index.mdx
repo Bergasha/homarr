@@ -4,138 +4,58 @@ sidebar_label: Overview
 tags: [Custom Widgets, API, JSX, MCP]
 ---
 
-import { BundledCustomWidgetGallery, CustomWidgetCodeExample } from "@site/src/components/custom-widget-code";
-
-export const completeManifest = `{
-  "$schema": "homarr-custom-widget-v2",
-  "name": "Service status",
-  "sources": {
-    "default": { "name": "Service API", "baseUrl": "https://status.example.com", "networkScope": "public", "auth": "none" }
-  },
-  "requests": { "status": { "path": "/api/status" } },
-  "options": {},
-  "template": "<Badge color={data.status?.ok ? 'green' : 'red'}>{data.status?.label ?? 'Unknown'}</Badge>"
-}`;
+import { CustomWidgetFlowDiagram } from "@site/src/components/pages/core-concepts/technical-diagrams";
 
 # Custom Widgets
 
 :::warning Experimental feature
 
-This feature is experimental and will probably change. If you encounter bugs, need more capabilities, or find something confusing, tell us in the [official discussion thread](https://github.com/homarr-labs/homarr/discussions/categories/custom-widgets). Your feedback directly shapes what comes next. Happy hacking!
+Custom Widgets may change during the v2 release cycle. Share feedback in the
+[Custom Widgets discussion](https://github.com/homarr-labs/homarr/discussions/categories/custom-widgets).
 
 :::
 
-Custom JSX v2 is Homarr's only Custom Widget format. A definition contains keyed API sources, keyed requests, optional widget options, and one safe JSX template. Credentials are encrypted separately and never exported.
+A **Custom Widget** is a validated `homarr-custom-widget-v2` definition containing API sources, queries and actions,
+optional settings, and a safe JSX template.
 
-```ts
-interface HomarrCustomWidgetV2 {
-  $schema: "homarr-custom-widget-v2";
-  name: string;
-  description?: string;
-  iconUrl?: string;
-  sources: Record<string, CustomWidgetSource>;
-  requests: Record<string, CustomWidgetRequest>;
-  options?: Record<string, CustomWidgetOption>;
-  template: string;
-}
-```
+Homarr executes requests on the server and renders the template in a restricted runtime. Source credentials are
+encrypted separately and are not included in exports, prompts, browser data, or Workshop submissions.
 
-### Design with AI
+<CustomWidgetFlowDiagram />
 
-The **Design with AI** action is available while creating or editing a custom widget. Describe what the widget should show and,
-when [Assistant](../assistant) is enabled, send the request directly from the form. The generated prompt includes the
-widget schema and current non-secret configuration, but not the latest preview response. It proposes the matching create or
-update tool for your approval.
+![The Custom Widgets management page](../img/custom-widgets.png)
 
-Use the preview's **Data** tab to inspect the endpoint's real response shape and mention important fields in your request; the
-copied prompt does not automatically include the latest preview response. Saved secrets are never added to the prompt. **Copy to
-clipboard** remains available when the Assistant is disabled or when you prefer another AI service.
+## Manage Custom Widgets
 
-<CustomWidgetCodeExample
-  id="complete-widget-manifest"
-  label="Complete manifest"
-  code={completeManifest}
-  height="360px"
-/>
+Administrators can create, import, duplicate, enable, export, publish, and delete definitions under
+**Management → Custom Widgets**. Adding or configuring one on a board also requires permission to modify that board.
+Use **Actions → Configure sources** to update deployment-specific URLs, network access, and encrypted credentials
+without reopening the authoring workbench.
 
-The browser renders JSX. Homarr's server executes named requests, applies board permissions and network protections, and injects credentials. The browser never receives source credentials.
+Once placed, normal board permissions control rendering and requests. Queries can run for anonymous viewers on public
+boards; actions require authentication and the permission declared by the request.
 
-## Permissions
+## Authoring
 
-Custom Widget management is an administrator-only surface. Only a Homarr administrator can create, import, migrate,
-preview, publish, install, configure, or write secrets, including through HTTP authoring resources or MCP. An API key
-only lists Custom Widget MCP tools, prompts, and resources when its owner is an administrator.
-
-Adding or configuring a Custom Widget placement requires both administrator access and permission to modify that
-board. Duplicating a board that contains Custom Widgets also requires an administrator. A non-administrator with
-board-modify access can move, resize, change presentation settings, or remove an existing placement, but cannot add one,
-change its definition, refresh interval, or Custom Widget options.
-
-Once an administrator has placed a widget, ordinary board permissions apply to rendering and requests. Authorized
-non-administrators can use it on private boards, and queries can render for anonymous viewers on public boards.
-Mutations remain authenticated and enforce each request's view, modify, or full permission.
-
-## Authoring paths
-
-- [Create a Custom Widget](./authoring) visually or with one copied AI prompt.
-- [Use the JSX runtime](./custom-jsx) for data, Mantine components, temporary inputs, and diagnostics.
-- [Browse the supported component reference](./component-reference).
+- [Create a Custom Widget](./authoring) in the workbench or from a copied AI prompt.
+- [Use the safe JSX runtime](./custom-jsx) for data bindings, temporary inputs, and components.
+- [Browse the component reference](./component-reference).
 - [Configure requests and security](./requests-and-security).
-- [Use MCP and the skills.sh skill](./agent-authoring).
-- [Correct problems](./troubleshooting).
+- [Connect an agent](./agent-authoring) through MCP and the Homarr skill.
+- [Troubleshoot a definition](./troubleshooting).
 
-The workbench keeps one continuous layout with visual source, request, and option editors. Advanced raw JSON remains available for experts and AI paste. Invalid values stay inline and disable both preview and Save/Create until they are corrected.
-
-Exports, imports, the official Workshop client, and MCP validate the same schema. PocketBase stores community
-submissions without interpreting their content, and Homarr validates them before installation. Widgets saved in the v1
-format remain visible to administrators with a **Migration required** badge after upgrading. Use **Copy migration
-prompt**, give the redacted prompt to an LLM, copy its single complete JSON block, then select **Paste migrated widget**
-from that widget's action menu. Homarr reads the `template` value into the JSX editor automatically. The prompt keeps safe
-request metadata but deliberately omits the v1 display configuration because legacy free-text and JSX can contain
-hard-coded credentials. Add a credential-free description of the widget's visible layout and behavior when sending the
-prompt.
-
-Homarr keeps the original v1 definition and encrypted secret as a compatibility backup even after the validated v2
-replacement is created. The v2 record uses the same stable ID and takes precedence. The archived v1 copy stays hidden
-while the replacement exists; deleting the v2 record surfaces the v1 entry as migration-required again. Automatic
-legacy deletion is intentionally unavailable during v2 stabilization. Credentials are never included in prompts,
-logs, or exports.
-
-For administrators adding widgets while editing a board, the Custom Widgets section includes **Import from
-Workshop**. Non-administrators do not see the Custom Widget picker or Workshop actions. Selecting **Install widget**
-opens a two-step modal flow: first review the Workshop entry and its complete source in the read-only editor, then
-confirm API sources and credentials. After import, the new definition appears in the picker. Its tile waits for the board
-to be saved before server requests run.
+The workbench validates the same schema used by imports, Workshop, HTTP authoring resources, and MCP. Test every query
+and simulate relevant actions before saving. Live preview actions are opt-in because they can change the source service.
 
 ## Import and Workshop
 
-The install flow always links to the corresponding public Workshop entry under the configured Workshop origin. Import confirmation shows origins, authentication modes, network scopes, methods, actions, and permissions. Every source has a suggested URL, but private and loopback sources must be confirmed or replaced for the current Homarr installation. The same screen accepts API keys, tokens, usernames, and passwords; credentials remain optional at install time and missing values stay visible on the Custom Widgets page.
+Use **Import from Workshop** while adding board content or import a v2 JSON definition directly. Review the source,
+requested permissions, API hosts, and actions before installation, then configure deployment-specific URLs and
+credentials in Homarr.
 
-For example, installing **Tautulli Activity** asks for both the user's Tautulli URL and API key. A stable public source such as PokéAPI keeps its published URL without creating unnecessary setup work.
+Legacy definitions show **Migration required**. The migration prompt excludes credentials and the old display template;
+describe the visible behavior separately, import the returned v2 definition, and verify it before removing the archived
+version.
 
-Workshop publishes technically valid widgets immediately; users can vote or report them, and Workshop moderators can
-delete submissions. The report form expands within the Workshop detail page instead of interrupting the review with a
-dialog. Community moderation is separate from Homarr administration and is not a security boundary.
-Publishers should replace personal private-network hosts with a clear service placeholder before publishing. Homarr
-performs definitive validation again at install time.
-
-Connected agents can search, inspect, and install Workshop widgets with `customWidget_workshopSearch`, `customWidget_workshopGet`, and `customWidget_workshopInstall`. After installation they can set a source URL and credentials with `customWidget_sourceConfigure`, or create a secure user-facing setup URL with `customWidget_configurationRequestUser`. Secret values are never returned through MCP.
-
-These tools are only exposed to API keys owned by Homarr administrators. Opening and completing a source-configuration
-URL also requires the same authenticated administrator; the URL is short-lived, single-use, and redacted.
-
-## Reliability and rollback
-
-Custom Widget response caches and action invalidation use shared Redis state, so multiple Homarr replicas see the same
-versioned cache generation. Deployments must point every replica at the same Redis service.
-
-Before upgrading, back up the database and `SECRET_ENCRYPTION_KEY`; a v1 binary can still read preserved v1 tables
-during application rollback. Widgets created only in v2 may be unavailable to the rolled-back binary, but do not
-replace the v1 backup.
-
-## Bundled examples
-
-Homarr seeds five disabled examples without credentials and never overwrites an edited seed. They use the same public
-contract. Tautulli Activity is one of the bundled examples preserved from Homarr's AI authoring evaluation:
-
-<BundledCustomWidgetGallery />
+Back up the database and `SECRET_ENCRYPTION_KEY` before upgrading or rolling back. Multi-replica installations must use
+the same Redis service so cached responses invalidate consistently.

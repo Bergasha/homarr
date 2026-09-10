@@ -1,6 +1,6 @@
 import { IconVideo } from "@tabler/icons-react";
 
-import { getIntegrationKindsByCategory } from "@homarr/definitions";
+import { getWidgetIntegrationConfig } from "@homarr/definitions";
 
 import { createWidgetDefinition, widgetQueryInputMatches } from "../definition";
 import { optionsBuilder } from "../options";
@@ -22,7 +22,6 @@ export const { componentLoader, definition } = createWidgetDefinition("mediaServ
       showLocation: factory.switch({ defaultValue: true, withDescription: true }),
     }));
   },
-  supportedIntegrations: getIntegrationKindsByCategory("mediaService"),
   activitySignal: (data) =>
     Array.isArray(data) &&
     data.some(
@@ -33,4 +32,5 @@ export const { componentLoader, definition } = createWidgetDefinition("mediaServ
         Array.isArray(pair.sessions) &&
         pair.sessions.length > 0,
     ),
+  ...getWidgetIntegrationConfig("mediaServer"),
 }).withDynamicImport(() => import("./component"));

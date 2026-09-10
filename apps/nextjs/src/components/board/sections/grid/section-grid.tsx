@@ -10,7 +10,6 @@ import { useEditMode } from "@homarr/boards/edit-mode";
 
 import type { ContainerSectionItem, Section } from "~/app/[locale]/boards/_types";
 import {
-  COLLAPSED_SECTION_ROW_COUNT,
   getCollapsedDisplayLayout,
   getEditableCanvasAttributes,
   getGridRowCountForVisualHeight,
@@ -24,7 +23,7 @@ import { useGridEditorRuntimeStatus } from "./grid-editor-runtime";
 import { createGridEntryElementStore, useGridEditorRegistry } from "./grid-editor-registry";
 import type { SectionGridPlacement } from "./use-grid-layout-actions";
 import { SectionContent } from "../content";
-import { useAutoExpandedSectionIds, useCollapsedSectionIds, useExpandSectionsForEditing } from "../section-collapse";
+import { useCollapsedSectionIds, useExpandSectionsForEditing } from "../section-collapse";
 import { SectionProvider } from "../section-context";
 import { useSectionItems } from "../use-section-items";
 import { useBoardGridPortalHost } from "./grid-portal-host";
@@ -34,9 +33,6 @@ interface SectionGridProps {
   section: Exclude<Section, { kind: "container" }> | ContainerSectionItem;
   columnCount: number;
   requestedRowCount?: number;
-  /** Forces the visible viewport to this many rows, bypassing the scrollable/content-grow formula
-   * below entirely - used when a container is collapsed, so its own inner content always agrees
-   * with the collapsed size its parent already allocated for it. */
   viewportRowCountOverride?: number;
   label: string;
   railPlacement?: "main" | "left" | "right";
@@ -63,7 +59,6 @@ export const SectionGrid = ({
   const { items, innerSections } = useSectionItems(section.id);
   const { announce, integrations } = useBoardGridPortalHost();
   const collapsedSectionIds = useCollapsedSectionIds();
-  const autoExpandedSectionIds = useAutoExpandedSectionIds();
   const expandSectionsForEditing = useExpandSectionsForEditing();
   const minimumBySectionId = useMemo(() => {
     const minimumSizes = getContainerMinimumSizes(board, currentLayoutId);
@@ -114,33 +109,14 @@ export const SectionGrid = ({
       ),
     [collapsedSectionIds, collapsibleSectionIds, placements],
   );
-  const hiddenInactiveIds = useMemo(() => {
-    if (isEditMode) return EMPTY_SECTION_ID_SET;
-    return new Set(
-      innerSections
-        .filter(
-          (inner) =>
-            inner.options.autoExpand.enabled &&
-            inner.options.autoExpand.inactiveDisplay === "hidden" &&
-            !autoExpandedSectionIds.has(inner.id),
-        )
-        .map((inner) => inner.id),
-    );
-  }, [autoExpandedSectionIds, innerSections, isEditMode]);
-  const collapsedRowCounts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const id of directCollapsedIds) map.set(id, COLLAPSED_SECTION_ROW_COUNT);
-    for (const id of hiddenInactiveIds) map.set(id, 0);
-    return map;
-  }, [directCollapsedIds, hiddenInactiveIds]);
   const displayPlacements = useMemo(() => {
-    if (collapsedRowCounts.size === 0) return placements;
+    if (directCollapsedIds.size === 0) return placements;
 
     return getCollapsedDisplayLayout(placements, {
       columnCount,
-      collapsedRowCounts,
+      collapsedItemIds: directCollapsedIds,
     });
-  }, [columnCount, collapsedRowCounts, placements]);
+  }, [columnCount, directCollapsedIds, placements]);
 
   const placementById = useMemo(
     () => new Map(displayPlacements.map((placement) => [placement.id, placement])),
@@ -167,40 +143,15 @@ export const SectionGrid = ({
   const isScrollableContainer = section.kind === "container" && section.options.scrollable;
   const viewportRowCount =
     viewportRowCountOverride ?? (isScrollableContainer ? Math.max(requestedRowCount, 1) : rowCount);
-  // A container's own visible card is inset from its allocated board cell by the board's
-  // standard per-item gap (see the base, non-container `.staticItem[data-type="item"] >
-  // .contentMount` rule in section-grid.module.css - a container is placed as an "item" like
-  // any widget, so it gets that same gap). A widget's content just fills whatever size its
-  // card ends up being, but this SectionGrid instead computes its own fixed pixel size from
-  // the same column/row counts used to allocate the *outer*, uninset cell - so without
-  // subtracting that gap back out here, a container's inner grid renders larger than its own
-  // card and visually spills past its right/bottom edges. 10 must match that CSS rule's inset.
   const effectiveCanvasScale = Number.isFinite(canvasScale) && canvasScale > 0 ? canvasScale : 1;
-  const outerCardInset = section.kind === "container" ? (2 * 10) / effectiveCanvasScale : 0;
-  // A collapsible container's toggle bar (see the `containerToggle` Button in
-  // container-section.tsx) is an absolutely positioned overlay sitting on top of this grid.
-  // Its height comes from a Mantine size prop, which - like spacing/font-size - is compensated
-  // by --mantine-scale to render at a constant physical size regardless of board zoom (see
-  // scaled-board-canvas.module.css). That makes it behave like the outerCardInset gap above,
-  // not like the grid's own un-compensated logical-pixel math, so it needs the same
-  // effectiveCanvasScale conversion - a plain, unconverted subtraction would under-reserve on
-  // a zoomed-out board and leave the header overlapping the content. Without reserving it at
-  // all, the header bar covers the first row of the container's content instead of sitting
-  // above it. Only the vertical axis is affected - the toggle spans the full width already.
+  // The collapsible label keeps a fixed physical height while the grid uses logical canvas pixels.
+  // Convert that height so the label reserves the same space at every board scale.
   const collapsibleHeaderInset =
     section.kind === "container" && section.options.collapsible ? CONTAINER_HEADER_HEIGHT / effectiveCanvasScale : 0;
-  const logicalWidth = getLogicalGridSize(columnCount) - outerCardInset;
-  const viewportHeight = Math.max(1, getLogicalGridSize(viewportRowCount) - outerCardInset - collapsibleHeaderInset);
-  // Items are positioned in a coordinate space sized to the *un-inset* column/row count
-  // (fullGridWidth/Height below - see getLogicalItemStyle), but logicalWidth/Height above are
-  // deliberately smaller by outerCardInset to match the container's actual visible card size.
-  // Left alone, that mismatch means the items - not just the grid's own box - spill past the
-  // card's right/bottom edge by exactly that inset. Scale the grid's content down by the same
-  // ratio the board's own canvas uses for its whole-board zoom (see ScaledBoardCanvas), just one
-  // level deeper, so it fits the actual card instead of clipping. --board-canvas-ui-scale is
-  // corrected to compensate so icon/text sizing inside the container isn't affected.
   const fullGridWidth = getLogicalGridSize(columnCount);
   const fullGridHeight = getLogicalGridSize(rowCount);
+  const logicalWidth = fullGridWidth;
+  const viewportHeight = Math.max(1, getLogicalGridSize(viewportRowCount) - collapsibleHeaderInset);
   // For a scrollable container, rowCount covers *all* content rows, not just the visible card -
   // fullGridHeight grows right along with it, so a ratio built from it drifts toward 1 as content
   // grows regardless of the (fixed) inset, under-scaling relative to what the actually-visible
@@ -208,16 +159,9 @@ export const SectionGrid = ({
   // describe the real visible card size in both cases (they equal the non-scrollable values when
   // rowCount and viewportRowCount are the same), so use those instead.
   const fullViewportHeight = getLogicalGridSize(viewportRowCount);
-  // A uniform zoom is required (not a non-uniform transform scale(x, y)) - --board-canvas-ui-scale
-  // is a single scalar that every icon/text/custom-CSS size compensation in the app multiplies
-  // by, so a non-uniform stretch can never be captured by it correctly. That means one axis can
-  // be left with a small amount of unfilled slack when width/height need different ratios to
-  // exactly fit - centered below so it's even on both sides rather than left-aligned.
-  // logicalWidth/viewportHeight can go non-positive for a narrow (e.g. single-column) container
-  // on a heavily zoomed-out board, where outerCardInset (which grows as canvasScale shrinks) can
-  // exceed the container's own un-inset size. Floor the scale well above 0 so it can never reach
-  // zero or negative - combinedUiScale divides by this value, and this value is also used as
-  // zoom directly, both of which break (Infinity/NaN, or invalid/collapsed content) otherwise.
+  // A collapsible container reserves a fixed-height label above the square-cell grid. Keep the
+  // nested content uniformly scaled within the remaining height so labels and icons retain their
+  // proportions; ordinary containers use the original unscaled, edge-aligned grid geometry.
   const containerContentScale =
     section.kind === "container" && fullGridWidth > 0 && fullViewportHeight > 0
       ? Math.max(0.01, Math.min(logicalWidth / fullGridWidth, viewportHeight / fullViewportHeight, 1))
@@ -326,6 +270,7 @@ export const SectionGrid = ({
             height: `var(--board-grid-drag-height, ${viewportHeight}px)`,
             marginTop: collapsibleHeaderInset || undefined,
             "--board-item-radius": `var(--mantine-radius-${board.itemRadius})`,
+            "--board-grid-content-scale": containerContentScale,
           } as CSSProperties
         }
         data-section-id={section.id}
@@ -361,8 +306,6 @@ export const SectionGrid = ({
 
 // Matches the collapsible container toggle's h={24} in container-section.tsx.
 const CONTAINER_HEADER_HEIGHT = 24;
-
-const EMPTY_SECTION_ID_SET: ReadonlySet<string> = new Set();
 
 const INTERACTIVE_GRID_SELECTOR =
   'a,button,input,textarea,select,option,[contenteditable="true"],[role="button"],[data-grid-no-drag]';

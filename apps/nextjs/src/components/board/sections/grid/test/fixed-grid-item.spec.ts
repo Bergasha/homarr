@@ -292,7 +292,7 @@ describe("fixed grid item behavior", () => {
 
     const displayed = getCollapsedDisplayLayout(persisted, {
       columnCount: 2,
-      collapsedRowCounts: new Map([["box", 0.5]]),
+      collapsedItemIds: new Set(["box"]),
     });
 
     expect(displayed).toEqual([

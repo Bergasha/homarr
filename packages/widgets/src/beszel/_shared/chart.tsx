@@ -101,12 +101,12 @@ interface BeszelChartPanelProps {
 
 export const BeszelChartPanel = memo(({ title, subtitle, chartProps }: BeszelChartPanelProps) => (
   <Stack gap={4} style={panelStyle}>
-    <Group gap="xs">
-      <Text size="sm" fw={600}>
+    <Group gap="xs" wrap="nowrap">
+      <Text size="sm" fw={600} style={{ flexShrink: 0 }}>
         {title}
       </Text>
       {subtitle && (
-        <Text size="xs" c="dimmed">
+        <Text size="xs" c="dimmed" truncate style={{ minWidth: 0 }}>
           {subtitle}
         </Text>
       )}
@@ -204,13 +204,19 @@ export const useContainerNames = (containerStats: BeszelContainerStatsRecord[] |
 
 type ContainerExtractor = (container: BeszelContainerStatsRecord["stats"][number] | undefined) => number;
 
-// c = CPU (%), m = memory (MB), b = bandwidth [sent,recv] (bytes/s), ns/nr = legacy net (bytes/s)
-const MB = 1024 * 1024;
+// c = CPU (%), m = memory (MiB), b = bandwidth [sent,recv] (bytes/s), ns/nr = legacy net (MiB/s)
+const MEBIBYTE = 1024 * 1024;
+const GIBIBYTE = 1024 * MEBIBYTE;
+
+export const normalizeBeszelByteRate = (
+  bytesPerSecond: number | undefined,
+  legacyMebibytesPerSecond: number | undefined,
+): number => bytesPerSecond ?? (legacyMebibytesPerSecond ?? 0) * MEBIBYTE;
 
 const defaultContainerExtractors: Record<string, ContainerExtractor> = {
   cpu: (c) => c?.c ?? 0,
-  memory: (c) => (c?.m ?? 0) * MB,
-  network: (c) => (c?.b ? c.b[0] + c.b[1] : (c?.ns ?? 0) + (c?.nr ?? 0)),
+  memory: (c) => (c?.m ?? 0) * MEBIBYTE,
+  network: (c) => normalizeBeszelByteRate(c?.b?.[0], c?.ns) + normalizeBeszelByteRate(c?.b?.[1], c?.nr),
 };
 
 export const useDiskChartData = (
@@ -238,11 +244,11 @@ export const buildDiskChartData = (
     const point: Record<string, unknown> = {
       time: fmt(record.created),
       rawTime: record.created,
-      [rootSeriesName]: record.stats.du,
+      [rootSeriesName]: record.stats.du * GIBIBYTE,
     };
     const efs = record.stats.efs ?? {};
     for (const path of efsPaths) {
-      point[path] = efs[path]?.du ?? 0;
+      point[path] = (efs[path]?.du ?? 0) * GIBIBYTE;
     }
     return point;
   });

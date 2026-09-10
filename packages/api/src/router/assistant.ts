@@ -3,7 +3,7 @@ import { parse, stringify } from "superjson";
 import { z } from "zod/v4";
 
 import { constructIntegrationPermissions } from "@homarr/auth/shared";
-import { createId } from "@homarr/common";
+import { createId, isRecord } from "@homarr/common";
 import { decryptSecret, encryptSecret } from "@homarr/common/server";
 import { and, asc, desc, eq, handleTransactionsAsync, inArray } from "@homarr/db";
 import type { Database } from "@homarr/db";
@@ -78,6 +78,8 @@ export type AssistantContextEntity = {
   iconUrl?: string;
   boardId?: string;
 };
+
+export type AssistantContextReference = Pick<AssistantContextEntity, "id" | "type">;
 
 const modelListCache = new Map<string, { expiresAt: number; value: z.infer<typeof modelSchema>[] }>();
 
@@ -173,20 +175,20 @@ const getProviderHeaders = (configuration: AssistantConfiguration) => {
 };
 
 const getGenerationIdsFromMessageContent = (content: unknown) => {
-  if (!content || typeof content !== "object" || Array.isArray(content)) return [];
-  const metadata = (content as { metadata?: unknown }).metadata;
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return [];
-  const custom = (metadata as { custom?: unknown }).custom;
-  if (!custom || typeof custom !== "object" || Array.isArray(custom)) return [];
-  const telemetry = (custom as { telemetry?: unknown }).telemetry;
-  if (!telemetry || typeof telemetry !== "object" || Array.isArray(telemetry)) return [];
-  const steps = (telemetry as { steps?: unknown }).steps;
+  if (!isRecord(content)) return [];
+  const metadata = content.metadata;
+  if (!isRecord(metadata)) return [];
+  const custom = metadata.custom;
+  if (!isRecord(custom)) return [];
+  const telemetry = custom.telemetry;
+  if (!isRecord(telemetry)) return [];
+  const steps = telemetry.steps;
   if (!Array.isArray(steps)) return [];
   return steps
     .flatMap((step) => {
-      if (!step || typeof step !== "object" || Array.isArray(step)) return [];
-      const generationId = (step as { generationId?: unknown }).generationId;
-      const accessToken = (step as { generationAccessToken?: unknown }).generationAccessToken;
+      if (!isRecord(step)) return [];
+      const generationId = step.generationId;
+      const accessToken = step.generationAccessToken;
       return typeof generationId === "string" &&
         /^gen-[A-Za-z0-9_-]{1,128}$/.test(generationId) &&
         typeof accessToken === "string" &&
@@ -418,6 +420,110 @@ export const getAssistantContextEntitiesAsync = async (ctx: AssistantContext): P
   ];
 };
 
+export const getAssistantRequestContextEntitiesAsync = async (
+  ctx: AssistantContext,
+  references: readonly AssistantContextReference[],
+): Promise<AssistantContextEntity[]> => {
+  const session = ctx.session;
+  if (!session) return [];
+
+  const referenceIds = (type: AssistantContextEntity["type"]) =>
+    references.filter((reference) => reference.type === type).map((reference) => reference.id);
+  const appIds = referenceIds("app");
+  const integrationIds = referenceIds("integration");
+  const itemIds = referenceIds("widget");
+  const [availableBoards, currentUser] = await Promise.all([
+    boardRouter.createCaller(ctx).getAllBoards(),
+    ctx.db.query.users.findFirst({ where: eq(users.id, session.user.id) }),
+  ]);
+  const boardIds = availableBoards.map((board) => board.id);
+  const [availableApps, availableIntegrations, availableItems] = await Promise.all([
+    appIds.length > 0
+      ? ctx.db.query.apps.findMany({
+          columns: { id: true, name: true, description: true, iconUrl: true },
+          where: inArray(apps.id, appIds),
+          limit: 30,
+        })
+      : [],
+    (async () => {
+      if (integrationIds.length === 0) return [];
+      const groupsOfCurrentUser = await ctx.db.query.groupMembers.findMany({
+        where: eq(groupMembers.userId, session.user.id),
+      });
+      return ctx.db.query.integrations.findMany({
+        columns: { id: true, name: true, kind: true },
+        where: inArray(integrations.id, integrationIds),
+        with: {
+          userPermissions: {
+            where: eq(integrationUserPermissions.userId, session.user.id),
+          },
+          groupPermissions: {
+            where: inArray(
+              integrationGroupPermissions.groupId,
+              groupsOfCurrentUser.map((group) => group.groupId).concat(""),
+            ),
+          },
+        },
+        limit: 30,
+      });
+    })(),
+    itemIds.length > 0 && boardIds.length > 0
+      ? ctx.db.query.items.findMany({
+          columns: { id: true, boardId: true, kind: true },
+          where: and(inArray(items.id, itemIds), inArray(items.boardId, boardIds)),
+          limit: 30,
+        })
+      : [],
+  ]);
+  const homeBoardId = await getHomeIdBoardAsync(ctx.db, currentUser ?? null, ctx.deviceType);
+  const boardsById = new Map(availableBoards.map((board) => [board.id, board]));
+
+  return [
+    ...availableBoards.map(
+      (board): AssistantContextEntity => ({
+        id: board.id,
+        type: "board",
+        label: board.name,
+        description:
+          board.id === homeBoardId ? "Home board" : board.isMobileHome ? "Mobile home board" : "Homarr board",
+      }),
+    ),
+    ...availableApps.map(
+      (app): AssistantContextEntity => ({
+        id: app.id,
+        type: "app",
+        label: app.name,
+        description: app.description ?? "Homarr app",
+        iconUrl: app.iconUrl,
+      }),
+    ),
+    ...availableIntegrations
+      .filter((integration) => constructIntegrationPermissions(integration, session).hasUseAccess)
+      .map(
+        (integration): AssistantContextEntity => ({
+          id: integration.id,
+          type: "integration",
+          label: integration.name,
+          description: `${integration.kind} integration`,
+          iconUrl: getIconUrl(integration.kind),
+        }),
+      ),
+    ...availableItems.flatMap((item): AssistantContextEntity[] => {
+      const board = boardsById.get(item.boardId);
+      if (!board) return [];
+      return [
+        {
+          id: item.id,
+          type: "widget",
+          label: `${item.kind} · ${board.name}`,
+          description: `${item.kind} widget on ${board.name}`,
+          boardId: board.id,
+        },
+      ];
+    }),
+  ];
+};
+
 const ownedThreadAsync = async (db: Database, threadId: string, userId: string) => {
   const thread = await db.query.assistantThreads.findFirst({
     where: and(eq(assistantThreads.id, threadId), eq(assistantThreads.userId, userId)),
@@ -435,16 +541,10 @@ const addFeedbackToMessageContent = (serializedContent: string, type: "positive"
   } catch {
     throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "The stored message is invalid." });
   }
-  if (!content || typeof content !== "object" || Array.isArray(content)) {
+  if (!isRecord(content)) {
     throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "The stored message is invalid." });
   }
-  const metadata =
-    "metadata" in content &&
-    content.metadata &&
-    typeof content.metadata === "object" &&
-    !Array.isArray(content.metadata)
-      ? content.metadata
-      : {};
+  const metadata = isRecord(content.metadata) ? content.metadata : {};
   return stringify({
     ...content,
     metadata: { ...metadata, submittedFeedback: { type } },

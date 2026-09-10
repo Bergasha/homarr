@@ -1,11 +1,13 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import {
   Avatar,
   Box,
   Card,
   Center,
+  Grid,
   Group,
   ScrollArea,
   SimpleGrid,
@@ -40,6 +42,7 @@ export default function BookmarksWidget({
   width,
   height,
   displayMode,
+  displayScale = 1,
 }: WidgetComponentProps<"bookmarks">) {
   const t = useI18n("widget.bookmarks");
   const board = useRequiredBoard();
@@ -64,6 +67,16 @@ export default function BookmarksWidget({
     return [item];
   });
   const data = [...configuredItems, ...legacyItems];
+
+  let responsiveWidth = width;
+  let responsiveHeight = height;
+  if (!advanced && Number.isFinite(displayScale) && displayScale > 0) {
+    responsiveWidth *= displayScale;
+    responsiveHeight *= displayScale;
+  }
+  const contentHeight = Math.max(0, responsiveHeight - (options.title.length > 0 ? 36 : 0));
+  let layoutWidth = responsiveWidth;
+  if (options.layout === "gridHorizontal") layoutWidth = width;
 
   useRegisterSpotlightContextResults(
     `bookmark-${itemId}`,
@@ -94,12 +107,13 @@ export default function BookmarksWidget({
     () =>
       getBookmarkDisplayPlan({
         advanced,
-        height: options.title.length > 0 ? height - 36 : height,
+        gap: bookmarkSpacingPixels[options.spacing],
+        height: contentHeight,
         itemCount: data.length,
         layout: options.layout,
-        width,
+        width: layoutWidth,
       }),
-    [advanced, data.length, height, options.layout, options.title.length, width],
+    [advanced, contentHeight, data.length, layoutWidth, options.layout, options.spacing],
   );
 
   const cardDisplay = getBookmarkCardDisplay({
@@ -130,8 +144,22 @@ export default function BookmarksWidget({
 
   if (appIds.length > 0 && isInitialWidgetQueryPending(appsQuery)) return <WidgetQueryLoadingState />;
 
+  const isTight = responsiveHeight < 120;
+  let compactStyle: CSSProperties | undefined;
+  if (!advanced && Number.isFinite(displayScale) && displayScale > 1) {
+    // Low-column boards zoom the canvas above 100%. Keep bookmark controls at their intended physical size.
+    // The spacing and font tokens are rebound here because their inherited values resolve at the canvas level.
+    compactStyle = {
+      "--board-canvas-ui-scale": 1 / displayScale,
+      "--mantine-scale": 1 / displayScale,
+      "--mantine-font-size-xxs": "calc(0.6875rem * var(--board-canvas-ui-scale))",
+      "--mantine-spacing-sm": "calc(0.75rem * var(--board-canvas-ui-scale))",
+      "--mantine-spacing-xs": "calc(0.625rem * var(--board-canvas-ui-scale))",
+    } as CSSProperties;
+  }
+
   return (
-    <Stack h="100%" mih={0} gap={height < 120 ? 6 : "sm"} p={height < 120 ? 6 : "sm"}>
+    <Stack h="100%" mih={0} gap={isTight ? 6 : "sm"} p={isTight ? 6 : "sm"} style={compactStyle}>
       {options.title.length > 0 ? (
         <Text fz={11} fw={600} px={2} lh={1.2} lineClamp={1}>
           {options.title}
@@ -150,14 +178,26 @@ export default function BookmarksWidget({
           </Stack>
         </Center>
       ) : (
-        <ScrollArea scrollbars={plan.horizontalScroll ? "x" : "y"} style={{ flex: 1, minHeight: 0 }}>
-          <Box miw="100%" mih="100%" pb={2}>
+        <ScrollArea
+          scrollbars={plan.horizontalScroll ? "x" : "y"}
+          style={{ flex: 1, minHeight: 0 }}
+          styles={{ content: { height: "100%" } }}
+        >
+          <Box miw="100%" h="100%" pb={2}>
             {plan.horizontalScroll ? (
-              <Group gap={options.spacing} wrap="nowrap" mih="100%" align="stretch">
+              <Group gap={plan.itemGap} wrap="nowrap" h="100%" align="center">
                 {cards}
               </Group>
+            ) : options.grow ? (
+              <Grid grow columns={plan.columns} gap={plan.itemGap}>
+                {cards.map((card) => (
+                  <Grid.Col key={card.key} span={1}>
+                    {card}
+                  </Grid.Col>
+                ))}
+              </Grid>
             ) : (
-              <SimpleGrid cols={plan.columns} spacing={options.spacing} verticalSpacing={options.spacing}>
+              <SimpleGrid cols={plan.columns} spacing={plan.itemGap} verticalSpacing={plan.itemGap}>
                 {cards}
               </SimpleGrid>
             )}
@@ -204,6 +244,17 @@ const BookmarkCard = ({
   const iconUrl = bookmark.iconUrl ?? getBookmarkFaviconUrl(bookmark.href);
   const iconOnly = orientation === "icon" || (!showTitle && !showHostname);
   const background = getBookmarkBackground(variant, active);
+  const isUltraDense = height <= 32;
+  const isDense = height <= 48;
+  let avatarSize = 30;
+  if (isDense) avatarSize = 28;
+  if (isUltraDense) avatarSize = 20;
+  if (iconOnly && !isDense) avatarSize = 32;
+  if (advanced) avatarSize = 42;
+  let padding: number | "xs" | "md" = "xs";
+  if (isDense || iconOnly) padding = 6;
+  if (isUltraDense) padding = 4;
+  if (advanced) padding = "md";
 
   const content =
     orientation === "vertical" && !advanced ? (
@@ -229,9 +280,7 @@ const BookmarkCard = ({
         align="center"
         flex={1}
       >
-        {showIcon ? (
-          <BookmarkAvatar bookmark={bookmark} iconUrl={iconUrl} size={advanced ? 42 : iconOnly ? 32 : 30} />
-        ) : null}
+        {showIcon ? <BookmarkAvatar bookmark={bookmark} iconUrl={iconUrl} size={avatarSize} /> : null}
         {!iconOnly ? (
           <Stack gap={advanced ? 3 : 0} miw={0} flex={1}>
             {showTitle ? (
@@ -295,7 +344,7 @@ const BookmarkCard = ({
         aria-label={bookmark.name}
         radius={radius}
         withBorder={withBorder || variant === "outline"}
-        p={iconOnly ? 6 : advanced ? "md" : "xs"}
+        p={padding}
         h={height}
         w={width}
         miw={width}
@@ -362,3 +411,11 @@ const getBookmarkHostname = (href: string): string | undefined => {
     return undefined;
   }
 };
+
+const bookmarkSpacingPixels = {
+  xs: 10,
+  sm: 12,
+  md: 16,
+  lg: 20,
+  xl: 32,
+} as const;
