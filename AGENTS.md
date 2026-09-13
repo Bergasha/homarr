@@ -59,7 +59,13 @@ homarr/
 
 The documentation site lives at `apps/docs/` (Docusaurus 3, `@homarr/docs`).
 
-When modifying user-facing code, you MUST also update the corresponding documentation:
+Write for smart, curious, advanced users. Documentation should contain only information they cannot reasonably discover or understand directly from the interface: hidden capabilities, non-obvious behavior, prerequisites, constraints, configuration contracts, and migration requirements.
+
+Keep docs concise. Every paragraph must add knowledge beyond visible labels and standard UI conventions. Explain how to discover and use a hidden advanced widget feature; omit explanations that the Delete button deletes an item in edit mode. Avoid UI walkthroughs, exhaustive control descriptions, and repetition. When editing a passage, remove obvious or redundant prose rather than preserving verbosity as a precedent.
+
+Update docs only when a change introduces or alters that non-obvious information, or makes existing guidance inaccurate. Routine fixes and self-explanatory UI changes need no docs update. A new feature alone does not require a page; apply the same reader-value test.
+
+When documentation is needed, use these locations:
 
 - New integration → `apps/docs/docs/integrations/<slug>/index.mdx` + `index.ts`
 - New widget → `apps/docs/docs/widgets/<slug>/index.mdx` + `index.ts`
@@ -86,7 +92,7 @@ When modifying user-facing code, you MUST also update the corresponding document
 - Lint: oxlint (not ESLint)
 - Format: oxfmt (not Prettier)
 - UI: Mantine (not Tailwind) — Tailwind is only used in docs app
-- Mantine: use the project-scoped MCP server in `.mcp.json` for current v9 APIs, and check `packages/ui/` before creating a new primitive.
+- Mantine: use the `mantine` MCP server in `.mcp.json` for current v9 APIs before writing component code. Prefer built-in primitives (`Combobox`/`useCombobox`, the polymorphic `component` prop, `@mantine/hooks`) and check `packages/ui/` for existing conventions first.
 - Icons: @tabler/icons-react
 - Docs app can import from `@homarr/definitions` for shared types
 - Run `pnpm dev:cli -- dev` to browse local `homarr:*` images and remote PR images.
@@ -94,11 +100,15 @@ When modifying user-facing code, you MUST also update the corresponding document
 - Run `pnpm dev:cli -- build --pr <number>` to build a PR locally from a temporary checkout.
 - Run Go checks from `tools/homarr-dev` with `go test ./...` and `go vet ./...`.
 
+## MCP servers
+
+`.mcp.json` declares project-scoped MCP servers. Keep only keyless definitions there; credentials belong in local dotfiles. See [Mantine LLM tooling](https://mantine.dev/guides/llms/) for client-specific setup.
+
 ## Agent Skills
 
 Portable skills live in `.agents/skills/`. Read the relevant `SKILL.md` before working in that domain; detailed references are loaded only when needed. Claude-compatible discovery is provided through `.claude/skills`.
 
 - `codebase-context` — architecture, package boundaries, and shared utilities
-- `documentation-sync` — required user-facing documentation updates
+- `documentation-sync` — documentation for changes users need explained
 - `mcp-integration` — safe tRPC-to-MCP exposure
 - `homarr-custom-widget` — safe Custom JSX v2 authoring
