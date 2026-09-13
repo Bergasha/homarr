@@ -328,7 +328,7 @@ export const AdvancedWeather = ({ height, options, weather, width }: AdvancedWea
                     <Stack gap="sm">
                       <Group justify="space-between" align="flex-start" wrap="nowrap">
                         <Stack gap={0} miw={0}>
-                          <Text size="sm" fw={700} tt="capitalize">
+                          <Text size="sm" fw={700} tt="capitalize" c={dayNightColor}>
                             {getPreferredDate(day.date, locale, { weekday: "short" })}
                           </Text>
                           <Text size="xs" c="dimmed">

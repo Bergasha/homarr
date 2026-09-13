@@ -143,7 +143,7 @@ export const CompactWeather = ({ height, isEditMode, options, weather, width }: 
                     gap={0}
                     align="center"
                   >
-                    <Text component="span" size="sm" fw={600} tt="capitalize">
+                    <Text component="span" size="sm" fw={600} tt="capitalize" c={dayNightColor}>
                       {getPreferredDate(day.date, locale, { weekday: "short" })}
                     </Text>
                     <AnimatedWeatherIcon
