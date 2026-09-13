@@ -1,6 +1,7 @@
 import { IconClock } from "@tabler/icons-react";
 import dayjs from "dayjs";
 
+import { weatherDayNightColorOptions } from "../common/weather-day-night-colors";
 import { createWidgetDefinition, widgetQueryInputMatches } from "../definition";
 import { optionsBuilder } from "../options";
 import {
@@ -11,23 +12,6 @@ import {
 } from "./world-clock";
 
 const timeZoneOptions = getTimeZoneOptions();
-
-// Mantine theme color names, used to let users pick their own day/night weather colors.
-const weatherColorOptions: string[] = [
-  "red",
-  "pink",
-  "grape",
-  "violet",
-  "indigo",
-  "blue",
-  "cyan",
-  "teal",
-  "green",
-  "lime",
-  "yellow",
-  "orange",
-  "gray",
-];
 
 export const { definition, componentLoader } = createWidgetDefinition("clock", {
   icon: IconClock,
@@ -123,11 +107,11 @@ export const { definition, componentLoader } = createWidgetDefinition("clock", {
           withDescription: true,
         }),
         dayWeatherColor: factory.select({
-          options: weatherColorOptions,
+          options: weatherDayNightColorOptions,
           defaultValue: "orange",
         }),
         nightWeatherColor: factory.select({
-          options: weatherColorOptions,
+          options: weatherDayNightColorOptions,
           defaultValue: "blue",
         }),
         worldClockCities: factory.timezoneList({

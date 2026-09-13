@@ -18,6 +18,7 @@ import { IconDroplets, IconMapPin, IconSunHigh, IconSunrise, IconSunset, IconWin
 import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
 import { iconSizes, zoomCompensatedSize } from "@homarr/ui";
 
+import { resolveWeatherDayNightColor } from "../common/weather-day-night-colors";
 import type { WidgetProps } from "../definition";
 import { AnimatedWeatherIcon } from "./animated-icon";
 import classes from "./component.module.css";
@@ -142,6 +143,12 @@ export const AdvancedWeather = ({ height, options, weather, width }: AdvancedWea
     };
   });
   const ticks = hourly.filter((_, index) => index % layout.hourlyTickStep === 0).map((hour) => hour.observedAt);
+  const dayNightColor = resolveWeatherDayNightColor(
+    options.colorByDayNight,
+    weather.current.isDay,
+    options.dayColor,
+    options.nightColor,
+  );
 
   return (
     <ScrollArea h="100%" w="100%">
@@ -154,9 +161,10 @@ export const AdvancedWeather = ({ height, options, weather, width }: AdvancedWea
                 code={weather.current.weatherCode}
                 isDay={weather.current.isDay}
                 size={56}
+                style={dayNightColor ? { color: dayNightColor } : undefined}
               />
               <Stack gap={2}>
-                <Text fz={32} fw={700} lh={1}>
+                <Text fz={32} fw={700} lh={1} c={dayNightColor}>
                   {getPreferredUnit(
                     weather.current.temperature,
                     options.isFormatFahrenheit,
@@ -188,7 +196,7 @@ export const AdvancedWeather = ({ height, options, weather, width }: AdvancedWea
                 })}
               </Text>
               {today && (
-                <Text size="sm">
+                <Text size="sm" c={dayNightColor}>
                   {t("advanced.highLow", {
                     maximum: getPreferredUnit(
                       today.maxTemperature,
@@ -330,7 +338,10 @@ export const AdvancedWeather = ({ height, options, weather, width }: AdvancedWea
                         <AnimatedWeatherIcon
                           animated={options.animateIcons}
                           code={day.weatherCode}
-                          style={zoomCompensatedSize(28)}
+                          style={{
+                            ...zoomCompensatedSize(28),
+                            ...(dayNightColor ? { color: dayNightColor } : undefined),
+                          }}
                         />
                       </Group>
 
@@ -339,7 +350,7 @@ export const AdvancedWeather = ({ height, options, weather, width }: AdvancedWea
                       </Text>
 
                       <Group gap="xs" align="baseline" wrap="nowrap">
-                        <Text fz="lg" fw={700}>
+                        <Text fz="lg" fw={700} c={dayNightColor}>
                           {getPreferredUnit(
                             day.maxTemperature,
                             options.isFormatFahrenheit,

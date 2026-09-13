@@ -4,6 +4,9 @@ import { Box, Center, Stack, Text, Title } from "@mantine/core";
 import dayjs from "dayjs";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 
+import { clientApi } from "@homarr/api/client";
+
+import { resolveWeatherDayNightColor } from "../common/weather-day-night-colors";
 import type { WidgetComponentProps } from "../definition";
 import { AdvancedClockView } from "./advanced-view";
 import { clockTimeFormatShowsSeconds, resolveClockTimeFormat } from "./format";
@@ -21,6 +24,18 @@ export default function ClockWidget({ options, width, height, displayMode }: Wid
   const primaryTimeZoneInvalid = !isTimeZoneSupported(requestedTimeZone);
   const primaryTimeZone = primaryTimeZoneInvalid ? "UTC" : requestedTimeZone;
   const zonedTime = time === null ? null : dayjs(time).tz(primaryTimeZone);
+  const weatherQuery = clientApi.widget.weather.atLocation.useQuery(
+    { latitude: options.weatherLocation.latitude, longitude: options.weatherLocation.longitude },
+    { enabled: options.showWeather && options.colorWeatherByDayNight },
+  );
+  const timeTextColor = weatherQuery.data
+    ? resolveWeatherDayNightColor(
+        options.colorWeatherByDayNight,
+        weatherQuery.data.current.isDay,
+        options.dayWeatherColor,
+        options.nightWeatherColor,
+      )
+    : undefined;
 
   if (isAdvanced) {
     if (time && zonedTime) {
@@ -31,6 +46,7 @@ export default function ClockWidget({ options, width, height, displayMode }: Wid
           primaryTime={zonedTime}
           primaryTimeZone={primaryTimeZone}
           primaryTimeZoneInvalid={primaryTimeZoneInvalid}
+          primaryTimeTextColor={timeTextColor}
         />
       );
     }
@@ -67,13 +83,13 @@ export default function ClockWidget({ options, width, height, displayMode }: Wid
             {options.customTitle}
           </Text>
         )}
-        <Title className="clock-time-text" fw={700} order={getTitleOrder(sizing)} lh="1">
+        <Title className="clock-time-text" fw={700} order={getTitleOrder(sizing)} lh="1" c={timeTextColor}>
           <time dateTime={zonedTime?.toISOString()}>
             {zonedTime === null ? "--:--" : zonedTime.format(resolvedTimeFormat)}
           </time>
         </Title>
         {options.showDate && (
-          <Text className="clock-date-text" size={sizing} lineClamp={1}>
+          <Text className="clock-date-text" size={sizing} lineClamp={1} c={timeTextColor}>
             {zonedTime?.format(options.dateFormat)}
           </Text>
         )}

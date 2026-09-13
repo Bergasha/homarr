@@ -5,6 +5,7 @@ import { IconArrowDownRight, IconArrowUpRight, IconDroplets, IconMapPin, IconWin
 import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
 import { zoomCompensatedSize } from "@homarr/ui";
 
+import { resolveWeatherDayNightColor } from "../common/weather-day-night-colors";
 import type { WidgetProps } from "../definition";
 import { AnimatedWeatherIcon } from "./animated-icon";
 import classes from "./component.module.css";
@@ -37,6 +38,12 @@ export const CompactWeather = ({ height, isEditMode, options, weather, width }: 
     : tCommon("unit.speed.kilometersPerHour");
   const contentGap = layout.tier === "micro" ? 2 : 4;
   const contentPadding = layout.tier === "roomy" ? "xs" : 4;
+  const dayNightColor = resolveWeatherDayNightColor(
+    options.colorByDayNight,
+    weather.current.isDay,
+    options.dayColor,
+    options.nightColor,
+  );
 
   return (
     <Stack
@@ -58,7 +65,10 @@ export const CompactWeather = ({ height, isEditMode, options, weather, width }: 
                   animated={options.animateIcons}
                   code={weather.current.weatherCode}
                   isDay={weather.current.isDay}
-                  style={zoomCompensatedSize(layout.tier === "micro" ? 18 : 32)}
+                  style={{
+                    ...zoomCompensatedSize(layout.tier === "micro" ? 18 : 32),
+                    ...(dayNightColor ? { color: dayNightColor } : undefined),
+                  }}
                 />
               </UnstyledButton>
             </Popover.Target>
@@ -67,7 +77,7 @@ export const CompactWeather = ({ height, isEditMode, options, weather, width }: 
             </Popover.Dropdown>
           </Popover>
           <Stack gap={0} align={layout.tier === "micro" ? "center" : "flex-start"}>
-            <Text fz={layout.tier === "micro" ? 22 : 30} fw={600} lh={1.05}>
+            <Text fz={layout.tier === "micro" ? 22 : 30} fw={600} lh={1.05} c={dayNightColor}>
               {getPreferredUnit(
                 weather.current.temperature,
                 options.isFormatFahrenheit,
@@ -82,14 +92,14 @@ export const CompactWeather = ({ height, isEditMode, options, weather, width }: 
       {!options.showOnlyForecast && layout.showHighLow && today && (
         <Group className="weather-max-min-temp-group" gap="sm" wrap="nowrap">
           <Group gap={3} wrap="nowrap">
-            <IconArrowUpRight size="var(--mantine-font-size-md)" aria-hidden />
-            <Text size="sm">
+            <IconArrowUpRight size="var(--mantine-font-size-md)" color={dayNightColor} aria-hidden />
+            <Text size="sm" c={dayNightColor}>
               {getPreferredUnit(today.maxTemperature, options.isFormatFahrenheit, options.disableTemperatureDecimals)}
             </Text>
           </Group>
           <Group gap={3} wrap="nowrap">
-            <IconArrowDownRight size="var(--mantine-font-size-md)" aria-hidden />
-            <Text size="sm">
+            <IconArrowDownRight size="var(--mantine-font-size-md)" color={dayNightColor} aria-hidden />
+            <Text size="sm" c={dayNightColor}>
               {getPreferredUnit(today.minTemperature, options.isFormatFahrenheit, options.disableTemperatureDecimals)}
             </Text>
           </Group>
@@ -139,9 +149,9 @@ export const CompactWeather = ({ height, isEditMode, options, weather, width }: 
                     <AnimatedWeatherIcon
                       animated={options.animateIcons}
                       code={day.weatherCode}
-                      style={zoomCompensatedSize(18)}
+                      style={{ ...zoomCompensatedSize(18), ...(dayNightColor ? { color: dayNightColor } : undefined) }}
                     />
-                    <Text component="span" size="sm">
+                    <Text component="span" size="sm" c={dayNightColor}>
                       {getPreferredUnit(
                         day.maxTemperature,
                         options.isFormatFahrenheit,

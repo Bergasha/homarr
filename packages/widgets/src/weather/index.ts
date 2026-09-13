@@ -2,6 +2,7 @@ import { IconCloud } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import { z } from "zod/v4";
 
+import { weatherDayNightColorOptions } from "../common/weather-day-night-colors";
 import { createWidgetDefinition, widgetQueryInputMatches } from "../definition";
 import { optionsBuilder } from "../options";
 
@@ -59,11 +60,33 @@ export const { definition, componentLoader } = createWidgetDefinition("weather",
           withDescription: true,
         }),
         showOnlyForecast: factory.switch({ defaultValue: false }),
+        colorByDayNight: factory.switch({
+          defaultValue: false,
+          withDescription: true,
+        }),
+        dayColor: factory.select({
+          options: weatherDayNightColorOptions,
+          defaultValue: "orange",
+        }),
+        nightColor: factory.select({
+          options: weatherDayNightColorOptions,
+          defaultValue: "blue",
+        }),
       }),
       {
         forecastDayCount: {
           shouldHide({ hasForecast, showOnlyForecast }) {
             return !hasForecast && !showOnlyForecast;
+          },
+        },
+        dayColor: {
+          shouldHide({ colorByDayNight }) {
+            return !colorByDayNight;
+          },
+        },
+        nightColor: {
+          shouldHide({ colorByDayNight }) {
+            return !colorByDayNight;
           },
         },
         hasForecast: {

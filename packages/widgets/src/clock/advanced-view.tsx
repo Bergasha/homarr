@@ -44,6 +44,7 @@ interface AdvancedClockViewProps {
   primaryTime: Dayjs;
   primaryTimeZone: string;
   primaryTimeZoneInvalid: boolean;
+  primaryTimeTextColor?: string;
 }
 
 export const AdvancedClockView = ({
@@ -52,6 +53,7 @@ export const AdvancedClockView = ({
   primaryTime,
   primaryTimeZone,
   primaryTimeZoneInvalid,
+  primaryTimeTextColor,
 }: AdvancedClockViewProps) => {
   const t = useI18n("widget.clock");
   const primaryLabel = getPrimaryLabel(options, t);
@@ -78,7 +80,7 @@ export const AdvancedClockView = ({
             {t("worldClock.unsupportedPrimary", { timeZone: options.timezone })}
           </Alert>
         )}
-        <PrimaryClock now={now} options={options} primary={primary} />
+        <PrimaryClock now={now} options={options} primary={primary} timeTextColor={primaryTimeTextColor} />
         <OverviewMode now={now} options={options} primary={primary} cities={cities} />
       </Stack>
     </ScrollArea>
@@ -92,7 +94,12 @@ interface ModeProps {
   cities: WorldClockTime[];
 }
 
-const PrimaryClock = ({ now, options, primary }: Pick<ModeProps, "now" | "options" | "primary">) => {
+const PrimaryClock = ({
+  now,
+  options,
+  primary,
+  timeTextColor,
+}: Pick<ModeProps, "now" | "options" | "primary"> & { timeTextColor?: string }) => {
   const locale = useCurrentIntlLocale();
   const t = useI18n("widget.clock");
   const primaryTime = primary.zonedTime;
@@ -110,9 +117,9 @@ const PrimaryClock = ({ now, options, primary }: Pick<ModeProps, "now" | "option
               {primary.label}
             </Title>
           </Group>
-          <ClockTime entry={primary} now={now} options={options} primary />
+          <ClockTime entry={primary} now={now} options={options} primary textColor={timeTextColor} />
           {options.showDate && (
-            <Text size="sm" c="dimmed">
+            <Text size="sm" c={timeTextColor ?? "dimmed"}>
               {formatLocalizedDate(now, locale, { dateStyle: "full", timeZone: primary.timeZone })}
             </Text>
           )}
@@ -218,7 +225,8 @@ const ClockTime = ({
   options,
   primary = false,
   compact = false,
-}: Omit<ClockEntryProps, "primaryOffset"> & { primary?: boolean; compact?: boolean }) => {
+  textColor,
+}: Omit<ClockEntryProps, "primaryOffset"> & { primary?: boolean; compact?: boolean; textColor?: string }) => {
   const locale = useCurrentIntlLocale();
   const t = useI18n("widget.clock");
   if (!entry.zonedTime) return null;
@@ -245,6 +253,7 @@ const ClockTime = ({
       ff="var(--mantine-font-family-monospace)"
       lh={1}
       lts="-0.04em"
+      c={textColor}
       aria-label={t("worldClock.accessibleTime", {
         city: entry.label,
         time: formattedTime,

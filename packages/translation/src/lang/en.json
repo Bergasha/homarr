@@ -2476,7 +2476,7 @@
         },
         "colorWeatherByDayNight": {
           "label": "Color weather by day/night",
-          "description": "Tint the weather icon and temperature with a day color or a night color, based on whether it's currently day or night at the chosen location."
+          "description": "Tint the weather icon, temperature, and the clock's time and date with a day color or a night color, based on whether it's currently day or night at the chosen location."
         },
         "dayWeatherColor": {
           "label": "Day color"
@@ -3159,6 +3159,16 @@
         "showOnlyForecast": {
           "label": "Show only forecast",
           "description": "Hides everything except the forecast"
+        },
+        "colorByDayNight": {
+          "label": "Color by day/night",
+          "description": "Tint the weather icons and temperatures with a day color or a night color, based on whether it's currently day or night at the chosen location."
+        },
+        "dayColor": {
+          "label": "Day color"
+        },
+        "nightColor": {
+          "label": "Night color"
         }
       },
       "currentWindSpeed": "{currentWindSpeed} {unit}",
