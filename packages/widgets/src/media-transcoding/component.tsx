@@ -13,7 +13,8 @@ import type { TablerIcon } from "@homarr/ui";
 
 import { WidgetEmptyState } from "../common/empty-state";
 import type { WidgetComponentProps } from "../definition";
-import { getUsableWidgetQueryData } from "../common/query-state";
+import { getUsableWidgetQueryData, isInitialWidgetQueryPending } from "../common/query-state";
+import { WidgetQueryLoadingState } from "../common/query-state-indicator";
 import { useWidgetRuntimeQueries } from "../runtime-hooks";
 import { HealthCheckStatus } from "./health-check-status";
 import { QueuePanel } from "./panels/queue.panel";
@@ -98,6 +99,7 @@ export default function MediaTranscodingWidget({
   };
   const widthLayout = useMemo(() => getTranscodingWidthLayout(width), [width]);
 
+  if (isInitialWidgetQueryPending(transcodingQuery)) return <WidgetQueryLoadingState />;
   if (!transcodingData) return <WidgetEmptyState />;
 
   const queuePageCount = totalQueuePages ?? 1;
