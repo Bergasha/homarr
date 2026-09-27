@@ -1,5 +1,6 @@
 import type { ConnectionOptions } from "node:tls";
 
+import type { IntegrationHttpBodyAuth } from "@homarr/definitions";
 import type { CustomJsxNetworkScope, CustomWidgetMethod } from "../core";
 
 export interface CustomWidgetAuthConfig {
@@ -7,6 +8,8 @@ export interface CustomWidgetAuthConfig {
   secrets: Array<{ kind: string; value: string }>;
   headerName?: string | null;
   headers?: Record<string, string>;
+  query?: Record<string, string>;
+  body?: IntegrationHttpBodyAuth;
 }
 
 export interface CustomWidgetHttpRequest {
@@ -18,7 +21,7 @@ export interface CustomWidgetHttpRequest {
   redactSecrets?: CustomWidgetAuthConfig["secrets"];
   baseUrl: string;
   targetUrl?: string | URL;
-  method: CustomWidgetMethod;
+  method: CustomWidgetMethod | "HEAD" | "OPTIONS";
   body?: string;
   staticHeaders?: Record<string, string>;
   auth?: CustomWidgetAuthConfig;
@@ -28,7 +31,12 @@ export interface CustomWidgetHttpRequest {
   textFallback?: boolean;
   cacheKey?: string;
   cacheTtlSeconds?: number;
-  logError?: (event: { origin: string; method: CustomWidgetMethod; errorName: string; reason?: "timeout" }) => void;
+  logError?: (event: {
+    origin: string;
+    method: CustomWidgetMethod | "HEAD" | "OPTIONS";
+    errorName: string;
+    reason?: "timeout";
+  }) => void;
 }
 
 export interface CustomWidgetHttpResponse {

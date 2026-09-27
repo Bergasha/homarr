@@ -2,7 +2,8 @@ package tui
 
 import (
 	"context"
-	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -37,93 +38,6 @@ func sample() (Model, tea.Cmd) {
 	}
 	next, cmd := m.Update(loaded)
 	return next.(Model), cmd
-}
-
-func TestRenderDev(t *testing.T) {
-	m, _ := sample()
-	fmt.Println("=========== DEV ===========")
-	fmt.Println(m.View().Content)
-}
-
-func TestRenderInstances(t *testing.T) {
-	m, _ := sample()
-	next, _ := m.switchScreen(screenInstances)
-	fmt.Println("=========== INSTANCES ===========")
-	fmt.Println(next.View().Content)
-}
-
-func TestDebugSelection(t *testing.T) {
-	m, _ := sample()
-	t.Logf("devFiltered=%d cursor=%d rows=%d", len(m.devFiltered), m.devTable.Cursor(), len(m.devTable.Rows()))
-	row, found := m.selectedDev()
-	t.Logf("selectedDev found=%v key=%q", found, row.key())
-	t.Logf("detailVisible=%v", m.detailVisible())
-	t.Logf("detail=%q", m.detail())
-	t.Logf("bodyHeight=%d sidebarCols=%d height=%d", m.bodyHeight, m.sidebarCols, m.height)
-}
-
-func fakePullTask(m Model) Model {
-	m.tasks.Start(task.KindPull, "pull and start PR #6612", "homarr_pr_6612", func(ctx context.Context, report *task.Reporter) error {
-		report.SetDetail("4/6 layers · 128.4MB/492.1MB · 12.4MB/s")
-		report.SetPercent(0.58)
-		report.SetSteps([]task.Step{
-			{ID: "a1b2c3d4e5f6", Label: "a1b2c3d4e5f6", Status: "Pull complete", Percent: 1, Done: true, Note: "48.2MB"},
-			{ID: "b2c3d4e5f6a7", Label: "b2c3d4e5f6a7", Status: "Already exists", Percent: 1, Done: true, Note: "12.1MB"},
-			{ID: "c3d4e5f6a7b8", Label: "c3d4e5f6a7b8", Status: "Extracting", Percent: 0.72, Note: "88.4MB/122.0MB"},
-			{ID: "d4e5f6a7b8c9", Label: "d4e5f6a7b8c9", Status: "Downloading", Percent: 0.21, Note: "18.2MB/86.5MB"},
-			{ID: "e5f6a7b8c9d0", Label: "e5f6a7b8c9d0", Status: "Waiting", Percent: 0},
-		})
-		<-ctx.Done()
-		return ctx.Err()
-	})
-	time.Sleep(60 * time.Millisecond)
-	next, _ := m.applyTasks()
-	next.focusTask = 1
-	next.sidebar.source = sourceTask
-	next.relayout()
-	next.refreshSidebar()
-	return next
-}
-
-func TestRenderPullProgress(t *testing.T) {
-	m, _ := sample()
-	m = fakePullTask(m)
-	fmt.Println("=========== PULL ===========")
-	fmt.Println(m.View().Content)
-	m.tasks.CancelAll()
-}
-
-func TestRenderManageAndConfirm(t *testing.T) {
-	m, _ := sample()
-	updated, _ := m.handleKey(tea.KeyPressMsg{Code: 'm', Text: "m"})
-	manage := updated.(Model)
-	fmt.Println("=========== MANAGE ===========")
-	fmt.Println(manage.View().Content)
-
-	updated, _ = manage.handleKey(tea.KeyPressMsg{Code: 'd', Text: "d"})
-	fmt.Println("=========== CONFIRM ===========")
-	fmt.Println(updated.(Model).View().Content)
-}
-
-func TestRenderTaskOverlayAndHelp(t *testing.T) {
-	m, _ := sample()
-	m = fakePullTask(m)
-	updated, _ := m.handleKey(tea.KeyPressMsg{Code: 't', Text: "t"})
-	fmt.Println("=========== TASKS ===========")
-	fmt.Println(updated.(Model).View().Content)
-	m.tasks.CancelAll()
-
-	m2, _ := sample()
-	updated, _ = m2.handleKey(tea.KeyPressMsg{Code: '?', Text: "?"})
-	fmt.Println("=========== HELP ===========")
-	fmt.Println(updated.(Model).View().Content)
-}
-
-func TestRenderNarrow(t *testing.T) {
-	m, _ := sample()
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 84, Height: 30})
-	fmt.Println("=========== NARROW (stacked sidebar) ===========")
-	fmt.Println(updated.(Model).View().Content)
 }
 
 func TestSidebarTaskAutoSwitchToLogsOnSuccess(t *testing.T) {
@@ -266,5 +180,67 @@ func TestSidebarTabCycleAndCIRendering(t *testing.T) {
 	mLogs := tabbedAgain.(Model)
 	if mLogs.sidebar.source != sourceLogs {
 		t.Fatalf("expected sourceLogs after Tab, got %v", mLogs.sidebar.source)
+	}
+}
+
+func TestDeleteDataVerifiesMountBeforeRemoval(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		state task.State
+		calls string
+	}{
+		{"matching", task.StateSucceeded, "inspect\nrm -f immutable-id\nvolume rm homarr_dev_data\n"},
+		{"mismatch", task.StateFailed, "inspect\n"},
+		{"inspect-error", task.StateFailed, "inspect\n"},
+		{"remove-error", task.StateFailed, "inspect\nrm -f immutable-id\n"},
+		{"missing", task.StateSucceeded, "inspect\nvolume rm homarr_dev_data\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			log := filepath.Join(dir, "calls")
+			script := `#!/bin/sh
+if [ "$1" = container ]; then
+  echo inspect >> "$CALL_LOG"
+  case "$SCENARIO" in
+    mismatch) echo '{"id":"immutable-id","mounts":[{"Name":"other_data"}]}'; exit 0 ;;
+    inspect-error) echo 'daemon unavailable' >&2; exit 1 ;;
+    missing) echo 'No such container: homarr_dev' >&2; exit 1 ;;
+  esac
+  echo '{"id":"immutable-id","mounts":[{"Name":"homarr_dev_data"}]}'
+else
+  echo "$*" >> "$CALL_LOG"
+  if [ "$1" = rm ] && [ "$SCENARIO" = remove-error ]; then
+    echo 'removal denied' >&2; exit 1
+  fi
+fi
+`
+			if err := os.WriteFile(filepath.Join(dir, "docker"), []byte(script), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+			t.Setenv("CALL_LOG", log)
+			t.Setenv("SCENARIO", tc.name)
+			m := Model{tasks: task.NewManager()}
+			t.Cleanup(m.tasks.CancelAll)
+			m.deleteData(target{container: "homarr_dev", volume: "homarr_dev_data"})
+			deadline := time.Now().Add(3 * time.Second)
+			for {
+				snapshot := m.tasks.Snapshots()[0]
+				if snapshot.State.Done() {
+					if snapshot.State != tc.state {
+						t.Fatalf("state = %v, want %v: %v", snapshot.State, tc.state, snapshot.Err)
+					}
+					break
+				}
+				if time.Now().After(deadline) {
+					t.Fatal("delete task did not finish")
+				}
+				time.Sleep(time.Millisecond)
+			}
+			calls, err := os.ReadFile(log)
+			if err != nil || string(calls) != tc.calls {
+				t.Fatalf("Docker calls = %q, want %q (read error: %v)", calls, tc.calls, err)
+			}
+		})
 	}
 }

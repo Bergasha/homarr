@@ -67,7 +67,6 @@ export const EditIntegrationForm = ({
     ) ?? getDefaultSecretKinds(integration.kind);
 
   const hasUrlSecret = initialSecretsKinds.includes("url");
-
   const utils = clientApi.useUtils();
   const router = useRouter();
   const form = useZodForm(formSchema, {

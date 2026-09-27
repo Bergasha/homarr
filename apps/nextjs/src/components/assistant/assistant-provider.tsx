@@ -698,9 +698,12 @@ const EnabledAssistantProvider = ({ children }: PropsWithChildren) => {
   const latestAssistantText = getMessageText(latestAssistantMessage);
   const latestUserText = getMessageText(latestUserMessage);
   const latestStatus = latestAssistantMessage?.role === "assistant" ? latestAssistantMessage.status : undefined;
+  const latestAssistantPart = latestAssistantMessage?.content.at(-1);
+  const latestToolComplete = latestAssistantPart?.type === "tool-call" && latestAssistantPart.result !== undefined;
   const latestAssistantPartType = getRunningAssistantPartType(
     latestStatus?.type,
-    latestAssistantMessage?.content.at(-1)?.type,
+    latestAssistantPart?.type,
+    latestToolComplete,
   );
   const pendingAction = getPendingAssistantAction(latestAssistantMessage);
   const assistantIsRunning = isRunning || queuedPrompt !== null;
@@ -725,6 +728,8 @@ const EnabledAssistantProvider = ({ children }: PropsWithChildren) => {
     };
     setUnreadCount(0);
   }, [conversationId, notificationKey]);
+  const markReadRef = useRef(markRead);
+  markReadRef.current = markRead;
   const open = useCallback(() => {
     markRead();
     setActivityDismissed(false);
@@ -732,6 +737,7 @@ const EnabledAssistantProvider = ({ children }: PropsWithChildren) => {
   }, [markRead]);
   const close = useCallback(() => setOpened(false), []);
   const setWidgetVisible = useCallback((widgetId: string, visible: boolean) => {
+    if (visible) markReadRef.current();
     setVisibleWidgetIds((current) => {
       if (current.has(widgetId) === visible) return current;
       const next = new Set(current);
@@ -814,13 +820,13 @@ const EnabledAssistantProvider = ({ children }: PropsWithChildren) => {
     if (!update.shouldNotify) return;
     setActivityDismissed(false);
 
-    if (opened) {
+    if (opened || visibleWidgetIds.size > 0) {
       setUnreadCount(0);
       return;
     }
 
     setUnreadCount((current) => current + 1);
-  }, [conversationId, isLoading, notificationKey, opened]);
+  }, [conversationId, isLoading, notificationKey, opened, visibleWidgetIds.size]);
 
   useEffect(() => {
     if (isLoading) return;

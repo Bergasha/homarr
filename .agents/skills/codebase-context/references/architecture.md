@@ -13,7 +13,7 @@
 | Path             | Role                                                                                     |
 | ---------------- | ---------------------------------------------------------------------------------------- |
 | `apps/nextjs`    | Main Next.js application and HTTP APIs on port 3000                                      |
-| `apps/docs`      | Docusaurus documentation site on port 3003                                               |
+| `apps/docs`      | Next.js and Fumadocs documentation site on port 3003                                      |
 | `apps/tasks`     | Cron-job initialization and scheduling runtime; it does not expose the old port-3002 API |
 | `apps/websocket` | tRPC WebSocket subscriptions on port 3001                                                |
 | `apps/workshop`  | Go/PocketBase Workshop service and provider integration                                  |
@@ -78,7 +78,7 @@ Prefer these directions; verify the exact dependency in package manifests before
 
 ### Databases
 
-Drizzle schemas live in parallel files under `packages/db/schema/`. `DB_DRIVER` selects `better-sqlite3`, `mysql2`, or `node-postgres`; migrations live in matching directories under `packages/db/migrations/`. Apply schema behavior consistently across all supported drivers unless the task is explicitly driver-specific.
+Drizzle schemas live in `packages/db/schema/`. `DB_DRIVER` selects `better-sqlite3` or `node-postgres`; MySQL and MariaDB are no longer runtime drivers in v2. Existing MySQL installations must use the documented converter before upgrading. Migrations live under `packages/db/migrations/sqlite/` and `packages/db/migrations/postgresql/`.
 
 ### Widgets
 
@@ -105,6 +105,6 @@ User routes live below `apps/nextjs/src/app/[locale]/`; the locale segment does 
 - Read current scripts from the root or package `package.json`; avoid caching commands that do not exist.
 - Use `pnpm dev` for Next.js, `pnpm dev:docs` for docs, and `pnpm dev:cli -- <args>` for the Go developer CLI.
 - Use `pnpm docker:dev:up` for the Redis development dependency.
-- Use package-filtered typechecks or focused tests for the touched behavior.
+- Follow the Testing section in `AGENTS.md` for test creation and validation scope.
 - Use `~/*` only inside the Next.js app. Use public `@homarr/*` entrypoints across package boundaries.
 - Keep Mantine application styles separate from the Tailwind-based docs app.

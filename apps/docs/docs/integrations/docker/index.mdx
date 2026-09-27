@@ -62,11 +62,11 @@ environment:
   DOCKER_PORTS: 2375,2375
 ```
 
-:::warning Plaintext Docker API
+<Alert type="warning" title="Plaintext Docker API">
 
 Unauthenticated Docker TCP provides control of the Docker host. Keep a socket proxy on a private network or use TLS.
 
-:::
+</Alert>
 
 Use `DOCKER_ENDPOINTS` for named endpoints, TLS, or restricted capabilities:
 
@@ -117,7 +117,7 @@ updating a Homarr resource still requires confirmation. If one endpoint is unava
 endpoints remain visible.
 
 The `homarr.hide` label excludes a container. Other `homarr.*` labels can provide apps, integrations, groups, and widgets
-during onboarding; see [Docker label discovery](../docker-labels).
+during onboarding; see [Docker label discovery](/docs/integrations/docker-labels).
 
 ## Security
 

@@ -78,7 +78,6 @@ export const NewIntegrationForm = ({ kind, initialUrl, initialName, onSuccess, o
         if (!values.hasApp || values.appId !== null) return;
         context.addIssue({ code: "custom", message: tCommon("zod.errors.required"), path: ["appId"] });
       });
-
   let url = initialUrl ?? getIntegrationDefaultUrl(kind) ?? "";
   if (hasUrlSecret) {
     url = "http://localhost";

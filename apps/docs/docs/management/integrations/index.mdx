@@ -14,8 +14,23 @@ actions to widgets and can be linked to apps.
 
 ![The integration catalog](../img/integrations-catalog.png)
 
-See the [integration catalog](/docs/category/integrations) for service-specific URLs, credentials, and supported
+See the [integration catalog](/docs/integrations) for service-specific URLs, credentials, and supported
 widgets.
+
+## Beyond native widgets
+
+<Alert type="tip" title="Homarr is the front door to your homelab">
+
+Configure a supported service once, then use its API through MCP and bring its data or actions onto your dashboard
+with Custom Widgets—even when Homarr has no native feature for it.
+
+</Alert>
+
+Have your agent consult the service’s API docs and test the endpoint through [`integration_request`](../mcp#authenticated-integration-requests),
+Homarr's most powerful MCP tool. Then bind the same saved integration to a
+[Custom Widget source](../custom-widgets/requests-and-security#existing-integrations) to display its data or run actions.
+Both reuse saved credentials and require **full integration access**. The iCalendar feed integration and TrueNAS's WebSocket
+API cannot be used through these generic HTTP requests.
 
 ## Browser and server routes
 
@@ -39,11 +54,11 @@ integration everywhere it is used.
 
 ## Permissions
 
-| Level    | Allows                                                   |
-| -------- | -------------------------------------------------------- |
-| Use      | Select the integration and read its data                 |
-| Interact | Run supported actions, such as pausing a download        |
-| Full     | Change the URL, credentials, permissions, and linked app |
+| Level    | Allows                                                       |
+| -------- | ------------------------------------------------------------ |
+| Use      | Select the integration and read its data                     |
+| Interact | Run supported actions, such as pausing a download            |
+| Full     | Change integration settings and call arbitrary API endpoints |
 
 ![Per-integration access for users and groups](./img/integration-permissions.png)
 
@@ -57,6 +72,6 @@ If a connection test fails:
 1. Check the integration page for the required base URL and credentials.
 2. Test name resolution and HTTP access from the Homarr container or pod, not only from the host or browser.
 3. Check Homarr and upstream-service logs, then any reverse proxy, firewall, VLAN, VPN, or DNS between them.
-4. For a self-signed certificate, add the expected certificate under [Certificates](../certificates).
+4. For a self-signed certificate, add the expected certificate under [Certificates](/docs/management/certificates).
 
 Do not disable upstream security controls as a general troubleshooting step.

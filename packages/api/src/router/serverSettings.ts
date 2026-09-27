@@ -6,6 +6,7 @@ import {
   getServerSettingByKeyAsync,
   getServerSettingsAsync,
   insertServerSettingByKeyAsync,
+  updateAnalyticsServerSettingAsync,
   updateServerSettingByKeyAsync,
 } from "@homarr/db/queries";
 import { boards, serverSettings } from "@homarr/db/schema";
@@ -27,6 +28,7 @@ const boardServerSettingsSchema = z.object({
 }) satisfies z.ZodType<ServerSettings["board"]>;
 
 const boardServerSettingsUpdateSchema = boardServerSettingsSchema.partial();
+const analyticsServerSettingsUpdateSchema = z.object({ enableGeneral: z.boolean().optional() }).strict();
 const brandingServerSettingsUpdateSchema = brandingServerSettingsSchema.partial().extend({
   authBranding: authBrandingSchema.partial().optional(),
 });
@@ -53,7 +55,15 @@ export const serverSettingsRouter = createTRPCRouter({
   getBoardSettings: permissionRequiredProcedure
     .requiresPermission("admin")
     .meta({
-      openapi: { method: "GET", path: "/api/settings/board", tags: ["settings"], protect: true },
+      openapi: {
+        method: "GET",
+        path: "/api/settings/board",
+        tags: ["settings"],
+        protect: true,
+        summary: "Get global board settings",
+        description:
+          "Return instance desktop and mobile home board IDs and default status behavior. Requires admin permission.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -68,7 +78,15 @@ export const serverSettingsRouter = createTRPCRouter({
   updateBoardSettings: permissionRequiredProcedure
     .requiresPermission("admin")
     .meta({
-      openapi: { method: "PATCH", path: "/api/settings/board", tags: ["settings"], protect: true },
+      openapi: {
+        method: "PATCH",
+        path: "/api/settings/board",
+        tags: ["settings"],
+        protect: true,
+        summary: "Update global board settings",
+        description:
+          "Update supplied instance board defaults and return the resulting settings. Home board IDs must reference public boards, or be null to clear the default. Requires admin permission.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -135,6 +153,11 @@ export const serverSettingsRouter = createTRPCRouter({
           authBranding,
         });
         await updateServerSettingByKeyAsync(ctx.db, "branding", value);
+        return;
+      }
+      if (input.settingsKey === "analytics") {
+        const parsedInput = analyticsServerSettingsUpdateSchema.parse(input.value);
+        await updateAnalyticsServerSettingAsync(ctx.db, (current) => ({ ...current, ...parsedInput }));
         return;
       }
       const current = await getServerSettingByKeyAsync(ctx.db, input.settingsKey);

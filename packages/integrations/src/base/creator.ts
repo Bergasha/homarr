@@ -1,4 +1,3 @@
-import { isHttpIntegrationKind } from "@homarr/definitions";
 import type { IntegrationKind } from "@homarr/definitions";
 import { createLogger } from "@homarr/core/infrastructure/logs";
 import { ErrorWithMetadata } from "@homarr/core/infrastructure/logs/error";
@@ -288,6 +287,8 @@ const integrationCreators = {
     new (await import("../media-organizer/lidarr/lidarr-integration")).LidarrIntegration(input),
   readarr: async (input: IntegrationInput) =>
     new (await import("../media-organizer/readarr/readarr-integration")).ReadarrIntegration(input),
+  bindery: async (input: IntegrationInput) =>
+    new (await import("../media-organizer/bindery/bindery-integration")).BinderyIntegration(input),
   dashDot: async (input: IntegrationInput) =>
     new (await import("../dashdot/dashdot-integration")).DashDotIntegration(input),
   tdarr: async (input: IntegrationInput) =>
@@ -400,8 +401,6 @@ export async function createIntegrationAsync(
 }
 
 export async function getIntegrationHttpAuthenticationAsync(integration: IntegrationInput & { kind: IntegrationKind }) {
-  if (!isHttpIntegrationKind(integration.kind))
-    throw new Error("This integration does not support arbitrary HTTP requests");
   const client = await createIntegrationAsync(integration);
   return client.getHttpAuthenticationAsync();
 }

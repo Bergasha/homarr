@@ -176,9 +176,20 @@ export const addItemToBoardSchema = z.object({
   boardId: z.string(),
   kind: zodEnumFromArray(widgetKinds),
   options: z.record(z.string(), z.unknown()).default({}),
+  size: z.object({ width: z.number().int().min(1).max(24), height: z.number().int().min(1).max(24) }).optional(),
   integrationIds: z
     .array(z.string())
     .max(32)
     .refine((ids) => new Set(ids).size === ids.length)
     .default([]),
+});
+
+export const updateBoardItemLayoutSchema = z.object({
+  boardId: z.string(),
+  itemId: z.string(),
+  layoutId: z.string(),
+  xOffset: z.number().int().min(0).max(32767),
+  yOffset: z.number().int().min(0).max(32767),
+  width: z.number().int().min(1).max(24),
+  height: z.number().int().min(1).max(24),
 });

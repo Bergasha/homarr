@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,7 +26,8 @@ import (
 const (
 	homarrProviderModelID    = "homarr/model"
 	homarrProviderModelName  = "Homarr model"
-	defaultOpenRouterModelID = "~deepseek/deepseek-v4-flash-latest"
+	defaultOpenRouterModelID = "openai/gpt-6-luna"
+	lunaOpenRouterModelID    = "openai/gpt-5.6-luna"
 	maxChatInputTokens       = 256 * 1024
 	maxChatOutputTokens      = 32 * 1024
 	defaultDailyLimit        = 50
@@ -34,9 +36,8 @@ const (
 	// base64. Keep the authenticated transport bounded without confusing bytes with
 	// model tokens; validate textual and image content separately below.
 	maxChatRequestBytes = 12_000_000
-	// One UTF-8 byte cannot expand into more than one tokenizer fallback token.
-	// This conservative bound keeps every accepted text payload within 256K tokens
-	// without coupling the public alias to the private upstream tokenizer.
+	// One UTF-8 byte can represent a complete token. Keep the byte guard conservative
+	// so accepted requests cannot exceed the advertised context before reaching the model.
 	maxChatTextBytes       = maxChatInputTokens
 	maxChatImageDataBytes  = 1_400_000
 	maxChatImages          = 5
@@ -315,7 +316,10 @@ func (provider *homarrProvider) chat(event *core.RequestEvent) error {
 		contentType = "application/json"
 	}
 	if upstreamResponse.StatusCode < 200 || upstreamResponse.StatusCode >= 300 {
-		return event.JSON(safeUpstreamStatus(upstreamResponse.StatusCode), openAIError("The model endpoint rejected the request."))
+		message := upstreamErrorMessage(upstreamResponse.Body, upstreamResponse.StatusCode, provider.apiKey)
+		return event.JSON(safeUpstreamStatus(upstreamResponse.StatusCode), map[string]any{
+			"error": map[string]any{"message": message, "type": "homarr_provider_upstream_error"},
+		})
 	}
 
 	if requestBody.Stream {
@@ -336,6 +340,52 @@ func (provider *homarrProvider) chat(event *core.RequestEvent) error {
 		return event.JSON(http.StatusBadGateway, openAIError("The model endpoint returned an invalid response."))
 	}
 	return event.Blob(upstreamResponse.StatusCode, contentType, responseBody)
+}
+
+var upstreamCredentialPattern = regexp.MustCompile(`(?i)\b(?:bearer\s+[^\s"<>]+|sk-[a-z0-9_-]+|eyJ[a-z0-9_-]+\.[a-z0-9_-]+\.[a-z0-9_-]+)`)
+
+// Forward only a bounded structured message, never provider metadata, request
+// headers, raw HTML, or a body that may contain the original conversation.
+func upstreamErrorMessage(body io.Reader, status int, apiKey string) string {
+	prefix := "Upstream model service returned HTTP " + strconv.Itoa(status) + "."
+	data, err := io.ReadAll(io.LimitReader(body, 16*1024+1))
+	if err != nil || len(data) > 16*1024 {
+		return prefix + " No readable error details were returned."
+	}
+	var payload struct {
+		Error struct {
+			Message string `json:"message"`
+		} `json:"error"`
+		Message string `json:"message"`
+	}
+	if json.Unmarshal(data, &payload) != nil {
+		return prefix + " The response was not a structured JSON error."
+	}
+	message := payload.Error.Message
+	if message == "" {
+		message = payload.Message
+	}
+	if apiKey != "" {
+		message = strings.ReplaceAll(message, apiKey, "[REDACTED]")
+	}
+	message = upstreamCredentialPattern.ReplaceAllString(message, "[REDACTED]")
+	message = strings.Join(strings.Fields(message), " ")
+	if message == "" {
+		return prefix + " No error message was returned."
+	}
+	// URLs can embed credentials or sensitive query strings. Keep only their origin/path.
+	words := strings.Split(message, " ")
+	for index, word := range words {
+		if strings.Contains(word, "://") {
+			words[index] = "[URL omitted]"
+		}
+	}
+	message = strings.Join(words, " ")
+	runes := []rune(message)
+	if len(runes) > 1000 {
+		message = string(runes[:1000]) + "…"
+	}
+	return prefix + " " + message
 }
 
 func streamErrorFrame() string {
@@ -432,7 +482,26 @@ func sanitizeProviderPayload(payload map[string]any, upstreamModelID string) err
 	payload["n"] = 1
 	payload["parallel_tool_calls"] = false
 	payload["usage"] = map[string]any{"include": true}
-	payload["provider"] = map[string]any{"zdr": true, "data_collection": "deny"}
+	delete(payload, "stream_options")
+	if payload["stream"] == true {
+		payload["stream_options"] = map[string]any{"include_usage": true}
+	}
+	// BYOK-only billing also requires disabling shared capacity on the OpenRouter key.
+	// Retention and data collection policies are managed by OpenRouter guardrails.
+	providerPreferences := map[string]any{
+		"allow_fallbacks": false,
+	}
+	if upstreamModelID == defaultOpenRouterModelID {
+		delete(payload, "reasoning_effort")
+		delete(payload, "include_reasoning")
+		delete(payload, "temperature")
+		delete(payload, "top_p")
+		payload["reasoning"] = map[string]any{"effort": "max", "exclude": false}
+	} else if upstreamModelID == lunaOpenRouterModelID {
+		delete(payload, "reasoning")
+		payload["reasoning_effort"] = "high"
+	}
+	payload["provider"] = providerPreferences
 	return nil
 }
 

@@ -6,14 +6,14 @@
 homarr/
 ├── apps/
 │   ├── nextjs/          # Main Next.js application (port 3000)
-│   ├── docs/            # Docusaurus 3 documentation site (@homarr/docs)
+│   ├── docs/            # Next.js + Fumadocs documentation site (@homarr/docs)
 │   ├── tasks/           # Cron-job initialization and scheduling runtime
 │   ├── websocket/       # Standalone tRPC WebSocket server (port 3001)
 │   └── workshop/        # Go/PocketBase Workshop service
 ├── packages/
 │   ├── api/             # tRPC appRouter, procedures, OpenAPI
 │   ├── auth/            # NextAuth config, providers, session, API keys
-│   ├── db/              # Drizzle schema (3 DB drivers), migrations, queries
+│   ├── db/              # SQLite and PostgreSQL schemas, migrations, queries
 │   ├── core/            # Env validation, DB/Redis driver factories, logging
 │   ├── definitions/     # Domain enums: WidgetKind, IntegrationKind, permissions
 │   ├── widgets/         # Dashboard widget definitions and components
@@ -55,17 +55,13 @@ homarr/
 └── Dockerfile           # Multi-stage production build
 ```
 
-## Documentation Sync
+## Documentation
 
-The documentation site lives at `apps/docs/` (Docusaurus 3, `@homarr/docs`).
+Add or update docs only when a smart, advanced user cannot infer the changed behavior from the UI or generated API schema. Document hidden capabilities, surprising behavior, non-obvious prerequisites or constraints, configuration contracts, and migrations. A code or API change alone is not a reason to add docs.
 
-Write for smart, curious, advanced users. Documentation should contain only information they cannot reasonably discover or understand directly from the interface: hidden capabilities, non-obvious behavior, prerequisites, constraints, configuration contracts, and migration requirements.
+Keep warranted documentation concise. Omit UI walkthroughs, visible control descriptions, and details already clear from the interface or schema.
 
-Keep docs concise. Every paragraph must add knowledge beyond visible labels and standard UI conventions. Explain how to discover and use a hidden advanced widget feature; omit explanations that the Delete button deletes an item in edit mode. Avoid UI walkthroughs, exhaustive control descriptions, and repetition. When editing a passage, remove obvious or redundant prose rather than preserving verbosity as a precedent.
-
-Update docs only when a change introduces or alters that non-obvious information, or makes existing guidance inaccurate. Routine fixes and self-explanatory UI changes need no docs update. A new feature alone does not require a page; apply the same reader-value test.
-
-When documentation is needed, use these locations:
+Only after this reader-value test passes, use these locations:
 
 - New integration → `apps/docs/docs/integrations/<slug>/index.mdx` + `index.ts`
 - New widget → `apps/docs/docs/widgets/<slug>/index.mdx` + `index.ts`
@@ -81,7 +77,7 @@ When documentation is needed, use these locations:
 - `pnpm dev:cli -- dev` — run the developer CLI without installing a global binary
 - `pnpm db:seed` — seed default database data explicitly
 - `pnpm docker:dev:up` — start the Redis development service in the background
-- `pnpm dev:docs` — Docusaurus docs site only
+- `pnpm dev:docs` — Fumadocs site only
 - `pnpm turbo build` — build all packages
 - `pnpm turbo build --filter=@homarr/docs` — build docs only
 - `pnpm turbo typecheck` — typecheck all packages
@@ -98,7 +94,10 @@ When documentation is needed, use these locations:
 - Run `pnpm dev:cli -- dev` to browse local `homarr:*` images and remote PR images.
 - Run `pnpm dev:cli -- build <name>` from a Homarr checkout to build `homarr:<name>` with rebuild provenance.
 - Run `pnpm dev:cli -- build --pr <number>` to build a PR locally from a temporary checkout.
-- Run Go checks from `tools/homarr-dev` with `go test ./...` and `go vet ./...`.
+
+## Testing
+
+Add tests only when requested. Favor assertions that would fail for a plausible regression in user-visible behavior or a security boundary; avoid checks that repeat implementation details or duplicate stronger coverage. For focused changes, run only the relevant existing or newly requested checks when validation is needed. Do not run broad test, Docker, or E2E suites by default.
 
 ## MCP servers
 

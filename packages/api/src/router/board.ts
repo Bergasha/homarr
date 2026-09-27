@@ -61,6 +61,7 @@ import {
   boardSaveSchema,
   boardSettingsSchema,
   boardSummarySchema,
+  updateBoardItemLayoutSchema,
 } from "@homarr/validation/board";
 import { byIdSchema } from "@homarr/validation/common";
 import { zodUnionFromArray } from "@homarr/validation/enums";
@@ -128,6 +129,12 @@ const findFirstAvailableBoardItemPosition = (
   }
   return null;
 };
+
+const doBoardItemPlacementsOverlap = (left: BoardItemPlacementRectangle, right: BoardItemPlacementRectangle) =>
+  left.yOffset < right.yOffset + right.height &&
+  left.yOffset + left.height > right.yOffset &&
+  left.xOffset < right.xOffset + right.width &&
+  left.xOffset + left.width > right.xOffset;
 
 interface WidgetConfiguration {
   id: string;
@@ -327,7 +334,15 @@ export const boardRouter = createTRPCRouter({
     .input(z.void())
     .output(z.array(boardSummarySchema))
     .meta({
-      openapi: { method: "GET", path: "/api/boards", tags: ["boards"], protect: true },
+      openapi: {
+        method: "GET",
+        path: "/api/boards",
+        tags: ["boards"],
+        protect: true,
+        summary: "List accessible boards",
+        description:
+          "Return accessible boards with creator details, visibility, and the current user's desktop and mobile home flags. Anonymous callers can see public boards.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -648,7 +663,15 @@ export const boardRouter = createTRPCRouter({
   createBoard: permissionRequiredProcedure
     .requiresPermission("board-create")
     .meta({
-      openapi: { method: "POST", path: "/api/boards", tags: ["boards"], protect: true },
+      openapi: {
+        method: "POST",
+        path: "/api/boards",
+        tags: ["boards"],
+        protect: true,
+        summary: "Create a board",
+        description:
+          "Create a board with base and mobile layouts. Requires board-create permission. Returns the board ID, name, and base layout ID; sets the creator's home board if none is selected.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -718,7 +741,15 @@ export const boardRouter = createTRPCRouter({
   duplicateBoard: permissionRequiredProcedure
     .requiresPermission("board-create")
     .meta({
-      openapi: { method: "POST", path: "/api/boards/{id}/duplicate", tags: ["boards"], protect: true },
+      openapi: {
+        method: "POST",
+        path: "/api/boards/{id}/duplicate",
+        tags: ["boards"],
+        protect: true,
+        summary: "Duplicate a board",
+        description:
+          "Copy a board under a unique name and return its new ID. Requires board-create permission, view access to the source, and use access to its linked integrations. Widget configurations must be valid; boards containing Custom Widgets require admin permission.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -1015,7 +1046,14 @@ export const boardRouter = createTRPCRouter({
     }),
   renameBoard: protectedProcedure
     .meta({
-      openapi: { method: "PATCH", path: "/api/boards/{id}/name", tags: ["boards"], protect: true },
+      openapi: {
+        method: "PATCH",
+        path: "/api/boards/{id}/name",
+        tags: ["boards"],
+        protect: true,
+        summary: "Rename a board",
+        description: "Change a board's name to a unique name. Requires full access to the board.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -1033,7 +1071,15 @@ export const boardRouter = createTRPCRouter({
     }),
   changeBoardVisibility: protectedProcedure
     .meta({
-      openapi: { method: "PATCH", path: "/api/boards/{id}/visibility", tags: ["boards"], protect: true },
+      openapi: {
+        method: "PATCH",
+        path: "/api/boards/{id}/visibility",
+        tags: ["boards"],
+        protect: true,
+        summary: "Change board visibility",
+        description:
+          "Make a board public or private. Requires full access to the board. A board selected as an instance desktop or mobile home board cannot be made private.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -1063,7 +1109,14 @@ export const boardRouter = createTRPCRouter({
     }),
   deleteBoard: protectedProcedure
     .meta({
-      openapi: { method: "DELETE", path: "/api/boards/{id}", tags: ["boards"], protect: true },
+      openapi: {
+        method: "DELETE",
+        path: "/api/boards/{id}",
+        tags: ["boards"],
+        protect: true,
+        summary: "Delete a board",
+        description: "Delete a board by ID. Requires full access to the board.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -1079,7 +1132,14 @@ export const boardRouter = createTRPCRouter({
     }),
   setHomeBoard: protectedProcedure
     .meta({
-      openapi: { method: "PATCH", path: "/api/boards/{id}/home", tags: ["boards"], protect: true },
+      openapi: {
+        method: "PATCH",
+        path: "/api/boards/{id}/home",
+        tags: ["boards"],
+        protect: true,
+        summary: "Set your desktop home board",
+        description: "Select the current user's desktop home board. Requires view access to the board.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -1095,7 +1155,14 @@ export const boardRouter = createTRPCRouter({
     }),
   setMobileHomeBoard: protectedProcedure
     .meta({
-      openapi: { method: "PATCH", path: "/api/boards/{id}/mobile-home", tags: ["boards"], protect: true },
+      openapi: {
+        method: "PATCH",
+        path: "/api/boards/{id}/mobile-home",
+        tags: ["boards"],
+        protect: true,
+        summary: "Set your mobile home board",
+        description: "Select the current user's mobile home board. Requires view access to the board.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -1523,7 +1590,15 @@ export const boardRouter = createTRPCRouter({
     }),
   savePartialBoardSettings: protectedProcedure
     .meta({
-      openapi: { method: "PATCH", path: "/api/boards/{id}/settings", tags: ["boards"], protect: true },
+      openapi: {
+        method: "PATCH",
+        path: "/api/boards/{id}/settings",
+        tags: ["boards"],
+        protect: true,
+        summary: "Update board settings",
+        description:
+          "Update the supplied appearance, metadata, background, custom CSS, or status settings. Omitted settings remain unchanged. Requires modify access to the board.",
+      },
       mcp: {
         enabled: true,
         description:
@@ -2144,11 +2219,19 @@ export const boardRouter = createTRPCRouter({
   }),
   addItem: protectedProcedure
     .meta({
-      openapi: { method: "POST", path: "/api/boards/items", tags: ["boards"], protect: true },
+      openapi: {
+        method: "POST",
+        path: "/api/boards/items",
+        tags: ["boards"],
+        protect: true,
+        summary: "Add an item to a board",
+        description:
+          "Add a widget or app to the first available position in the main canvas of each layout and return its item ID. Requires modify access to the board and use access to linked integrations. Widget configurations must be valid; placing Custom Widgets requires admin permission.",
+      },
       mcp: {
         enabled: true,
         description:
-          "Add a widget/app item to a board after configure_widget has reviewed it. Automatically places it in the main canvas at the first free grid position without overlapping items or containers. Use the configure_widget result's boardId, kind, options, and integrationIds exactly. Integration IDs must be accessible to the current user. To create a formatted dashboard note, configure kind 'notebook' with options { content: Tiptap-compatible HTML, showToolbar: boolean, allowReadOnlyCheck: boolean }. Returns { itemId }",
+          "Add a widget/app item to a board after configure_widget has reviewed it. Automatically places it in the main canvas at the first free grid position without overlapping items or containers. Use the configure_widget result's boardId, kind, options, and integrationIds exactly. Optional size {width,height} sets grid dimensions; width is capped by each layout's available columns. Integration IDs must be accessible to the current user. To create a formatted dashboard note, configure kind 'notebook' with options { content: Tiptap-compatible HTML, showToolbar: boolean, allowReadOnlyCheck: boolean }. Returns { itemId }",
       },
     })
     .input(addItemToBoardSchema)
@@ -2195,7 +2278,7 @@ export const boardRouter = createTRPCRouter({
         }
 
         const itemId = createId();
-        const defaultSize = widgetDefaultSizes[input.kind as WidgetKind] ?? { width: 1, height: 1 };
+        const defaultSize = input.size ?? widgetDefaultSizes[input.kind as WidgetKind] ?? { width: 1, height: 1 };
         const layoutRows: (typeof itemLayouts.$inferInsert)[] = board.layouts.map((layout) => {
           const columnCount = getBoardLaneColumnCount(layout, getRootSectionLane(emptySection.xOffset));
           const size = { ...defaultSize, width: Math.min(columnCount, defaultSize.width) };
@@ -2247,6 +2330,102 @@ export const boardRouter = createTRPCRouter({
         }
 
         return { itemId };
+      });
+    }),
+  updateItemLayout: protectedProcedure
+    .meta({
+      openapi: {
+        method: "PATCH",
+        path: "/api/boards/{boardId}/items/{itemId}/layouts/{layoutId}",
+        tags: ["boards"],
+        protect: true,
+        summary: "Move or resize one board item",
+        description:
+          "Update one item's position and size in one existing layout without replacing the board. Requires modify access. The item stays in its current section; out-of-bounds and overlapping placements are rejected.",
+      },
+      mcp: {
+        enabled: true,
+        description:
+          "Move or resize one existing board item in one layout. Requires modify access to boardId. Obtain itemId and layoutId from the board, then provide xOffset, yOffset, width, and height in grid cells. The item stays in its current section; the mutation rejects overlap with other items or containers. It never replaces or deletes other board content.",
+      },
+    })
+    .input(updateBoardItemLayoutSchema)
+    .output(updateBoardItemLayoutSchema)
+    .mutation(async ({ ctx, input }) => {
+      await throwIfActionForbiddenAsync(ctx, eq(boards.id, input.boardId), "modify");
+
+      return await serializeBoardItemPlacementAsync(input.boardId, async () => {
+        const board = await ctx.db.query.boards.findFirst({
+          where: eq(boards.id, input.boardId),
+          with: {
+            layouts: true,
+            sections: { with: { layouts: true } },
+            items: { with: { layouts: true } },
+          },
+        });
+        if (!board) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Board not found" });
+        }
+
+        const layout = board.layouts.find((candidate) => candidate.id === input.layoutId);
+        const item = board.items.find((candidate) => candidate.id === input.itemId);
+        const itemLayout = item?.layouts.find((candidate) => candidate.layoutId === input.layoutId);
+        if (!layout || !item || !itemLayout) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Item layout not found on this board" });
+        }
+
+        const section = board.sections.find((candidate) => candidate.id === itemLayout.sectionId);
+        if (!section) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Item section not found on this board" });
+        }
+
+        let columnCount: number;
+        if (section.kind === "empty") {
+          columnCount = getBoardLaneColumnCount(layout, getRootSectionLane(section.xOffset));
+        } else {
+          const sectionLayout = section.layouts.find((candidate) => candidate.layoutId === layout.id);
+          if (!sectionLayout) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Item section has no layout at this breakpoint" });
+          }
+          columnCount = sectionLayout.width;
+        }
+
+        if (input.xOffset + input.width > columnCount || input.yOffset + input.height > 32767) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Item layout exceeds its section bounds" });
+        }
+
+        const otherItemPlacements = board.items
+          .filter((candidate) => candidate.id !== item.id)
+          .flatMap((candidate) => candidate.layouts)
+          .filter((candidate) => candidate.layoutId === layout.id && candidate.sectionId === section.id);
+        const childSectionPlacements = board.sections
+          .flatMap((candidate) => candidate.layouts)
+          .filter((candidate) => candidate.layoutId === layout.id && candidate.parentSectionId === section.id);
+        if (
+          [...otherItemPlacements, ...childSectionPlacements].some((placement) =>
+            doBoardItemPlacementsOverlap(input, placement),
+          )
+        ) {
+          throw new TRPCError({ code: "CONFLICT", message: "Item layout overlaps another item or section" });
+        }
+
+        await ctx.db
+          .update(itemLayouts)
+          .set({
+            xOffset: input.xOffset,
+            yOffset: input.yOffset,
+            width: input.width,
+            height: input.height,
+          })
+          .where(
+            and(
+              eq(itemLayouts.itemId, item.id),
+              eq(itemLayouts.layoutId, layout.id),
+              eq(itemLayouts.sectionId, section.id),
+            ),
+          );
+
+        return input;
       });
     }),
 });

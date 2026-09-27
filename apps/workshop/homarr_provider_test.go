@@ -7,6 +7,27 @@ import (
 	"testing"
 )
 
+func TestUpstreamErrorMessage(t *testing.T) {
+	for _, tt := range []struct{ name, body, key, want string }{
+		{"routing", `{"error":{"message":"No endpoints found matching your data policy"}}`, "", "Upstream model service returned HTTP 404. No endpoints found matching your data policy"},
+		{"proxy", `{"message":"Route not found"}`, "", "Upstream model service returned HTTP 404. Route not found"},
+		{"redaction", `{"error":{"message":"opaque-private-key Bearer abc123 sk-or-v1-example https://user:pass@example.com/?key=secret"},"metadata":{"secret":"must not appear"}}`, "opaque-private-key", "Upstream model service returned HTTP 404. [REDACTED] [REDACTED] [REDACTED] [URL omitted]"},
+		{"html", `<html>private upstream page</html>`, "", "Upstream model service returned HTTP 404. The response was not a structured JSON error."},
+		{"empty", `{}`, "", "Upstream model service returned HTTP 404. No error message was returned."},
+		{"oversized", strings.Repeat("x", 16*1024+1), "", "Upstream model service returned HTTP 404. No readable error details were returned."},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := upstreamErrorMessage(strings.NewReader(tt.body), 404, tt.key); got != tt.want {
+				t.Fatalf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+	message := upstreamErrorMessage(strings.NewReader(`{"error":{"message":"`+strings.Repeat("é", 2000)+`"}}`), 404, "")
+	if len([]rune(message)) > 1100 {
+		t.Fatal("upstream message was not bounded")
+	}
+}
+
 func TestSanitizeProviderPayload(t *testing.T) {
 	payload := map[string]any{
 		"model":                 homarrProviderModelID,
@@ -93,8 +114,80 @@ func TestSanitizeProviderPayload(t *testing.T) {
 		t.Fatalf("unexpected usage options: %s, %v", usage, err)
 	}
 	privacy := payload["provider"].(map[string]any)
-	if privacy["zdr"] != true || privacy["data_collection"] != "deny" {
-		t.Fatalf("upstream privacy controls were not enforced: %#v", privacy)
+	for _, field := range []string{"zdr", "data_collection"} {
+		if _, exists := privacy[field]; exists {
+			t.Fatalf("privacy policy must be left to OpenRouter guardrails: %#v", privacy)
+		}
+	}
+}
+
+func TestSanitizeProviderPayloadPinsDefaultModelQuality(t *testing.T) {
+	payload := map[string]any{
+		"reasoning_effort":  "none",
+		"reasoning":         map[string]any{"effort": "low", "enabled": false, "exclude": true},
+		"include_reasoning": false,
+		"temperature":       0.3,
+		"top_p":             0.5,
+		"provider":          map[string]any{"only": []string{"azure"}, "allow_fallbacks": true, "zdr": true, "data_collection": "allow"},
+		"stream":            true,
+		"stream_options":    map[string]any{"include_usage": false},
+	}
+	if err := sanitizeProviderPayload(payload, defaultOpenRouterModelID); err != nil {
+		t.Fatal(err)
+	}
+
+	if payload["model"] != "openai/gpt-6-luna" {
+		t.Fatalf("unexpected default model: %#v", payload["model"])
+	}
+	reasoning := payload["reasoning"].(map[string]any)
+	if reasoning["effort"] != "max" || reasoning["exclude"] != false {
+		t.Fatalf("default model did not use visible max reasoning: %#v", reasoning)
+	}
+	for _, field := range []string{"reasoning_effort", "include_reasoning", "temperature", "top_p"} {
+		if _, exists := payload[field]; exists {
+			t.Fatalf("conflicting or unsupported field %q was forwarded", field)
+		}
+	}
+	if payload["stream_options"].(map[string]any)["include_usage"] != true {
+		t.Fatal("streamed token usage must be included")
+	}
+	preferences := payload["provider"].(map[string]any)
+	if _, exists := preferences["only"]; exists {
+		t.Fatalf("provider allowlists must not restrict eligible endpoints: %#v", preferences)
+	}
+	if preferences["allow_fallbacks"] != false {
+		t.Fatalf("default model must not fall back to another provider: %#v", preferences)
+	}
+	for _, field := range []string{"zdr", "data_collection"} {
+		if _, exists := preferences[field]; exists {
+			t.Fatalf("client privacy overrides must not be forwarded: %#v", preferences)
+		}
+	}
+	for _, field := range []string{"order", "quantizations"} {
+		if _, exists := preferences[field]; exists {
+			t.Fatalf("obsolete DeepInfra routing field %q was forwarded", field)
+		}
+	}
+}
+
+func TestSanitizeProviderPayloadPinsLunaReasoning(t *testing.T) {
+	payload := map[string]any{
+		"reasoning":        map[string]any{"effort": "xhigh"},
+		"reasoning_effort": "xhigh",
+	}
+	if err := sanitizeProviderPayload(payload, lunaOpenRouterModelID); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, exists := payload["reasoning"]; exists {
+		t.Fatal("Luna must use the top-level reasoning_effort field")
+	}
+	if payload["reasoning_effort"] != "high" {
+		t.Fatalf("Luna did not use high reasoning: %#v", payload["reasoning_effort"])
+	}
+	preferences := payload["provider"].(map[string]any)
+	if _, exists := preferences["order"]; exists {
+		t.Fatalf("Luna must not inherit DeepInfra routing: %#v", preferences)
 	}
 }
 
@@ -128,6 +221,10 @@ func TestValidateProviderInput(t *testing.T) {
 	}
 	if err := validateProviderInput(payload); err != nil {
 		t.Fatalf("expected a supported Homarr image request, got %v", err)
+	}
+	payload["messages"] = []any{map[string]any{"role": "user", "content": strings.Repeat("x", maxChatTextBytes-100)}}
+	if err := validateProviderInput(payload); err != nil {
+		t.Fatalf("expected text at the conservative context boundary to be accepted, got %v", err)
 	}
 	payload["messages"] = []any{map[string]any{"role": "user", "content": strings.Repeat("x", maxChatTextBytes+1)}}
 	if err := validateProviderInput(payload); !errors.Is(err, errInputTooLarge) {

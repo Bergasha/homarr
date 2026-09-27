@@ -17,19 +17,7 @@ import {
   useAui,
   useAuiState,
 } from "@assistant-ui/react";
-import {
-  ActionIcon,
-  Anchor,
-  Badge,
-  Box,
-  Button,
-  Group,
-  Stack,
-  Text,
-  ThemeIcon,
-  Tooltip,
-  UnstyledButton,
-} from "@mantine/core";
+import { ActionIcon, Badge, Box, Button, Group, Stack, Text, ThemeIcon, Tooltip, UnstyledButton } from "@mantine/core";
 import { useReducedMotion, useWindowEvent } from "@mantine/hooks";
 import {
   IconAlertTriangle,
@@ -42,13 +30,11 @@ import {
   IconCopy,
   IconDotsVertical,
   IconFileExport,
-  IconLink,
   IconMinus,
   IconPencil,
   IconPlus,
   IconQuote,
   IconRefresh,
-  IconSearch,
   IconThumbDown,
   IconThumbUp,
   IconVolume,
@@ -79,7 +65,6 @@ import {
   UserTextPart,
 } from "./assistant-message-content";
 import { assistantMessageGroupBy } from "./assistant-message-grouping";
-import { getAssistantTelemetry } from "./assistant-message-metadata";
 import { AutoApprovalControl, EmptyThread, ViewRefreshAction } from "./assistant-panel-controls";
 import classes from "./assistant-panel.module.css";
 import type { AssistantPendingAction } from "./assistant-pending-action";
@@ -323,67 +308,6 @@ const RuntimeError = () => {
   );
 };
 
-const WebSearchActivity = () => {
-  const t = useI18n("assistant");
-  const metadata = useAuiState((state) => state.message.metadata);
-  const telemetry = getAssistantTelemetry(metadata);
-  if (!telemetry) return null;
-  const sources = telemetry.webSearchSources ?? [];
-  if (telemetry.webSearchRequests === undefined && sources.length === 0) return null;
-
-  return (
-    <Box className={`${classes.tool} ${classes.webSearchActivity}`}>
-      <Group justify="space-between" align="flex-start" wrap="nowrap" gap="sm">
-        <Group gap="xs" wrap="nowrap" align="flex-start">
-          <ThemeIcon size="sm" radius="xl" variant="light" color="blue">
-            <IconSearch size={13} />
-          </ThemeIcon>
-          <div>
-            <Text size="sm" fw={600}>
-              {t("webSearch.title")}
-            </Text>
-            <Text size="xs" c="dimmed">
-              {t("webSearch.completed")}
-            </Text>
-          </div>
-        </Group>
-        <Group gap={4} wrap="wrap" justify="flex-end">
-          {telemetry.webSearchRequests !== undefined && (
-            <Badge size="xs" variant="light" color="blue">
-              {t("webSearch.searches", { count: telemetry.webSearchRequests })}
-            </Badge>
-          )}
-          {sources.length > 0 && (
-            <Badge size="xs" variant="light" color="gray">
-              {t("webSearch.sources", { count: sources.length })}
-            </Badge>
-          )}
-        </Group>
-      </Group>
-      {sources.length > 0 && (
-        <Group className={classes.webSearchSources} gap="xs" wrap="wrap">
-          {sources.map((source) => (
-            <Anchor
-              key={source.url}
-              className={classes.webSearchSource}
-              href={source.url}
-              target="_blank"
-              rel="noreferrer"
-              size="xs"
-              title={source.title ?? source.url}
-            >
-              <IconLink size={13} />
-              <Text component="span" inherit lineClamp={1}>
-                {source.title ?? new URL(source.url).hostname}
-              </Text>
-            </Anchor>
-          ))}
-        </Group>
-      )}
-    </Box>
-  );
-};
-
 const AssistantMessage = () => {
   const isComplete = useAuiState((state) => state.message.status?.type === "complete");
 
@@ -431,7 +355,6 @@ const AssistantMessage = () => {
         }}
       </MessagePrimitive.GroupedParts>
       <RuntimeError />
-      <WebSearchActivity />
       <AssistantMessageActions />
     </MessagePrimitive.Root>
   );
@@ -548,6 +471,7 @@ const AssistantActivityBar = ({
 };
 
 interface AssistantConversationSurfaceProps extends AssistantConversationControls {
+  variant?: "widget" | "panel";
   isRunning: boolean;
   pendingAction: AssistantPendingAction | undefined;
   onExpand?: () => void;
@@ -556,6 +480,7 @@ interface AssistantConversationSurfaceProps extends AssistantConversationControl
 }
 
 export const AssistantConversationSurface = ({
+  variant = "panel",
   isRunning,
   pendingAction,
   modelId,
@@ -584,10 +509,15 @@ export const AssistantConversationSurface = ({
   return (
     <AssistantDirectiveEntitiesProvider>
       <Group className={classes.panelHeader} justify="space-between" wrap="nowrap" gap="xs">
+        {variant === "widget" && (
+          <Text className={classes.widgetPanelTitle} size="sm" fw={600}>
+            {t("title")}
+          </Text>
+        )}
         <Group className={classes.panelActions} gap={2} wrap="nowrap">
-          <ConversationHistory />
+          <ConversationHistory compact={variant === "widget"} />
           <ViewRefreshAction isRefreshing={isRefreshing} onRefresh={onRefresh} />
-          <AutoApprovalControl />
+          {variant !== "widget" && <AutoApprovalControl />}
           <Tooltip label={t("newConversation")}>
             <ThreadListPrimitive.New asChild>
               <ActionIcon
@@ -649,7 +579,7 @@ export const AssistantConversationSurface = ({
           >
             <ThreadPrimitive.Viewport className={classes.viewport} autoScroll>
               <Box className={classes.messages}>
-                <EmptyThread />
+                <EmptyThread compact={variant === "widget"} />
                 <ThreadPrimitive.Messages components={assistantThreadMessageComponents} />
               </Box>
               <SelectionToolbarPrimitive.Root className={classes.selectionToolbar}>
@@ -673,6 +603,7 @@ export const AssistantConversationSurface = ({
             <PendingQuestionDock pendingAction={pendingAction} setTarget={setQuestionPortalTarget} />
             <PendingActionBanner pendingAction={pendingAction} />
             <Composer
+              compact={variant === "widget"}
               modelId={modelId}
               models={models}
               modelOptionsLoading={modelOptionsLoading}
