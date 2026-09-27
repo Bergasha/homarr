@@ -49,7 +49,7 @@ describe("getBoardRecipeRecommendations", () => {
   test("falls back to other configured integrations when the new service has no missing widgets", () => {
     const recommendations = getBoardRecipeRecommendations({
       configuredIntegrationKinds: ["piHole", "jellyfin"],
-      existingItemKinds: ["dnsHoleSummary", "dnsHoleControls"],
+      existingItemKinds: ["dnsHoleSummary", "dnsHoleControls", "stats"],
       preferredIntegrationKind: "piHole",
       limit: 1,
     });
