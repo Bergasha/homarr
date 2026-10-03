@@ -56,9 +56,10 @@ export const BoardContainerSection = ({ section }: Props) => {
     collapsible: options.collapsible,
   });
   const isAutoExpanded = useIsAutoExpanded(section.id);
-  const isHiddenInactive =
-    options.autoExpand.enabled && options.autoExpand.inactiveDisplay === "hidden" && !isAutoExpanded && !isEditMode;
+  const usesHiddenAutoExpand = options.autoExpand.enabled && options.autoExpand.inactiveDisplay === "hidden";
+  const isHiddenInactive = usesHiddenAutoExpand && !isAutoExpanded && !isEditMode;
   const effectivelyCollapsed = isVisuallyCollapsed || isHiddenInactive;
+  const showCollapseToggle = options.collapsible && !usesHiddenAutoExpand;
   const label = options.title.trim() || t("untitled");
   const contentId = `board-container-${section.id}-content`;
   const menuPosition = { right: getBoundedMenuOffset(menuRightOffset), top: getBoundedMenuOffset(menuTopOffset) };
@@ -123,7 +124,7 @@ export const BoardContainerSection = ({ section }: Props) => {
         radius={board.itemRadius}
         p={0}
       >
-        {options.collapsible && !isHiddenInactive && (
+        {showCollapseToggle && !isHiddenInactive && (
           <Button
             className={classes.containerToggle}
             pos="absolute"
@@ -146,7 +147,7 @@ export const BoardContainerSection = ({ section }: Props) => {
             {options.showLabel ? label : toggleIcon}
           </Button>
         )}
-        {!isVisuallyCollapsed && !options.collapsible && !isHiddenInactive && options.showLabel && options.title && (
+        {!isVisuallyCollapsed && !showCollapseToggle && !isHiddenInactive && options.showLabel && options.title && (
           <Badge
             className={classes.containerLabel}
             pos="absolute"
