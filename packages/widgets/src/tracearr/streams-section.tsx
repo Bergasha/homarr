@@ -4,7 +4,6 @@ import { IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
 import { formatDuration } from "@homarr/common";
 import type { TracearrStream } from "@homarr/integrations/types";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 import type { SourcedTracearrItem } from "./source";
 
@@ -104,9 +103,9 @@ function StreamCard({
         <Group justify="space-between" wrap="nowrap">
           <Group gap="xs" wrap="nowrap" style={{ overflow: "hidden" }}>
             {stream.state === "playing" ? (
-              <IconPlayerPlay style={iconSizes.sm} color="var(--mantine-color-green-6)" />
+              <IconPlayerPlay size="var(--mantine-font-size-sm)" color="var(--mantine-color-green-6)" />
             ) : (
-              <IconPlayerPause style={iconSizes.sm} color="var(--mantine-color-yellow-6)" />
+              <IconPlayerPause size="var(--mantine-font-size-sm)" color="var(--mantine-color-yellow-6)" />
             )}
             <Text size="sm" fw={600} lineClamp={1}>
               {stream.username}

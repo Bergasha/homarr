@@ -11,7 +11,7 @@ import {
 } from "@tabler/icons-react";
 
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes, zoomCompensatedSize } from "@homarr/ui";
+import { zoomCompensatedSize } from "@homarr/ui";
 
 import actionTargetClasses from "../common/action-target.module.css";
 import { getSafeApplicationUrl, SAFE_NEW_TAB_REL } from "../common/application-url";
@@ -111,7 +111,7 @@ export function ResourceRow({ item, baseUrl, isTiny, resourceType }: ResourceRow
             variant="subtle"
             c="dimmed"
           >
-            <IconLink style={iconSizes.xs} />
+            <IconLink size="var(--mantine-font-size-xs)" />
           </ActionIcon>
         )}
         {logsUrl && (
@@ -126,7 +126,7 @@ export function ResourceRow({ item, baseUrl, isTiny, resourceType }: ResourceRow
             variant="subtle"
             c="dimmed"
           >
-            <IconFileText style={iconSizes.xs} />
+            <IconFileText size="var(--mantine-font-size-xs)" />
           </ActionIcon>
         )}
         <Text fz="10px" c="dimmed" lineClamp={1}>

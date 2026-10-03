@@ -17,7 +17,6 @@ import { IconHeartbeat, IconTransform } from "@tabler/icons-react";
 
 import type { TdarrWorker } from "@homarr/integrations";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 interface WorkersPanelProps {
   workers: TdarrWorker[];
@@ -68,11 +67,11 @@ export function WorkersPanel(props: WorkersPanelProps) {
                     <div>
                       {worker.jobType === "transcode" ? (
                         <Tooltip label={tCommon("transcode")}>
-                          <IconTransform style={{ ...iconSizes.sm, flexShrink: 0 }} />
+                          <IconTransform size="var(--mantine-font-size-sm)" style={{ flexShrink: 0 }} />
                         </Tooltip>
                       ) : (
                         <Tooltip label={tCommon("healthCheck")}>
-                          <IconHeartbeat style={{ ...iconSizes.sm, flexShrink: 0 }} />
+                          <IconHeartbeat size="var(--mantine-font-size-sm)" style={{ flexShrink: 0 }} />
                         </Tooltip>
                       )}
                     </div>

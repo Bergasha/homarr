@@ -24,7 +24,7 @@ import { getQueryKey } from "@trpc/react-query";
 import { clientApi } from "@homarr/api/client";
 import type { MissingMediaItem, QueuedMediaItem } from "@homarr/integrations/types";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes, zoomCompensatedSize } from "@homarr/ui";
+import { zoomCompensatedSize } from "@homarr/ui";
 
 import { WidgetEmptyState } from "../common/empty-state";
 import { getSafeApplicationUrl, SAFE_NEW_TAB_REL } from "../common/application-url";
@@ -171,7 +171,7 @@ export default function MediaMissingWidget({
           {showMissing && (
             <Paper withBorder radius="sm" style={{ minHeight: 0, overflow: "hidden" }}>
               <Group p="xs" gap="xs">
-                <IconQuestionMark style={iconSizes.md} />
+                <IconQuestionMark size="var(--mantine-font-size-md)" />
                 <Text size="sm" fw={600}>
                   {tabLabel(t("tab.missing"), missing.length, missingCount)}
                 </Text>
@@ -182,7 +182,7 @@ export default function MediaMissingWidget({
           {showQueued && (
             <Paper withBorder radius="sm" style={{ minHeight: 0, overflow: "hidden" }}>
               <Group p="xs" gap="xs">
-                <IconDownload style={iconSizes.md} />
+                <IconDownload size="var(--mantine-font-size-md)" />
                 <Text size="sm" fw={600}>
                   {tabLabel(t("tab.queued"), queued.length, queuedCount)}
                 </Text>
@@ -208,12 +208,20 @@ export default function MediaMissingWidget({
       {partialFailures}
       <Tabs.List grow>
         {showMissing && (
-          <Tabs.Tab value="missing" px={isThin ? 6 : undefined} leftSection={<IconQuestionMark style={iconSizes.sm} />}>
+          <Tabs.Tab
+            value="missing"
+            px={isThin ? 6 : undefined}
+            leftSection={<IconQuestionMark size="var(--mantine-font-size-sm)" />}
+          >
             {tabLabel(t("tab.missing"), missing.length, missingCount)}
           </Tabs.Tab>
         )}
         {showQueued && (
-          <Tabs.Tab value="queued" px={isThin ? 6 : undefined} leftSection={<IconDownload style={iconSizes.sm} />}>
+          <Tabs.Tab
+            value="queued"
+            px={isThin ? 6 : undefined}
+            leftSection={<IconDownload size="var(--mantine-font-size-sm)" />}
+          >
             {tabLabel(t("tab.queued"), queued.length, queuedCount)}
           </Tabs.Tab>
         )}

@@ -5,7 +5,6 @@ import { IconStack2 } from "@tabler/icons-react";
 
 import type { CoolifyServiceWithContext } from "@homarr/integrations/types";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 import actionTargetClasses from "../common/action-target.module.css";
 import { getSafeApplicationUrl, SAFE_NEW_TAB_REL } from "../common/application-url";
@@ -26,7 +25,7 @@ export function ServicesSection({ services, baseUrl, isTiny, isAdvanced }: Servi
 
   return (
     <Accordion.Item value="services">
-      <Accordion.Control icon={isTiny ? null : <IconStack2 style={iconSizes.md} />}>
+      <Accordion.Control icon={isTiny ? null : <IconStack2 size="var(--mantine-font-size-md)" />}>
         <Group gap="xs">
           <Text size="xs">{tCommon("services")}</Text>
           <Badge variant="dot" color={getBadgeColor(runningServices, services.length)} size="xs">

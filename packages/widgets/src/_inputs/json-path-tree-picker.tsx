@@ -12,8 +12,6 @@ import {
   IconToggleLeft,
 } from "@tabler/icons-react";
 
-import { iconSizes } from "@homarr/ui";
-
 const VALUE_TRUNCATE_LENGTH = 80;
 const LEVEL_OFFSET = 14;
 const BASE_PADDING = 8;
@@ -360,15 +358,16 @@ function TreeNodeOption({ node, selected, isSearching }: { node: FlatNode; selec
       <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
         {node.hasChildren && (
           <IconChevronDown
+            size="var(--mantine-font-size-sm)"
             style={{
-              ...iconSizes.sm,
+              flexShrink: 0,
               color: "var(--mantine-color-dimmed)",
               transform: node.isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
               transition: "transform 150ms ease",
             }}
           />
         )}
-        <TypeIcon style={{ ...iconSizes.sm, flexShrink: 0, opacity: 0.5 }} />
+        <TypeIcon size="var(--mantine-font-size-sm)" style={{ flexShrink: 0, opacity: 0.5 }} />
         <Text
           size="sm"
           fw={selected ? 600 : 400}

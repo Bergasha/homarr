@@ -36,7 +36,7 @@ import { formatBitRate, objectEntries } from "@homarr/common";
 import { getIconUrl } from "@homarr/definitions";
 import type { StreamSession } from "@homarr/integrations";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes, zoomCompensatedSize } from "@homarr/ui";
+import { zoomCompensatedSize } from "@homarr/ui";
 import type { TablerIcon } from "@homarr/ui";
 
 import type { WidgetComponentProps } from "../definition";
@@ -148,13 +148,21 @@ function StreamTableHeader({
   const SortIcon = !active ? IconArrowsSort : sort.descending ? IconChevronDown : IconChevronUp;
 
   return (
-    <Table.Th w={width} className={className} aria-sort={active ? (sort.descending ? "descending" : "ascending") : "none"}>
+    <Table.Th
+      w={width}
+      className={className}
+      aria-sort={active ? (sort.descending ? "descending" : "ascending") : "none"}
+    >
       {sortable ? (
         <UnstyledButton className={classes.sortButton} onClick={() => onSort(column)}>
           <Text component="span" size="xs" fw={600} c="dimmed" style={{ letterSpacing: "0.02em" }} truncate>
             {label}
           </Text>
-          <SortIcon style={iconSizes.xs} aria-hidden color={active ? undefined : "var(--mantine-color-dimmed)"} />
+          <SortIcon
+            size="var(--mantine-font-size-xs)"
+            aria-hidden
+            color={active ? undefined : "var(--mantine-color-dimmed)"}
+          />
         </UnstyledButton>
       ) : (
         <Text size="xs" fw={600} c="dimmed" style={{ letterSpacing: "0.02em" }} truncate>
@@ -256,7 +264,7 @@ export default function MediaServerWidget({
               onChange={(event) => setSearch(event.currentTarget.value)}
               placeholder={tSearch("placeholder")}
               aria-label={tSearch("placeholder")}
-              leftSection={<IconSearch style={iconSizes.xs} aria-hidden />}
+              leftSection={<IconSearch size="var(--mantine-font-size-xs)" aria-hidden />}
             />
             <IntegrationErrorIndicator results={currentStreams} />
           </Group>
@@ -381,9 +389,9 @@ export default function MediaServerWidget({
                             {location && (
                               <Group gap={4} align="center" wrap="nowrap" style={{ flexShrink: 0 }}>
                                 {location === "lan" ? (
-                                  <IconWifi style={iconSizes.xs} />
+                                  <IconWifi size="var(--mantine-font-size-xs)" />
                                 ) : (
-                                  <IconWorld style={iconSizes.xs} />
+                                  <IconWorld size="var(--mantine-font-size-xs)" />
                                 )}
                                 <Text size="xs" c="dimmed" tt="uppercase">
                                   {t(`items.location.${location}` as never)}
@@ -516,8 +524,9 @@ function CurrentlyPlaying({ item }: { item: StreamSession }) {
     <Stack gap={6} style={{ minWidth: 0 }}>
       <Group gap="xs" align="center" wrap="nowrap" style={{ minWidth: 0 }}>
         <Icon
+          size="var(--mantine-font-size-xs)"
           color={isPaused ? "var(--mantine-color-yellow-6)" : undefined}
-          style={{ ...iconSizes.xs, flexShrink: 0 }}
+          style={{ flexShrink: 0 }}
         />
         <Text size="xs" lineClamp={1} style={{ minWidth: 0 }}>
           {currentlyPlaying.name}

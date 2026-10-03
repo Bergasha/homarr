@@ -12,7 +12,6 @@ import {
 
 import type { CoolifyServer } from "@homarr/integrations/types";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 import actionTargetClasses from "../common/action-target.module.css";
 import { getSafeApplicationUrl, SAFE_NEW_TAB_REL } from "../common/application-url";
@@ -44,7 +43,10 @@ export function ServersSection({
   return (
     <Accordion.Item value="servers">
       <Group gap={0} wrap="nowrap">
-        <Accordion.Control icon={isTiny ? null : <IconServer style={iconSizes.md} />} style={{ flex: 1, minWidth: 0 }}>
+        <Accordion.Control
+          icon={isTiny ? null : <IconServer size="var(--mantine-font-size-md)" />}
+          style={{ flex: 1, minWidth: 0 }}
+        >
           <Group gap="xs">
             <Text size="xs">{tCommon("servers")}</Text>
             <Badge variant="dot" color={getBadgeColor(onlineServers, servers.length)} size="xs">
@@ -62,7 +64,7 @@ export function ServersSection({
           mr="xs"
           onClick={onToggleIp}
         >
-          {showIp ? <IconEye style={iconSizes.xs} /> : <IconEyeOff style={iconSizes.xs} />}
+          {showIp ? <IconEye size="var(--mantine-font-size-xs)" /> : <IconEyeOff size="var(--mantine-font-size-xs)" />}
         </ActionIcon>
       </Group>
       <Accordion.Panel p={4}>

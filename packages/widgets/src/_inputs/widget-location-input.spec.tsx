@@ -42,10 +42,6 @@ vi.mock("@mantine/core", () => {
   };
 });
 
-vi.mock("@homarr/ui", () => ({
-  iconSizes: { xs: {}, sm: {}, md: {}, lg: {}, xl: {} },
-}));
-
 vi.mock("@homarr/translation/client", () => ({
   useCurrentIntlLocale: () => "en",
   useI18n: () => (key: string) => key,

@@ -8,7 +8,6 @@ import type { RouterInputs, RouterOutputs } from "@homarr/api";
 import { clientApi } from "@homarr/api/client";
 import { useRequiredBoard } from "@homarr/boards/context";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 import { getSafeApplicationUrl, SAFE_NEW_TAB_REL } from "../common/application-url";
 import { WidgetEmptyState } from "../common/empty-state";
@@ -74,7 +73,12 @@ export default function RssFeed({ options, width, height, displayMode }: WidgetC
     return (
       <Flex direction="column" h="100%" p="xs">
         {warning && (
-          <Alert role="presentation" color="orange" icon={<IconAlertTriangle aria-hidden style={iconSizes.md} />} p="xs">
+          <Alert
+            role="presentation"
+            color="orange"
+            icon={<IconAlertTriangle aria-hidden size="var(--mantine-font-size-md)" />}
+            p="xs"
+          >
             <output>{warning}</output>
           </Alert>
         )}
@@ -105,7 +109,13 @@ export default function RssFeed({ options, width, height, displayMode }: WidgetC
   return (
     <ScrollArea className="scroll-area-w100" w="100%" h="100%" p={isAdvanced ? (isTiny ? 4 : "xs") : "sm"}>
       {warning && (
-        <Alert role="presentation" color="orange" icon={<IconAlertTriangle aria-hidden style={iconSizes.md} />} p="xs" mb="xs">
+        <Alert
+          role="presentation"
+          color="orange"
+          icon={<IconAlertTriangle aria-hidden size="var(--mantine-font-size-md)" />}
+          p="xs"
+          mb="xs"
+        >
           <output>{warning}</output>
         </Alert>
       )}

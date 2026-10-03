@@ -9,7 +9,6 @@ import type { AppFormHandle } from "@homarr/forms-collection";
 import { AppForm } from "@homarr/forms-collection";
 import { showErrorNotification, showSuccessNotification } from "@homarr/notifications";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 export interface EmbeddedAppEditFormHandle {
   submitIfDirty: () => Promise<boolean>;
@@ -80,7 +79,7 @@ export const EmbeddedAppEditForm = ({ appId, handleRef }: EmbeddedAppEditFormPro
 
   return (
     <Stack>
-      <Alert icon={<IconInfoCircle style={iconSizes.md} />} color="blue" variant="light">
+      <Alert icon={<IconInfoCircle size="var(--mantine-font-size-md)" />} color="blue" variant="light">
         {tItemApp("propagationNotice")}
       </Alert>
       <AppForm

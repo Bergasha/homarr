@@ -12,7 +12,6 @@ import { Activity, Battery, Cpu, HardDrive, MemoryStick, Monitor, Network, Serve
 import { clientApi } from "@homarr/api/client";
 import { useByteFormatter } from "@homarr/settings";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 import { WidgetQueryLoadingState } from "../common/query-state-indicator";
 import type { WidgetComponentProps } from "../definition";
@@ -116,7 +115,7 @@ export default function BeszelAlertsWidget({
           {alerts.length === 0 && (
             <Stack align="center" justify="center" py="xl" gap="xs">
               <ThemeIcon variant="light" color="gray" size="lg" radius="xl">
-                <IconBellOff style={iconSizes.lg} />
+                <IconBellOff size="var(--mantine-font-size-lg)" />
               </ThemeIcon>
               <Text size="sm" c="dimmed">
                 {t("empty")}
@@ -127,7 +126,7 @@ export default function BeszelAlertsWidget({
           {triggeredAlerts.length > 0 && (
             <Stack gap={6}>
               <Group gap={6}>
-                <IconFlame style={iconSizes.sm} color="var(--mantine-color-red-6)" />
+                <IconFlame size="var(--mantine-font-size-sm)" color="var(--mantine-color-red-6)" />
                 <Text size="xs" fw={600} c="red" tt={isAdvanced ? undefined : "uppercase"}>
                   {t("status.triggered")} ({triggeredAlerts.length})
                 </Text>
@@ -152,7 +151,7 @@ export default function BeszelAlertsWidget({
           {okAlerts.length > 0 && (
             <Stack gap={6}>
               <Group gap={6}>
-                <IconCircleCheck style={iconSizes.sm} color="var(--mantine-color-green-6)" />
+                <IconCircleCheck size="var(--mantine-font-size-sm)" color="var(--mantine-color-green-6)" />
                 <Text size="xs" fw={600} c="dimmed" tt={isAdvanced ? undefined : "uppercase"}>
                   {t("status.ok")} ({okAlerts.length})
                 </Text>
@@ -177,7 +176,7 @@ export default function BeszelAlertsWidget({
               <Divider />
               <Stack gap={6}>
                 <Group gap={6}>
-                  <IconHistory style={iconSizes.sm} opacity={0.5} />
+                  <IconHistory size="var(--mantine-font-size-sm)" opacity={0.5} />
                   <Text size="xs" fw={600} c="dimmed" tt={isAdvanced ? undefined : "uppercase"}>
                     {t("history")}
                   </Text>
@@ -196,7 +195,7 @@ export default function BeszelAlertsWidget({
                           style={{ borderRadius: 2, flexShrink: 0 }}
                           bg={isResolved ? "green.6" : "red.6"}
                         />
-                        <HistoryIcon opacity={0.5} style={iconSizes.xs} />
+                        <HistoryIcon size="var(--mantine-font-size-xs)" opacity={0.5} style={{ flexShrink: 0 }} />
                         <Stack gap={0} style={{ minWidth: 0 }}>
                           <Text size="xs" fw={500} truncate>
                             {entry.name}
@@ -278,7 +277,7 @@ function AlertRow({ name, value, min, systemName, integrationName, triggered, is
       };
   return (
     <Group wrap="nowrap" gap="xs" py={4} pr={8} pl={isAdvanced ? 8 : 12} style={rowStyle}>
-      <Icon opacity={0.7} style={{ ...iconSizes.sm, flexShrink: 0 }} />
+      <Icon size="var(--mantine-font-size-sm)" opacity={0.7} style={{ flexShrink: 0 }} />
       <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
         <Group gap={6} wrap="nowrap">
           <Text size="xs" fw={600} truncate>

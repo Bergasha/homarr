@@ -192,7 +192,7 @@ function Carousel({
                 size={40}
                 onClick={() => move(-1)}
               >
-                <IconChevronLeft style={iconSizes.lg} />
+                <IconChevronLeft size="var(--mantine-font-size-lg)" />
               </ActionIcon>
             )}
             <ActionIcon
@@ -203,7 +203,11 @@ function Carousel({
               size={advanced ? 40 : 32}
               onClick={() => setPaused((value) => !value)}
             >
-              {paused ? <IconPlayerPlay style={iconSizes.lg} /> : <IconPlayerPause style={iconSizes.lg} />}
+              {paused ? (
+                <IconPlayerPlay size="var(--mantine-font-size-lg)" />
+              ) : (
+                <IconPlayerPause size="var(--mantine-font-size-lg)" />
+              )}
             </ActionIcon>
             {advanced && (
               <ActionIcon
@@ -214,7 +218,7 @@ function Carousel({
                 size={40}
                 onClick={() => move(1)}
               >
-                <IconChevronRight style={iconSizes.lg} />
+                <IconChevronRight size="var(--mantine-font-size-lg)" />
               </ActionIcon>
             )}
           </Group>
@@ -228,7 +232,7 @@ function Carousel({
               </Text>
             )}
             <Group gap="xs">
-              <IconCalendar style={iconSizes.md} />
+              <IconCalendar size="var(--mantine-font-size-md)" />
               <Text size="xs">{new Date(currentAsset.fileModifiedAt).toLocaleDateString(locale)}</Text>
             </Group>
             <Text size="xs" c="dimmed">

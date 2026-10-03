@@ -4,7 +4,6 @@ import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 interface IntegrationResult {
   integrationId: string;
@@ -26,7 +25,7 @@ export function IntegrationErrorIndicator({ results }: IntegrationErrorIndicator
   return (
     <Tooltip label={label} position="left" withArrow>
       <ActionIcon variant="transparent" color="orange" size={28} aria-label={label} style={{ cursor: "help" }}>
-        <IconAlertTriangle aria-hidden style={iconSizes.sm} />
+        <IconAlertTriangle aria-hidden size="var(--mantine-font-size-sm)" />
       </ActionIcon>
     </Tooltip>
   );

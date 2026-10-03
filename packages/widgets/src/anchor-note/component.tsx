@@ -10,7 +10,6 @@ import { useIntegrationsWithInteractAccess } from "@homarr/auth/client";
 import { useTimeAgo } from "@homarr/common";
 import type { AnchorNotePermission } from "@homarr/integrations";
 import { useCurrentIntlLocale, useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 import { WidgetEmptyState } from "../common/empty-state";
 import type { WidgetComponentProps } from "../definition";
@@ -264,7 +263,7 @@ const AnchorNoteWidgetContent = ({
                     onClick={handleEdit}
                     disabled={isUpdating}
                   >
-                    <IconEdit style={iconSizes.md} />
+                    <IconEdit size="var(--mantine-font-size-md)" />
                   </ActionIcon>
                 </Tooltip>
               )}

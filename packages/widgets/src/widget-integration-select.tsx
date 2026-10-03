@@ -19,7 +19,7 @@ import {
 import type { IntegrationKind } from "@homarr/definitions";
 import { getIconUrl } from "@homarr/definitions";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes, Link } from "@homarr/ui";
+import { Link } from "@homarr/ui";
 
 import classes from "./widget-integration-select.module.css";
 
@@ -93,12 +93,12 @@ export const WidgetIntegrationSelect = ({
     return (
       <Combobox.Option value={item.id} key={item.id} active={multiSelectValues.includes(item.id)}>
         <Group gap="sm" align="center">
-          {multiSelectValues.includes(item.id) ? <CheckIcon style={iconSizes.xs} /> : null}
+          {multiSelectValues.includes(item.id) ? <CheckIcon size="var(--mantine-font-size-xs)" /> : null}
           <Group gap={7} align="center">
             <Avatar src={getIconUrl(item.kind)} size="sm" />
             <Stack gap={0}>
               <span>{item.name}</span>
-              <Text size="xs" c="gray.6">
+              <Text size="xs" c="dimmed">
                 {item.url}
               </Text>
             </Stack>
@@ -129,7 +129,7 @@ export const WidgetIntegrationSelect = ({
             )
           }
           pointer
-          onClick={() => combobox.toggleDropdown()}
+          onClick={() => combobox.openDropdown()}
           label={label}
           withAsterisk={withAsterisk}
           {...props}
@@ -145,11 +145,20 @@ export const WidgetIntegrationSelect = ({
                 onFocus={() => combobox.openDropdown()}
                 onBlur={() => combobox.closeDropdown()}
                 onKeyDown={(event) => {
-                  if (event.key !== "Backspace") return;
-
-                  event.preventDefault();
-                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  handleValueRemove(multiSelectValues[multiSelectValues.length - 1]!);
+                  if (["ArrowDown", "Enter", " "].includes(event.key)) {
+                    event.preventDefault();
+                    combobox.openDropdown();
+                    return;
+                  }
+                  if (event.key === "Escape") {
+                    combobox.closeDropdown();
+                    return;
+                  }
+                  if (event.key === "Backspace" && canSelectMultiple && multiSelectValues.length > 0) {
+                    event.preventDefault();
+                    const lastValue = multiSelectValues.at(-1);
+                    if (lastValue) handleValueRemove(lastValue);
+                  }
                 }}
               />
             </Combobox.EventsTarget>

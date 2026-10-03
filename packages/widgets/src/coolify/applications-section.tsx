@@ -5,7 +5,6 @@ import { IconCloud } from "@tabler/icons-react";
 
 import type { CoolifyApplicationWithContext } from "@homarr/integrations/types";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 import { getBadgeColor, parseStatus } from "./coolify-utils";
 import { ResourceRow } from "./resource-row";
@@ -23,7 +22,7 @@ export function ApplicationsSection({ applications, baseUrl, isTiny }: Applicati
 
   return (
     <Accordion.Item value="applications">
-      <Accordion.Control icon={isTiny ? null : <IconCloud style={iconSizes.md} />}>
+      <Accordion.Control icon={isTiny ? null : <IconCloud size="var(--mantine-font-size-md)" />}>
         <Group gap="xs">
           <Text size="xs">{tCommon("applications")}</Text>
           <Badge variant="dot" color={getBadgeColor(runningApps, applications.length)} size="xs">

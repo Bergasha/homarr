@@ -3,7 +3,6 @@ import { IconDevices, IconNetwork, IconUsers, IconVideo } from "@tabler/icons-re
 
 import type { TracearrDashboardData } from "@homarr/integrations/types";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 
 export function StatsBar({
   stats,
@@ -22,25 +21,25 @@ export function StatsBar({
   return (
     <SimpleGrid cols={cols} spacing="xs">
       <StatCard
-        icon={<IconVideo style={iconSizes.md} />}
+        icon={<IconVideo size="var(--mantine-font-size-md)" />}
         label={t("stats.activeStreams")}
         value={stats.activeStreams}
         transparent={transparent}
       />
       <StatCard
-        icon={<IconUsers style={iconSizes.md} />}
+        icon={<IconUsers size="var(--mantine-font-size-md)" />}
         label={t("stats.totalUsers")}
         value={stats.totalUsers}
         transparent={transparent}
       />
       <StatCard
-        icon={<IconDevices style={iconSizes.md} />}
+        icon={<IconDevices size="var(--mantine-font-size-md)" />}
         label={t("stats.transcodes")}
         value={`${summary.transcodes}/${summary.total}`}
         transparent={transparent}
       />
       <StatCard
-        icon={<IconNetwork style={iconSizes.md} />}
+        icon={<IconNetwork size="var(--mantine-font-size-md)" />}
         label={t("stats.bandwidth")}
         value={summary.totalBitrate}
         transparent={transparent}

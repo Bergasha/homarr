@@ -14,7 +14,7 @@ import {
 import { clientApi } from "@homarr/api/client";
 import type { TraefikDashboardData, TraefikProtocolSummary, TraefikResourceSummary } from "@homarr/integrations/types";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes, zoomCompensatedSize } from "@homarr/ui";
+import { zoomCompensatedSize } from "@homarr/ui";
 
 import { WidgetEmptyState } from "../common/empty-state";
 import { IntegrationErrorIndicator } from "../common/integration-error-indicator";
@@ -317,7 +317,7 @@ function ProtocolCard({
         {rows.map(({ key, icon: Icon, summary }) => (
           <div key={key} className={classes.protocolRow}>
             <Group gap={4} wrap="nowrap" className={classes.protocolLabel}>
-              <Icon style={iconSizes.sm} />
+              <Icon size="var(--mantine-font-size-sm)" />
               <Text>{resourceLabels[key]}</Text>
             </Group>
             <StatusCount summary={summary} />
@@ -363,7 +363,12 @@ function HealthBadge({ errors, warnings }: { errors: number; warnings: number })
 
   if (errors > 0) {
     return (
-      <Badge color="red" variant="light" leftSection={<IconAlertTriangle style={iconSizes.xs} />} radius="sm">
+      <Badge
+        color="red"
+        variant="light"
+        leftSection={<IconAlertTriangle size="var(--mantine-font-size-xs)" />}
+        radius="sm"
+      >
         {t("status.errors", { count: errors })}
       </Badge>
     );
@@ -371,14 +376,24 @@ function HealthBadge({ errors, warnings }: { errors: number; warnings: number })
 
   if (warnings > 0) {
     return (
-      <Badge color="yellow" variant="light" leftSection={<IconAlertTriangle style={iconSizes.xs} />} radius="sm">
+      <Badge
+        color="yellow"
+        variant="light"
+        leftSection={<IconAlertTriangle size="var(--mantine-font-size-xs)" />}
+        radius="sm"
+      >
         {t("status.warnings", { count: warnings })}
       </Badge>
     );
   }
 
   return (
-    <Badge color="green" variant="light" leftSection={<IconCircleCheck style={iconSizes.xs} />} radius="sm">
+    <Badge
+      color="green"
+      variant="light"
+      leftSection={<IconCircleCheck size="var(--mantine-font-size-xs)" />}
+      radius="sm"
+    >
       {t("status.healthy")}
     </Badge>
   );

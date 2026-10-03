@@ -8,7 +8,6 @@ import { IconClipboardList, IconCpu2, IconReportAnalytics } from "@tabler/icons-
 
 import { clientApi } from "@homarr/api/client";
 import { useI18n } from "@homarr/translation/client";
-import { iconSizes } from "@homarr/ui";
 import type { TablerIcon } from "@homarr/ui";
 
 import { WidgetEmptyState } from "../common/empty-state";
@@ -156,7 +155,7 @@ export default function MediaTranscodingWidget({
                   key={value}
                   size="compact-xs"
                   variant={value === view ? "filled" : "default"}
-                  leftSection={<Icon style={iconSizes.xs} />}
+                  leftSection={<Icon size="var(--mantine-font-size-xs)" />}
                   aria-pressed={value === view}
                   style={{ flex: 1 }}
                   onClick={() => setView(value)}
@@ -269,7 +268,7 @@ export const resolveQueuePagination = (
 const AdvancedPanel = ({ title, icon: Icon, children }: { title: string; icon: TablerIcon; children: ReactNode }) => (
   <Paper withBorder radius="sm" p="xs" mih={280} style={{ display: "flex", flexDirection: "column" }}>
     <Group gap="xs" mb="xs">
-      <Icon style={iconSizes.md} />
+      <Icon size="var(--mantine-font-size-md)" style={{ flexShrink: 0 }} />
       <Text size="sm" fw={600}>
         {title}
       </Text>
