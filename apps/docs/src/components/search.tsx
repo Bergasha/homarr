@@ -13,11 +13,35 @@ import {
   SearchDialogOverlay,
   type SharedProps,
 } from "fumadocs-ui/components/dialog/search";
+import { useEffect, useRef } from "react";
 
-export default function Search(props: SharedProps) {
+import { track } from "@/lib/analytics";
+
+export default function Search({ initialSearch, ...props }: SharedProps & { initialSearch?: string }) {
   const { search, setSearch, query } = useDocsSearch({
     client: staticClient(),
   });
+  const { open } = props;
+  const lastTracked = useRef("");
+
+  useEffect(() => {
+    if (initialSearch !== undefined) setSearch(initialSearch);
+  }, [initialSearch, setSearch]);
+
+  useEffect(() => {
+    if (!open) lastTracked.current = "";
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || query.isLoading || query.error || !Array.isArray(query.data) || query.data.length > 0) return;
+    const trimmed = search.trim();
+    if (!trimmed || trimmed === lastTracked.current) return;
+    const timeout = setTimeout(() => {
+      lastTracked.current = trimmed;
+      track("Search No Results", { query: trimmed });
+    }, 900);
+    return () => clearTimeout(timeout);
+  }, [open, search, query.data, query.isLoading, query.error]);
 
   return (
     <SearchDialog search={search} onSearchChange={setSearch} isLoading={query.isLoading} {...props}>

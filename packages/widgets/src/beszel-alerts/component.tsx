@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Badge, Box, Center, Divider, Group, Loader, ScrollArea, Stack, Text, ThemeIcon } from "@mantine/core";
+import { Badge, Box, Divider, Group, ScrollArea, Stack, Text, ThemeIcon } from "@mantine/core";
 import { IconBellOff, IconCircleCheck, IconFlame, IconHistory } from "@tabler/icons-react";
 import { getQueryKey } from "@trpc/react-query";
 import dayjs from "dayjs";
@@ -14,6 +14,7 @@ import { useByteFormatter } from "@homarr/settings";
 import { useI18n } from "@homarr/translation/client";
 import { iconSizes } from "@homarr/ui";
 
+import { WidgetQueryLoadingState } from "../common/query-state-indicator";
 import type { WidgetComponentProps } from "../definition";
 import { IntegrationErrorIndicator } from "../common/integration-error-indicator";
 import { getUsableWidgetQueryData } from "../common/query-state";
@@ -100,11 +101,7 @@ export default function BeszelAlertsWidget({
   const showHistory = isAdvanced || options.showHistory;
 
   if (isPending) {
-    return (
-      <Center h="100%">
-        <Loader size="sm" />
-      </Center>
-    );
+    return <WidgetQueryLoadingState />;
   }
 
   return (

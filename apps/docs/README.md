@@ -83,6 +83,7 @@ generated API schema. Routine or self-explanatory changes need no docs update. S
 - `/llms.mdx/blog/.../content.md` — raw Markdown for each blog post
 - `/llms.mdx/api-reference/.../content.md` — operation parameters, bodies, responses, and authentication
 - `/blog/rss.xml` — RSS feed for project posts
+- `/search?q=...` — opens documentation search with the supplied query, including existing Homarr search-engine links
 
 Every docs page and blog post includes copy-Markdown and view-source actions. Search is generated at build time and
 runs locally in the browser; it does not depend on an external crawler. Markdown exports and search resolve
@@ -125,8 +126,10 @@ The September 2026 update moves Core/UI from 16.15.4 to 16.15.12, MDX from 15.4.
 
 ## Kapa AI
 
-The **Ask AI** launcher uses Homarr's existing public Kapa Website ID. The root layout loads the widget once across
-client-side navigation. **Search** and `Ctrl+K` / `Cmd+K` always use Fumadocs search, including when Kapa is unavailable.
+The compact Homarr mascot in the bottom-right opens **Ask AI**. It slowly spins when idle and gives a subtle claw movement and wink on hover. Animation respects reduced motion.
+
+The launcher uses Homarr's existing public Kapa Website ID. The root layout loads the widget once across
+client-side navigation and follows the docs light or dark theme. **Search** and `Ctrl+K` / `Cmd+K` always use Fumadocs search, including when Kapa is unavailable.
 
 Set `KAPA_WEBSITE_ID` at build time to use a different Kapa Website Widget integration. An explicitly empty value
 disables the widget, for example `KAPA_WEBSITE_ID= pnpm --filter @homarr/docs build`. This is a public integration ID
@@ -151,10 +154,11 @@ The production image compiles the docs itself; it does not depend on a host `out
 Build-time `HOMARR_WEBSITE_URL` controls canonical metadata. Runtime URL overrides configure Workshop connections
 but do not rewrite already-exported canonical URLs.
 
-PostHog records SPA pageviews and named `demo_opened`, `installation_opened`, and `link_clicked` events through
-`hog.homarr.dev`. Link events include destination, source path, external status, and an explicit CTA label when present.
-Form autocapture and session replay are disabled; tracked URL query strings and fragments are removed. Localhost and
-`?analytics_test` traffic carries `verification=true`; exclude it from production reports.
+PostHog records SPA pageviews, installation clicks, searches with no results (including the search query), and Workshop
+content downloads and submission starts/completions through `hog.homarr.dev`. Downloads include JSON files and
+successful JSON/CSS clipboard copies. All events carry `site` and `source_path`. Autocapture, page-leave events, and
+session replay are disabled; tracked URL query strings and fragments are removed. Localhost and `?analytics_test`
+traffic carries `verification=true`; exclude it from production reports.
 
 Carbon loads one visible placement after the desktop TOC, below API examples, or below content on other layouts.
 The homepage is excluded at every viewport size. Navigation reloads the ad script; resizing changes placement only when crossing its breakpoint. Ad blockers

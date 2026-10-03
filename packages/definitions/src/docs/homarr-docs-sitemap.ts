@@ -365,6 +365,7 @@ export type HomarrDocumentationPath =
   | "/docs/integrations/gluetun"
   | "/docs/integrations/traefik"
   | "/docs/integrations/archiveteam-warrior"
+  | "/docs/integrations/wazuh"
   | "/docs/integrations/whats-up-docker"
   | "/docs/integrations/llama-cpp"
   | "/docs/widgets/stats"

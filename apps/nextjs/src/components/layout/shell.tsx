@@ -45,7 +45,7 @@ export const ClientShell = ({
             }
           : undefined
       }
-      padding="md"
+      padding="xs"
     >
       {children}
     </AppShell>
