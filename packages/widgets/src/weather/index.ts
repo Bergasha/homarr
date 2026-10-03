@@ -59,7 +59,7 @@ export const { definition, componentLoader } = createWidgetDefinition("weather",
           step: 1,
           withDescription: true,
         }),
-        showOnlyForecast: factory.switch({ defaultValue: false }),
+        showOnlyForecast: factory.switch({ defaultValue: false, withDescription: true }),
         colorByDayNight: factory.switch({
           defaultValue: false,
           withDescription: true,
