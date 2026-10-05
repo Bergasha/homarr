@@ -12,7 +12,6 @@ import { useI18n } from "@homarr/translation/client";
 
 import { UserAvatarMenu } from "~/components/user-avatar-menu";
 import type { BoardSwitcherControls } from "~/components/board/board-switcher";
-import { UpdateIndicator } from "./update";
 
 interface UserButtonClientProps {
   avatar: ReactNode;
@@ -50,11 +49,7 @@ export const UserButtonClient = ({ avatar, isAdmin, isDockerEnabled, boardSwitch
 
   return (
     <UserAvatarMenu availableUpdates={visibleUpdates} isDockerEnabled={isDockerEnabled} boardSwitcher={boardSwitcher}>
-      <UnstyledButton aria-label={t("open")}>
-        <UpdateIndicator availableUpdates={visibleUpdates} disabled={!isCurrentSessionAdmin}>
-          {avatar}
-        </UpdateIndicator>
-      </UnstyledButton>
+      <UnstyledButton aria-label={t("open")}>{avatar}</UnstyledButton>
     </UserAvatarMenu>
   );
 };

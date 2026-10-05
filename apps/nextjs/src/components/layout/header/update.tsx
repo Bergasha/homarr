@@ -1,28 +1,10 @@
 "use client";
 
-import type { PropsWithChildren } from "react";
-import { Indicator, Menu, Text } from "@mantine/core";
+import { Menu, Text } from "@mantine/core";
 import { IconBellRinging } from "@tabler/icons-react";
 
 import type { RouterOutputs } from "@homarr/api";
 import { useI18n } from "@homarr/translation/client";
-
-interface UpdateIndicatorProps extends PropsWithChildren {
-  availableUpdates: RouterOutputs["updateChecker"]["getAvailableUpdates"] | undefined;
-  disabled: boolean;
-}
-
-export const UpdateIndicator = ({ children, availableUpdates, disabled }: UpdateIndicatorProps) => {
-  if (disabled || availableUpdates === undefined) {
-    return children;
-  }
-
-  return (
-    <Indicator disabled={availableUpdates.length === 0} size={15} processing withBorder>
-      {children}
-    </Indicator>
-  );
-};
 
 interface AvailableUpdatesMenuItemProps {
   availableUpdates: RouterOutputs["updateChecker"]["getAvailableUpdates"] | undefined;
