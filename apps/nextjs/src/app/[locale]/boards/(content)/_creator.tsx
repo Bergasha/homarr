@@ -23,7 +23,6 @@ import { createBoardLayout, getInitialViewportWidthAsync } from "../_layout-crea
 import type { Board, Item } from "../_types";
 import { ClientBoard } from "./_client";
 import { BoardContentEditAction, BoardContentSettingsAction } from "./_header-actions";
-import { createBoardQuerySnapshot } from "./_query-snapshot";
 import { WidgetResourcePreload } from "./_widget-resource-preload";
 
 export type Params = Record<string, unknown>;
@@ -56,25 +55,6 @@ const DeferredWidgetHydration = async ({
         shouldDehydrateQuery: (query) =>
           query.meta?.streamedBeszelSelection === true &&
           (query.state.status === "pending" || query.state.status === "success"),
-      })}
-    />
-  );
-};
-
-const RefreshedQueryHydration = async ({
-  queryClient,
-  queryHashes,
-  promises,
-}: {
-  queryClient: QueryClient;
-  queryHashes: Set<string>;
-  promises: Promise<unknown>[];
-}) => {
-  await Promise.allSettled(promises);
-  return (
-    <HydrationBoundary
-      state={dehydrate(queryClient, {
-        shouldDehydrateQuery: (query) => queryHashes.has(query.queryHash) && query.state.status === "success",
       })}
     />
   );
@@ -135,52 +115,13 @@ export const createBoardContentPage = <TParams extends Record<string, unknown>>(
       for (const [kind, items] of itemsMap) prefetchForKind(kind, queryClient, items);
 
       const layoutId = getLayoutIdForViewportWidth(board.layouts, await viewportWidthPromise);
-      const [session, integrations] = await Promise.all([sessionPromise, integrationsPromise]);
-      const snapshot = createBoardQuerySnapshot(board, integrations);
-      await snapshot.restoreAsync(queryClient).catch(() => undefined);
-      const restoredQueryHashes = new Set(
-        queryClient
-          .getQueryCache()
-          .getAll()
-          .filter((query) => query.meta?.rscWidgetPrefetch === true && query.state.status === "success")
-          .map((query) => query.queryHash),
-      );
+      const session = await sessionPromise;
       const dependentQueries = prefetchInitialWidgetData(queryClient, board, layoutId, Boolean(session));
-      const refreshingQueries = queryClient
-        .getQueryCache()
-        .getAll()
-        .flatMap((query) => {
-          if (query.meta?.rscWidgetPrefetch !== true || !query.promise) return [];
-          return [{ queryHash: query.queryHash, promise: query.promise }];
-        });
-      const restoredRefreshes = refreshingQueries.filter(({ queryHash }) => restoredQueryHashes.has(queryHash));
-      void Promise.allSettled([...refreshingQueries.map(({ promise }) => promise), ...dependentQueries])
-        .then(async () => {
-          const lateQueries = queryClient
-            .getQueryCache()
-            .getAll()
-            .flatMap((query) => {
-              if (query.meta?.rscWidgetPrefetch !== true || !query.promise) return [];
-              return [query.promise];
-            });
-          await Promise.allSettled(lateQueries);
-          await snapshot.saveAsync(queryClient);
-        })
-        .catch(() => undefined);
 
       return (
         <>
           <WidgetResourcePreload kinds={getInitiallyVisibleWidgetKinds(board, layoutId)} />
           <HydrationBoundary state={dehydrate(queryClient)}>
-            {restoredRefreshes.length > 0 && (
-              <Suspense fallback={null}>
-                <RefreshedQueryHydration
-                  queryClient={queryClient}
-                  queryHashes={restoredQueryHashes}
-                  promises={restoredRefreshes.map(({ promise }) => promise)}
-                />
-              </Suspense>
-            )}
             {dependentQueries.length > 0 && (
               <Suspense fallback={null}>
                 <DeferredWidgetHydration queryClient={queryClient} queries={dependentQueries} />
