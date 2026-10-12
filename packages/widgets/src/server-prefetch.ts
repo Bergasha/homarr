@@ -35,6 +35,24 @@ const prefetchQuery = <TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
   });
 };
 
+const prefetchWeather = (queryClient: QueryClient, location: unknown) => {
+  if (
+    !location ||
+    typeof location !== "object" ||
+    !("latitude" in location) ||
+    !("longitude" in location) ||
+    typeof location.latitude !== "number" ||
+    typeof location.longitude !== "number"
+  ) {
+    return;
+  }
+
+  prefetchQuery(
+    queryClient,
+    trpc.widget.weather.atLocation.queryOptions({ latitude: location.latitude, longitude: location.longitude }),
+  );
+};
+
 type Board = RouterOutputs["board"]["getHomeBoard"];
 type Item = Board["items"][number];
 type BeszelStatsInput = RouterInputs["widget"]["beszel"]["getSystemStats"];
@@ -249,23 +267,12 @@ export const prefetchInitialWidgetData = (
             }),
           );
         break;
-      case "weather": {
-        const location = options.location;
-        if (
-          location &&
-          typeof location === "object" &&
-          "latitude" in location &&
-          "longitude" in location &&
-          typeof location.latitude === "number" &&
-          typeof location.longitude === "number"
-        ) {
-          prefetchQuery(
-            queryClient,
-            trpc.widget.weather.atLocation.queryOptions({ latitude: location.latitude, longitude: location.longitude }),
-          );
-        }
+      case "weather":
+        prefetchWeather(queryClient, options.location);
         break;
-      }
+      case "clock":
+        if (options.showWeather === true) prefetchWeather(queryClient, options.weatherLocation);
+        break;
       case "calendar": {
         if (!integrationIds.length || !calendarMonth) break;
         let releaseType: RouterInputs["widget"]["calendar"]["findAllEvents"]["releaseType"] = [
