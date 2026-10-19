@@ -32,7 +32,7 @@ import {
 } from "@tabler/icons-react";
 
 import { clientApi } from "@homarr/api/client";
-import { formatBitRate, objectEntries } from "@homarr/common";
+import { formatBitRate } from "@homarr/common";
 import { getIconUrl } from "@homarr/definitions";
 import type { StreamSession } from "@homarr/integrations";
 import { useI18n } from "@homarr/translation/client";
@@ -578,7 +578,7 @@ export function SessionDetailsPopover({
       opened={opened}
       onChange={onChange}
       position="bottom-start"
-      width="min(26.25rem, calc(100vw - 1.5rem))"
+      width="min(28rem, calc(100vw - 1.5rem))"
       shadow="md"
       withArrow
       withinPortal
@@ -603,99 +603,228 @@ export function SessionDetailsPopover({
   );
 }
 
+export const formatPlaybackTime = (ms: number | null | undefined): string | null => {
+  if (ms === null || ms === undefined || !Number.isFinite(ms) || ms < 0) return null;
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  if (hours > 0) return `${hours}:${String(minutes).padStart(2, "0")}:${seconds}`;
+  return `${minutes}:${seconds}`;
+};
+
+export const formatChannelLayout = (channelCount: number | null | undefined): string | null => {
+  if (!channelCount || channelCount <= 0) return null;
+  if (channelCount === 6) return "5.1";
+  if (channelCount === 8) return "7.1";
+  return `${channelCount}.0`;
+};
+
+export const formatFrameRate = (frameRate: number | null | undefined): string | null => {
+  if (!frameRate || !Number.isFinite(frameRate) || frameRate <= 0) return null;
+  return `${Number(frameRate.toFixed(3))} fps`;
+};
+
+export const formatCodec = (codec: string | null | undefined): string | null => (codec ? codec.toUpperCase() : null);
+
+const formatResolution = (resolution: { width: number; height: number } | null | undefined): string | null => {
+  if (!resolution) return null;
+  return `${resolution.width}×${resolution.height} (${getResolutionLabel(resolution.width, resolution.height)})`;
+};
+
+interface DetailEntry {
+  key: string;
+  label: string;
+  value: ReactNode;
+  fullWidth: boolean;
+}
+
+const createEntry = (
+  key: string,
+  label: string,
+  value: ReactNode | null | undefined,
+  fullWidth = false,
+): DetailEntry | null =>
+  value === null || value === undefined || value === "" ? null : { key, label, value, fullWidth };
+
+const DetailSection = ({ title, entries }: { title: string; entries: (DetailEntry | null)[] }) => {
+  const visible = entries.filter((entry): entry is DetailEntry => entry !== null);
+  if (visible.length === 0) return null;
+
+  return (
+    <Stack gap="xs" style={{ minWidth: 0 }}>
+      <Divider label={title} labelPosition="left" />
+      <SimpleGrid cols={2} spacing="sm" verticalSpacing="xs">
+        {visible.map((entry) => (
+          <Stack key={entry.key} gap={0} style={{ minWidth: 0, gridColumn: entry.fullWidth ? "1 / -1" : undefined }}>
+            <Text size="xs" c="dimmed" truncate>
+              {entry.label}
+            </Text>
+            <Text component="div" size="sm" fw={500} truncate>
+              {entry.value}
+            </Text>
+          </Stack>
+        ))}
+      </SimpleGrid>
+    </Stack>
+  );
+};
+
 function SessionDetails({ item }: { item: StreamSession }) {
   const t = useI18n("widget.mediaServer.items");
-  const Icon = item.currentlyPlaying ? mediaTypeIconMap[item.currentlyPlaying.type] : null;
+  const playing = item.currentlyPlaying;
+  const Icon = playing ? mediaTypeIconMap[playing.type] : null;
+  const metadata = playing?.metadata ?? null;
+  const transcoding = metadata?.transcoding;
+  const status = playing ? getPlaybackStatus(transcoding) : null;
+  const playbackState = playing?.playback?.state ?? null;
+  const positionMs = playing?.playback?.positionMs ?? null;
+  const durationMs = playing?.playback?.durationMs ?? null;
+  const progress =
+    positionMs !== null && durationMs !== null && durationMs > 0
+      ? Math.min(100, (positionMs / durationMs) * 100)
+      : null;
+  const position = formatPlaybackTime(positionMs);
+  const duration = formatPlaybackTime(durationMs);
+  const remainingMinutes =
+    positionMs !== null && durationMs !== null ? Math.max(0, Math.round((durationMs - positionMs) / 60_000)) : null;
+  const seasonEpisode = playing ? getSeasonEpisodeParams(playing.seasonNumber, playing.episodeNumber) : null;
+  let subtitle = "";
+  if (playing) {
+    const parts = seasonEpisode
+      ? [t("seasonEpisode", seasonEpisode), playing.episodeName]
+      : [playing.episodeName, playing.seasonName, playing.albumName];
+    subtitle = parts.filter(Boolean).join(" · ");
+  }
 
-  const metadata = item.currentlyPlaying?.metadata ? constructMetadata(item.currentlyPlaying.metadata) : null;
+  let videoHandling: string | null = null;
+  let audioHandling: string | null = null;
+  if (transcoding) {
+    const videoTarget = [formatCodec(transcoding.target.videoCodec), formatResolution(transcoding.resolution)]
+      .filter(Boolean)
+      .join(" · ");
+    videoHandling = transcoding.isVideoDirect
+      ? t("details.direct")
+      : t("details.transcode", { target: videoTarget || t("details.unknown") });
+    audioHandling = transcoding.isAudioDirect
+      ? t("details.direct")
+      : t("details.transcode", { target: formatCodec(transcoding.target.audioCodec) ?? t("details.unknown") });
+  }
+
+  let container: string | null = null;
+  if (transcoding?.container) {
+    const containerName = transcoding.container.toUpperCase();
+    container = transcoding.containerChanged
+      ? t("details.containerChanged", { container: containerName })
+      : containerName;
+  }
+  const location = playing?.location ? t(`location.${playing.location}`) : null;
 
   return (
     <Stack gap="sm" style={{ minWidth: 0 }}>
-      {Icon && item.currentlyPlaying && (
-        <Group gap="sm" align="flex-start" wrap="nowrap">
-          <Icon size={22} style={{ flexShrink: 0 }} />
-          <Stack gap={2} style={{ minWidth: 0 }}>
-            <Text fw={600} lineClamp={2}>
-              {item.currentlyPlaying.name}
-            </Text>
-            {item.currentlyPlaying.episodeName && (
-              <Text size="xs" c="dimmed" lineClamp={2}>
-                {[item.currentlyPlaying.episodeName, item.currentlyPlaying.seasonName].filter(Boolean).join(" · ")}
+      {Icon && playing && (
+        <Stack gap="xs" style={{ minWidth: 0 }}>
+          <Group gap="sm" align="flex-start" wrap="nowrap">
+            <Icon size={22} style={{ flexShrink: 0, marginTop: 2 }} />
+            <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
+              <Text fw={600} lineClamp={2}>
+                {playing.name}
               </Text>
-            )}
-          </Stack>
-        </Group>
-      )}
-      <NormalizedLine
-        itemKey={t("user")}
-        value={
-          <Group gap="xs" align="center" wrap="nowrap">
-            <Avatar size="xs" src={item.user?.profilePictureUrl} />
-            <Text size="sm" truncate>
-              {item.user?.username ?? t("unknownUser")}
-            </Text>
-          </Group>
-        }
-      />
-      <NormalizedLine
-        itemKey={t("name")}
-        value={
-          <Text size="sm" truncate>
-            {item.sessionName}
-          </Text>
-        }
-      />
-      <NormalizedLine
-        itemKey={t("id")}
-        value={
-          <Text size="xs" ff="monospace" truncate>
-            {item.sessionId}
-          </Text>
-        }
-      />
-
-      {metadata ? (
-        <Stack gap="xs">
-          <Divider label={t("metadata.title")} labelPosition="left" />
-          <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm" verticalSpacing="xs">
-            {objectEntries(metadata).map(([key, entries]) => (
-              <Stack key={key} gap={4} style={{ minWidth: 0 }}>
-                <Text fw={600} size="xs">
-                  {t(`metadata.${key}.title`)}
+              {subtitle && (
+                <Text size="xs" c="dimmed" lineClamp={2}>
+                  {subtitle}
                 </Text>
-                {Object.entries(entries)
-                  .filter(([_, entryValue]) => Boolean(entryValue))
-                  .map(([innerKey, entryValue]) => (
-                    <Group justify="space-between" gap="xs" key={innerKey} wrap="nowrap">
-                      <Text size="xs" c="dimmed">
-                        {t(`metadata.${key}.${innerKey}` as never)}
-                      </Text>
-                      <Text size="xs" ta="right" truncate>
-                        {entryValue}
-                      </Text>
-                    </Group>
-                  ))}
-              </Stack>
-            ))}
-          </SimpleGrid>
+              )}
+            </Stack>
+            {status && (
+              <Badge size="sm" variant="light" color={playbackStatusColorMap[status]} style={{ flexShrink: 0 }}>
+                {t(status)}
+              </Badge>
+            )}
+          </Group>
+          {progress !== null && (
+            <Stack gap={4}>
+              <Progress value={progress} size="sm" color={playbackState === "paused" ? "yellow" : undefined} />
+              <Group justify="space-between" gap="xs" wrap="nowrap">
+                <Text size="xs" c="dimmed">
+                  {position && duration ? t("details.position", { position, duration }) : null}
+                </Text>
+                <Group gap="xs" wrap="nowrap">
+                  {playbackState && (
+                    <Text size="xs" c="dimmed">
+                      {t(`state.${playbackState}`)}
+                    </Text>
+                  )}
+                  {remainingMinutes !== null && (
+                    <Text size="xs" c="dimmed">
+                      {t("remaining", { minutes: remainingMinutes.toString() })}
+                    </Text>
+                  )}
+                </Group>
+              </Group>
+            </Stack>
+          )}
         </Stack>
+      )}
+      <DetailSection
+        title={t("details.session")}
+        entries={[
+          createEntry(
+            "user",
+            t("user"),
+            <Group gap="xs" align="center" wrap="nowrap">
+              <Avatar size="xs" src={item.user?.profilePictureUrl} />
+              <Text size="sm" fw={500} truncate>
+                {item.user?.username ?? t("unknownUser")}
+              </Text>
+            </Group>,
+          ),
+          createEntry("device", t("details.device"), item.sessionName),
+          createEntry("location", t("details.location"), location),
+          createEntry(
+            "id",
+            t("details.sessionId"),
+            <Text component="span" size="xs" ff="monospace" truncate>
+              {item.sessionId}
+            </Text>,
+            true,
+          ),
+        ]}
+      />
+      {metadata ? (
+        <>
+          <DetailSection
+            title={t("metadata.video.title")}
+            entries={[
+              createEntry("resolution", t("metadata.video.resolution"), formatResolution(metadata.video.resolution)),
+              createEntry("frameRate", t("metadata.video.frameRate"), formatFrameRate(metadata.video.frameRate)),
+              createEntry("handling", t("details.playbackMethod"), videoHandling, true),
+            ]}
+          />
+          <DetailSection
+            title={t("metadata.audio.title")}
+            entries={[
+              createEntry("codec", t("metadata.audio.codec"), formatCodec(metadata.audio.codec)),
+              createEntry(
+                "channels",
+                t("metadata.audio.channelCount"),
+                formatChannelLayout(metadata.audio.channelCount),
+              ),
+              createEntry("handling", t("details.playbackMethod"), audioHandling, true),
+            ]}
+          />
+          <DetailSection
+            title={t("details.stream")}
+            entries={[
+              createEntry("container", t("details.container"), container),
+              createEntry("bitrate", t("details.bitrate"), formatBitrate(metadata.bitrateKbps)),
+            ]}
+          />
+        </>
       ) : null}
     </Stack>
   );
 }
-
-const NormalizedLine = ({ itemKey, value }: { itemKey: string; value: ReactNode }) => {
-  return (
-    <Group w="100%" gap="md" align="flex-start" justify="space-between" wrap="nowrap">
-      <Text size="sm" c="dimmed" style={{ flexShrink: 0 }}>
-        {itemKey}:
-      </Text>
-      <Stack gap={0} align="flex-end" style={{ minWidth: 0 }}>
-        {value}
-      </Stack>
-    </Group>
-  );
-};
 
 const mediaTypeIconMap = {
   movie: IconMovie,
@@ -703,23 +832,3 @@ const mediaTypeIconMap = {
   video: IconVideo,
   audio: IconHeadphones,
 } satisfies Record<Exclude<StreamSession["currentlyPlaying"], null>["type"], TablerIcon>;
-
-const constructMetadata = (metadata: Exclude<Exclude<StreamSession["currentlyPlaying"], null>["metadata"], null>) => ({
-  video: {
-    resolution: metadata.video.resolution
-      ? `${metadata.video.resolution.width}x${metadata.video.resolution.height}`
-      : null,
-    frameRate: metadata.video.frameRate,
-  },
-  audio: {
-    channelCount: metadata.audio.channelCount,
-    codec: metadata.audio.codec,
-  },
-  transcoding: {
-    container: metadata.transcoding.container,
-    resolution: metadata.transcoding.resolution
-      ? `${metadata.transcoding.resolution.width}x${metadata.transcoding.resolution.height}`
-      : null,
-    target: `${metadata.transcoding.target.videoCodec} ${metadata.transcoding.target.audioCodec}`.trim(),
-  },
-});
