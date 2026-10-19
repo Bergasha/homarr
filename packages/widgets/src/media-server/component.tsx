@@ -578,11 +578,12 @@ export function SessionDetailsPopover({
       opened={opened}
       onChange={onChange}
       position="bottom-start"
-      width="min(28rem, calc(100vw - 1.5rem))"
+      width="min(26rem, calc(100vw - 1.5rem))"
       shadow="md"
       withArrow
       withinPortal
       returnFocus
+      middlewares={{ flip: true, shift: { padding: 8 } }}
     >
       <Popover.Target>
         <UnstyledButton
@@ -596,7 +597,7 @@ export function SessionDetailsPopover({
           {children}
         </UnstyledButton>
       </Popover.Target>
-      <Popover.Dropdown>
+      <Popover.Dropdown p="sm" style={{ maxHeight: "calc(100vh - 1.5rem)", overflowY: "auto" }}>
         <SessionDetails item={item} />
       </Popover.Dropdown>
     </Popover>
@@ -647,26 +648,23 @@ const createEntry = (
 ): DetailEntry | null =>
   value === null || value === undefined || value === "" ? null : { key, label, value, fullWidth };
 
-const DetailSection = ({ title, entries }: { title: string; entries: (DetailEntry | null)[] }) => {
+const DetailGrid = ({ entries }: { entries: (DetailEntry | null)[] }) => {
   const visible = entries.filter((entry): entry is DetailEntry => entry !== null);
   if (visible.length === 0) return null;
 
   return (
-    <Stack gap="xs" style={{ minWidth: 0 }}>
-      <Divider label={title} labelPosition="left" />
-      <SimpleGrid cols={2} spacing="sm" verticalSpacing="xs">
-        {visible.map((entry) => (
-          <Stack key={entry.key} gap={0} style={{ minWidth: 0, gridColumn: entry.fullWidth ? "1 / -1" : undefined }}>
-            <Text size="xs" c="dimmed" truncate>
-              {entry.label}
-            </Text>
-            <Text component="div" size="sm" fw={500} truncate>
-              {entry.value}
-            </Text>
-          </Stack>
-        ))}
-      </SimpleGrid>
-    </Stack>
+    <SimpleGrid cols={3} spacing="xs" verticalSpacing={6}>
+      {visible.map((entry) => (
+        <Stack key={entry.key} gap={0} style={{ minWidth: 0, gridColumn: entry.fullWidth ? "1 / -1" : undefined }}>
+          <Text fz={11} c="dimmed" truncate>
+            {entry.label}
+          </Text>
+          <Text component="div" size="xs" fw={500} truncate>
+            {entry.value}
+          </Text>
+        </Stack>
+      ))}
+    </SimpleGrid>
   );
 };
 
@@ -719,62 +717,61 @@ function SessionDetails({ item }: { item: StreamSession }) {
       : containerName;
   }
   const location = playing?.location ? t(`location.${playing.location}`) : null;
+  const audioFormat = metadata
+    ? [formatCodec(metadata.audio.codec), formatChannelLayout(metadata.audio.channelCount)].filter(Boolean).join(" ")
+    : "";
 
   return (
-    <Stack gap="sm" style={{ minWidth: 0 }}>
+    <Stack gap={8} style={{ minWidth: 0 }}>
       {Icon && playing && (
-        <Stack gap="xs" style={{ minWidth: 0 }}>
-          <Group gap="sm" align="flex-start" wrap="nowrap">
-            <Icon size={22} style={{ flexShrink: 0, marginTop: 2 }} />
-            <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
-              <Text fw={600} lineClamp={2}>
+        <Stack gap={6} style={{ minWidth: 0 }}>
+          <Group gap="xs" align="flex-start" wrap="nowrap">
+            <Icon size={20} style={{ flexShrink: 0, marginTop: 2 }} />
+            <Stack gap={0} style={{ minWidth: 0, flex: 1 }}>
+              <Text fw={600} size="sm" lineClamp={1}>
                 {playing.name}
               </Text>
               {subtitle && (
-                <Text size="xs" c="dimmed" lineClamp={2}>
+                <Text fz={11} c="dimmed" lineClamp={1}>
                   {subtitle}
                 </Text>
               )}
             </Stack>
             {status && (
-              <Badge size="sm" variant="light" color={playbackStatusColorMap[status]} style={{ flexShrink: 0 }}>
+              <Badge size="xs" variant="light" color={playbackStatusColorMap[status]} style={{ flexShrink: 0 }}>
                 {t(status)}
               </Badge>
             )}
           </Group>
           {progress !== null && (
-            <Stack gap={4}>
-              <Progress value={progress} size="sm" color={playbackState === "paused" ? "yellow" : undefined} />
+            <Stack gap={2}>
+              <Progress value={progress} size={4} color={playbackState === "paused" ? "yellow" : undefined} />
               <Group justify="space-between" gap="xs" wrap="nowrap">
-                <Text size="xs" c="dimmed">
+                <Text fz={11} c="dimmed">
                   {position && duration ? t("details.position", { position, duration }) : null}
                 </Text>
-                <Group gap="xs" wrap="nowrap">
-                  {playbackState && (
-                    <Text size="xs" c="dimmed">
-                      {t(`state.${playbackState}`)}
-                    </Text>
-                  )}
-                  {remainingMinutes !== null && (
-                    <Text size="xs" c="dimmed">
-                      {t("remaining", { minutes: remainingMinutes.toString() })}
-                    </Text>
-                  )}
-                </Group>
+                <Text fz={11} c="dimmed">
+                  {[
+                    playbackState ? t(`state.${playbackState}`) : null,
+                    remainingMinutes !== null ? t("remaining", { minutes: remainingMinutes.toString() }) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </Text>
               </Group>
             </Stack>
           )}
         </Stack>
       )}
-      <DetailSection
-        title={t("details.session")}
+      <Divider />
+      <DetailGrid
         entries={[
           createEntry(
             "user",
             t("user"),
-            <Group gap="xs" align="center" wrap="nowrap">
-              <Avatar size="xs" src={item.user?.profilePictureUrl} />
-              <Text size="sm" fw={500} truncate>
+            <Group gap={6} align="center" wrap="nowrap">
+              <Avatar size={16} src={item.user?.profilePictureUrl} />
+              <Text size="xs" fw={500} truncate>
                 {item.user?.username ?? t("unknownUser")}
               </Text>
             </Group>,
@@ -782,46 +779,30 @@ function SessionDetails({ item }: { item: StreamSession }) {
           createEntry("device", t("details.device"), item.sessionName),
           createEntry("location", t("details.location"), location),
           createEntry(
+            "resolution",
+            t("metadata.video.resolution"),
+            metadata ? formatResolution(metadata.video.resolution) : null,
+          ),
+          createEntry(
+            "frameRate",
+            t("metadata.video.frameRate"),
+            metadata ? formatFrameRate(metadata.video.frameRate) : null,
+          ),
+          createEntry("bitrate", t("details.bitrate"), metadata ? formatBitrate(metadata.bitrateKbps) : null),
+          createEntry("video", t("metadata.video.title"), videoHandling),
+          createEntry("audio", t("metadata.audio.title"), audioFormat),
+          createEntry("audioHandling", t("details.playbackMethod"), audioHandling),
+          createEntry("container", t("details.container"), container),
+          createEntry(
             "id",
             t("details.sessionId"),
-            <Text component="span" size="xs" ff="monospace" truncate>
+            <Text component="span" fz={11} ff="monospace" truncate>
               {item.sessionId}
             </Text>,
             true,
           ),
         ]}
       />
-      {metadata ? (
-        <>
-          <DetailSection
-            title={t("metadata.video.title")}
-            entries={[
-              createEntry("resolution", t("metadata.video.resolution"), formatResolution(metadata.video.resolution)),
-              createEntry("frameRate", t("metadata.video.frameRate"), formatFrameRate(metadata.video.frameRate)),
-              createEntry("handling", t("details.playbackMethod"), videoHandling, true),
-            ]}
-          />
-          <DetailSection
-            title={t("metadata.audio.title")}
-            entries={[
-              createEntry("codec", t("metadata.audio.codec"), formatCodec(metadata.audio.codec)),
-              createEntry(
-                "channels",
-                t("metadata.audio.channelCount"),
-                formatChannelLayout(metadata.audio.channelCount),
-              ),
-              createEntry("handling", t("details.playbackMethod"), audioHandling, true),
-            ]}
-          />
-          <DetailSection
-            title={t("details.stream")}
-            entries={[
-              createEntry("container", t("details.container"), container),
-              createEntry("bitrate", t("details.bitrate"), formatBitrate(metadata.bitrateKbps)),
-            ]}
-          />
-        </>
-      ) : null}
     </Stack>
   );
 }
