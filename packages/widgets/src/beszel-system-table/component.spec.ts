@@ -32,10 +32,6 @@ describe("Beszel table column layout options", () => {
       ),
     ).toEqual({ cpu: 140 });
   });
-
-  test("discards the whole saved layout when any width is implausibly large", () => {
-    expect(parseColumnWidths(JSON.stringify({ name: 765, cpu: 483, memory: 1232 }), columnAccessors)).toEqual({});
-  });
 });
 
 describe("Beszel table metric visibility", () => {

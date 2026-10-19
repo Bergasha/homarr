@@ -56,7 +56,6 @@ export const useTableLayoutPersistence = ({
 // something glitched. Reject widths below this floor rather than applying them, so a corrupted
 // stored value can't wedge a column open at a near-unusable size forever.
 const minColumnWidth = 24;
-const maxColumnWidth = 1000;
 
 const toPixelWidth = (width: string | number): number | undefined => {
   if (typeof width === "number" && Number.isFinite(width) && width >= minColumnWidth) return width;
@@ -103,16 +102,11 @@ export const parseColumnWidths = (value: string, columnAccessors: readonly strin
     const parsed: unknown = JSON.parse(value);
     if (!isRecord(parsed)) return {};
 
-    if (Object.values(parsed).some((width) => typeof width === "number" && width > maxColumnWidth)) return {};
-
     const allowed = new Set(columnAccessors);
     return Object.fromEntries(
       Object.entries(parsed).filter(
         (entry): entry is [string, number] =>
-          allowed.has(entry[0]) &&
-          typeof entry[1] === "number" &&
-          Number.isFinite(entry[1]) &&
-          entry[1] >= minColumnWidth,
+          allowed.has(entry[0]) && typeof entry[1] === "number" && Number.isFinite(entry[1]) && entry[1] >= minColumnWidth,
       ),
     );
   } catch {
