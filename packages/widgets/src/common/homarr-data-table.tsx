@@ -139,8 +139,7 @@ export function HomarrDataTable<T>({
     const totalWidth = columns
       .filter(({ hidden }) => !hidden)
       .reduce((total, column) => total + getColumnWidth(column.width), 0);
-    // Keep the minimum readable in displayed pixels when the board canvas is zoomed.
-    return `calc(${totalWidth}px * var(--board-canvas-inverse-scale, 1))`;
+    return `${totalWidth}px`;
   }, [columns, preserveColumnWidths]);
 
   return (
