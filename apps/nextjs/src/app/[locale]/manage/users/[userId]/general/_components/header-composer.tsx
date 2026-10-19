@@ -27,6 +27,7 @@ import {
   IconBrandDocker,
   IconEye,
   IconEyeOff,
+  IconGripVertical,
   IconHome,
   IconLayoutDashboard,
   IconPencil,
@@ -90,6 +91,9 @@ type HeaderDropData = HeaderItemDragData | HeaderZoneDropData;
 const headerSortableSensors = [
   PointerSensor.configure({
     activationConstraints: [new PointerActivationConstraints.Distance({ value: 6 })],
+    preventActivation: (event, source) =>
+      (source.handle?.matches(":disabled") ?? false) ||
+      (PointerSensor.defaults.preventActivation?.(event, source) ?? false),
   }),
   KeyboardSensor,
 ];
@@ -101,10 +105,21 @@ export const HeaderComposer = ({ value, onChange, boards, homeBoardId }: HeaderC
   const [draggedItemKey, setDraggedItemKey] = useState<string | null>(null);
   const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null);
   const zoneTableRef = useRef<HTMLDivElement>(null);
+  const pendingFocusItemKey = useRef<string | null>(null);
   const { branding } = useSettings();
   const t = useI18n("management.page.user.setting.general.header");
+  const tSelection = useI18n("item.selection");
   const boardsById = useMemo(() => new Map(boards.map((board) => [board.id, board])), [boards]);
   const activeItems = getHeaderItems(value.zones);
+
+  useEffect(() => {
+    const itemKey = pendingFocusItemKey.current;
+    if (itemKey === null) return;
+    pendingFocusItemKey.current = null;
+    zoneTableRef.current
+      ?.querySelector<HTMLButtonElement>(`[data-header-drag-handle="${CSS.escape(itemKey)}"]`)
+      ?.focus({ preventScroll: true });
+  }, [value.zones]);
 
   useEffect(() => {
     const zoneTable = zoneTableRef.current;
@@ -183,6 +198,9 @@ export const HeaderComposer = ({ value, onChange, boards, homeBoardId }: HeaderC
 
     const nextZones = moveHeaderItem(value.zones, sourceData.itemKey, targetData.zone, targetIndex);
     if (nextZones === value.zones) return;
+    if (operation.activatorEvent instanceof KeyboardEvent && sourceData.zone !== targetData.zone) {
+      pendingFocusItemKey.current = sourceData.itemKey;
+    }
     updateZones(nextZones);
   };
 
@@ -249,6 +267,7 @@ export const HeaderComposer = ({ value, onChange, boards, homeBoardId }: HeaderC
                               item.type === "board" ? (boardsById.get(item.boardId)?.logoImageUrl ?? null) : null
                             }
                             configureLabel={t("action.configure", { item: itemLabel(item) })}
+                            reorderLabel={`${tSelection("move")}: ${itemLabel(item)}`}
                             selected={selectedItemKey === getHeaderItemKey(item)}
                             onSelect={toggleSelectedItem}
                           />
@@ -450,6 +469,7 @@ interface SortableHeaderItemProps {
   logoTitle: string;
   boardLogo: string | null;
   configureLabel: string;
+  reorderLabel: string;
   selected: boolean;
   onSelect: (itemKey: string) => void;
 }
@@ -464,6 +484,7 @@ const SortableHeaderItem = ({
   logoTitle,
   boardLogo,
   configureLabel,
+  reorderLabel,
   selected,
   onSelect,
 }: SortableHeaderItemProps) => {
@@ -485,12 +506,11 @@ const SortableHeaderItem = ({
       data-drop-target={isDropTarget || undefined}
       data-entry-id={itemKey}
       data-selected={selected || undefined}
+      data-header-composer-item
     >
       <button
-        ref={handleRef}
         type="button"
         className={classes.itemButton}
-        data-header-composer-item
         data-kind={item.type === "builtin" ? item.id : "board"}
         data-wide={
           (item.type === "builtin" &&
@@ -499,6 +519,8 @@ const SortableHeaderItem = ({
           undefined
         }
         aria-label={configureLabel}
+        aria-expanded={selected}
+        disabled={isDragging}
         onClick={(event) => {
           event.stopPropagation();
           onSelect(itemKey);
@@ -514,6 +536,20 @@ const SortableHeaderItem = ({
           boardLogo={boardLogo}
         />
       </button>
+      <Tooltip label={reorderLabel}>
+        <ActionIcon
+          ref={handleRef}
+          type="button"
+          className={classes.dragHandle}
+          variant="subtle"
+          color="gray"
+          size={24}
+          data-header-drag-handle={itemKey}
+          aria-label={reorderLabel}
+        >
+          <IconGripVertical size={16} aria-hidden />
+        </ActionIcon>
+      </Tooltip>
     </div>
   );
 };

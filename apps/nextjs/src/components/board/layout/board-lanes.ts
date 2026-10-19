@@ -2,7 +2,6 @@ import type { BoardLane } from "@homarr/definitions";
 import { getBoardLaneColumnCount, getRootSectionLane } from "@homarr/definitions";
 
 import type { Board, EmptySection } from "~/app/[locale]/boards/_types";
-import { COLLAPSED_SECTION_ROW_COUNT } from "./constants";
 import { getLogicalGridSize, getLayoutRowCount, normalizeGridPlacement } from "./geometry";
 import { getCollapsedDisplayLayout } from "./reflow";
 import type { GridPlacement } from "./types";
@@ -85,10 +84,7 @@ export const getInitialBoardLogicalHeight = (board: Board, layoutId: string) => 
     );
     const displayPlacements =
       collapsedSectionIds.size > 0
-        ? getCollapsedDisplayLayout(placements, {
-            columnCount,
-            collapsedRowCounts: new Map([...collapsedSectionIds].map((id) => [id, COLLAPSED_SECTION_ROW_COUNT])),
-          })
+        ? getCollapsedDisplayLayout(placements, { columnCount, collapsedItemIds: collapsedSectionIds })
         : placements;
 
     return [getLayoutRowCount(displayPlacements)];

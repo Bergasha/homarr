@@ -1,11 +1,13 @@
 import { IconDownload } from "@tabler/icons-react";
 import { z } from "zod/v4";
 
+import { isRecord } from "@homarr/common";
 import { getIntegrationKindsByCategory, getWidgetIntegrationConfig } from "@homarr/definitions";
 
 import { createWidgetDefinition, widgetQueryInputMatches } from "../definition";
 import { optionsBuilder } from "../options";
 import { DOWNLOAD_COLUMN_ACCESSORS } from "./helpers";
+import { resolveDownloadsQueryInput } from "./query-input";
 
 const sortColumns = [
   "name",
@@ -27,10 +29,11 @@ export const { definition, componentLoader } = createWidgetDefinition("downloads
   supportsAdvancedFocus: true,
   queryKey: [["widget", "downloads", "getJobsAndStatuses"]],
   queryMatcher: ({ input }, scope) =>
-    widgetQueryInputMatches(input, {
-      integrationIds: scope.integrationIds,
-      limitPerIntegration: scope.options.limitPerIntegration,
-    }),
+    isRecord(input) &&
+    widgetQueryInputMatches(
+      { ...resolveDownloadsQueryInput(scope.integrationIds, input), integrationIds: input.integrationIds },
+      resolveDownloadsQueryInput(scope.integrationIds, scope.options),
+    ),
   refetchInterval: 10,
   createOptions() {
     return optionsBuilder.from(
@@ -62,6 +65,16 @@ export const { definition, componentLoader } = createWidgetDefinition("downloads
         showCompletedHttp: factory.switch({
           defaultValue: true,
         }),
+        includeArchivedHistory: factory.switch({
+          defaultValue: false,
+          withDescription: true,
+        }),
+        historyWindowDays: factory.number({
+          defaultValue: 7,
+          validate: z.number().int().min(1),
+          step: 1,
+          withDescription: true,
+        }),
         activeTorrentThreshold: factory.number({
           validate: z.number().min(0),
           defaultValue: 0,
@@ -89,6 +102,13 @@ export const { definition, componentLoader } = createWidgetDefinition("downloads
       {
         columnOrder: { shouldHide: () => true },
         columnWidths: { shouldHide: () => true },
+        includeArchivedHistory: {
+          shouldHide: (_, integrationKinds) => !integrationKinds.includes("sabNzbd"),
+        },
+        historyWindowDays: {
+          shouldHide: ({ includeArchivedHistory }, integrationKinds) =>
+            !integrationKinds.includes("sabNzbd") || !includeArchivedHistory,
+        },
         showCompletedUsenet: {
           shouldHide: (_, integrationKinds) =>
             !getIntegrationKindsByCategory("usenet").some((kinds) => integrationKinds.includes(kinds)),

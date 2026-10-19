@@ -37,7 +37,7 @@ describe("dashboard layout reflow", () => {
       ],
       {
         columnCount: 3,
-        collapsedRowCounts: new Map([["section", 0.5]]),
+        collapsedItemIds: new Set(["section"]),
       },
     );
 
@@ -56,7 +56,8 @@ describe("dashboard layout reflow", () => {
       ],
       {
         columnCount: 2,
-        collapsedRowCounts: new Map([["section", 0]]),
+        collapsedItemIds: new Set(["section"]),
+        collapsedRowCountById: new Map([["section", 0]]),
       },
     );
 
@@ -73,7 +74,7 @@ describe("dashboard layout reflow", () => {
         { id: "below", x: 0, y: 6, w: 2, h: 1 },
         { id: "above", x: 0, y: 0, w: 2, h: 1 },
       ],
-      { columnCount: 2, collapsedRowCounts: new Map([["section", 0.5]]) },
+      { columnCount: 2, collapsedItemIds: new Set(["section"]) },
     );
 
     expect(result).toEqual([
@@ -90,13 +91,7 @@ describe("dashboard layout reflow", () => {
         { id: "right", x: 1, y: 0, w: 1, h: 3 },
         { id: "below", x: 0, y: 3, w: 2, h: 1 },
       ],
-      {
-        columnCount: 2,
-        collapsedRowCounts: new Map([
-          ["left", 0.5],
-          ["right", 0.5],
-        ]),
-      },
+      { columnCount: 2, collapsedItemIds: new Set(["left", "right"]) },
     );
 
     expect(result).toEqual([

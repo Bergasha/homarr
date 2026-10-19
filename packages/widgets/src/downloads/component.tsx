@@ -67,6 +67,7 @@ import {
   getDownloadColumnAccessors,
   getDownloadsStatsDisplay,
 } from "./helpers";
+import { resolveDownloadsQueryInput } from "./query-input";
 
 dayjs.extend(relativeTime);
 
@@ -316,10 +317,9 @@ export default function DownloadClientsWidget({
     [allInteractAccess, integrationIds],
   );
 
-  const downloadsQuery = clientApi.widget.downloads.getJobsAndStatuses.useQuery({
-    integrationIds,
-    limitPerIntegration: options.limitPerIntegration,
-  });
+  const downloadsQuery = clientApi.widget.downloads.getJobsAndStatuses.useQuery(
+    resolveDownloadsQueryInput(integrationIds, options),
+  );
   const currentItems = getUsableWidgetQueryData(downloadsQuery);
   const availableItems = useMemo(() => currentItems?.filter((item) => item.data !== null) ?? [], [currentItems]);
   const { isFetching } = downloadsQuery;
@@ -781,6 +781,7 @@ export default function DownloadClientsWidget({
           {queryIndicators}
         </Box>
         <HomarrDataTable
+          preserveColumnWidths
           isEditMode={isEditMode}
           cellPadding={`${size.cellPadding}px 8px`}
           fetching={isFetching && (currentItems?.length ?? 0) === 0}
