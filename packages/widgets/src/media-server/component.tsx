@@ -134,7 +134,6 @@ function StreamTableHeader({
   sort,
   onSort,
   width,
-  className,
 }: {
   column: SortColumn;
   label: string;
@@ -142,17 +141,12 @@ function StreamTableHeader({
   sort: SortState;
   onSort: (column: SortColumn) => void;
   width?: number | string;
-  className?: string;
 }) {
   const active = sort?.column === column;
   const SortIcon = !active ? IconArrowsSort : sort.descending ? IconChevronDown : IconChevronUp;
 
   return (
-    <Table.Th
-      w={width}
-      className={className}
-      aria-sort={active ? (sort.descending ? "descending" : "ascending") : "none"}
-    >
+    <Table.Th style={{ width }} aria-sort={active ? (sort.descending ? "descending" : "ascending") : "none"}>
       {sortable ? (
         <UnstyledButton className={classes.sortButton} onClick={() => onSort(column)}>
           <Text component="span" size="xs" fw={600} c="dimmed" style={{ letterSpacing: "0.02em" }} truncate>
@@ -223,7 +217,7 @@ export default function MediaServerWidget({
     );
 
   const uniqueIntegrations = currentStreams
-    .filter((stream) => stream.sessions.some((session) => Boolean(session.currentlyPlaying)))
+    .filter((stream) => stream.sessions.length > 0)
     .map((stream) => ({
       integrationId: stream.integrationId,
       integrationKind: stream.integrationKind,
@@ -311,7 +305,6 @@ export default function MediaServerWidget({
                   sort={sort}
                   onSort={toggleSort}
                   width="22%"
-                  className={classes.statusCell}
                 />
               )}
             </Table.Tr>
@@ -376,27 +369,22 @@ export default function MediaServerWidget({
                     </SessionDetailsPopover>
                   </Table.Td>
                   {columnVisibility.status && (
-                    <Table.Td className={classes.statusCell}>
+                    <Table.Td>
                       {currentlyPlaying && (
                         <Stack gap={4} align="flex-start" w="100%" className={classes.cellContent}>
                           <Group gap={4} align="center" justify="space-between" wrap="nowrap" w="100%">
-                            <Badge
-                              size="xs"
-                              variant="light"
-                              color={playbackStatusColorMap[status]}
-                              style={{ flexShrink: 0 }}
-                            >
+                            <Badge size="xs" variant="light" color={playbackStatusColorMap[status]}>
                               {t(`items.${status}` as never)}
                             </Badge>
                             {location && (
-                              <Group gap={4} align="center" wrap="nowrap" style={{ flexShrink: 0 }}>
+                              <Group gap={4} align="center" wrap="nowrap">
                                 {location === "lan" ? (
                                   <IconWifi size="var(--mantine-font-size-xs)" />
                                 ) : (
                                   <IconWorld size="var(--mantine-font-size-xs)" />
                                 )}
                                 <Text size="xs" c="dimmed" tt="uppercase">
-                                  {t(`items.location.${location}` as never)}
+                                  {location}
                                 </Text>
                               </Group>
                             )}
@@ -676,6 +664,12 @@ function SessionDetails({ item }: { item: StreamSession }) {
   const transcoding = metadata?.transcoding;
   const status = playing ? getPlaybackStatus(transcoding) : null;
   const playbackState = playing?.playback?.state ?? null;
+  let playbackStateLabel: string | null = null;
+  if (playbackState === "paused") {
+    playbackStateLabel = t("paused");
+  } else if (playbackState) {
+    playbackStateLabel = t(`state.${playbackState}`);
+  }
   const positionMs = playing?.playback?.positionMs ?? null;
   const durationMs = playing?.playback?.durationMs ?? null;
   const progress =
@@ -716,7 +710,7 @@ function SessionDetails({ item }: { item: StreamSession }) {
       ? t("details.containerChanged", { container: containerName })
       : containerName;
   }
-  const location = playing?.location ? t(`location.${playing.location}`) : null;
+  const location = playing?.location?.toUpperCase() ?? null;
   const audioFormat = metadata
     ? [formatCodec(metadata.audio.codec), formatChannelLayout(metadata.audio.channelCount)].filter(Boolean).join(" ")
     : "";
@@ -752,7 +746,7 @@ function SessionDetails({ item }: { item: StreamSession }) {
                 </Text>
                 <Text fz={11} c="dimmed">
                   {[
-                    playbackState ? t(`state.${playbackState}`) : null,
+                    playbackStateLabel,
                     remainingMinutes !== null ? t("remaining", { minutes: remainingMinutes.toString() }) : null,
                   ]
                     .filter(Boolean)
@@ -791,8 +785,8 @@ function SessionDetails({ item }: { item: StreamSession }) {
           createEntry("bitrate", t("details.bitrate"), metadata ? formatBitrate(metadata.bitrateKbps) : null),
           createEntry("video", t("metadata.video.title"), videoHandling),
           createEntry("audio", t("metadata.audio.title"), audioFormat),
-          createEntry("audioHandling", t("details.playbackMethod"), audioHandling),
-          createEntry("container", t("details.container"), container),
+          createEntry("audioHandling", t("details.audioHandling"), audioHandling),
+          createEntry("container", t("metadata.transcoding.container"), container),
           createEntry(
             "id",
             t("details.sessionId"),
