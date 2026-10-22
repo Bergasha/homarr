@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Box, Container, HoverCard, Text, useMantineTheme } from "@mantine/core";
+import { Box, Container, HoverCard, Text, rem, useMantineTheme } from "@mantine/core";
 
 import { useRequiredBoard } from "@homarr/boards/context";
 import type { CalendarEvent } from "@homarr/integrations/types";
@@ -105,7 +105,7 @@ const NotificationIndicator = ({ events, size, marginTop, visible }: Notificatio
       p={0}
       style={{
         display: "grid",
-        gridTemplateColumns: `repeat(${Math.min(notificationEvents.length, 3)}, ${size}px)`,
+        gridTemplateColumns: `repeat(${Math.min(notificationEvents.length, 3)}, ${rem(size)})`,
         gap: 2,
         justifyContent: "center",
       }}
