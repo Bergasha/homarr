@@ -3,13 +3,13 @@
     "studio": {
       "navigationLabel": "Onboarding Bereiche",
       "back": "Zurück",
-      "buildBoard": "Brett bauen",
+      "buildBoard": "Mein Board erstellen",
       "common": {
         "unknownError": "Etwas ist schief gelaufen. Deine Auswahl ist noch hier; versuche es erneut."
       },
       "claim": {
         "checking": "Sicherstellen dieser Onboarding-Sitzung…",
-        "checkingTitle": "Sichere Einrichtung vorbereiten",
+        "checkingTitle": "Sicheres Setup vorbereiten",
         "lockedTitle": "Die Einrichtung ist bereits in einem anderen Browser geöffnet",
         "lockedDescription": "Fahren Sie dort fort oder warten Sie darauf, dass die sichere erste Sitzung abläuft, bevor Sie es erneut versuchen.",
         "signInTitle": "Administratoranmeldung erforderlich",
@@ -65,7 +65,6 @@
         "themeAuto": "System",
         "themeLight": "Hell",
         "themeDark": "Dunkel",
-        "serverOriginHelp": "Homarr verwendet diese Adresse, um erkannte Service-URLs vorauszufüllen. Sie können immer noch jeden Dienst einzeln bearbeiten.",
         "serverDescription": "Dies ist eine Verknüpfung und keine Einschränkung. Jeder erkannte Dienst bleibt editierbar.",
         "serverOrigin": "Domänen, IP oder umgekehrter Proxy-Pfad",
         "serverOriginDescription": "Beispiele: home.lan, 192.168.1.10 oder https://home.example.com/services. Wählen Sie, wie jeder Dienst unten angehängt wird.",
@@ -102,6 +101,8 @@
       "connect": {
         "title": "Verbinden, was das Board nützlich macht",
         "description": "Wählen Sie mehrere Dienste auf einmal. Docker Labels haben Priorität, Bild-Matching füllt Lücken und jede URL und Anmeldeinformationen bleibt überprüfbar.",
+        "confirmServerAddress": "",
+        "serverAddressReviewed": "",
         "discoveredIntegrations": "Erkannte Integrationsinstanzen ({count})",
         "detectedIntegrationLabel": "Importiere {name}, wurde als {kind} erkannt",
         "detectedAppLabel": "Importiere App {name}",
@@ -126,7 +127,8 @@
         "needsConfiguration": "Benötigt Konfiguration",
         "tested": "Verbindung getestet",
         "testFailed": "Verbindungstest fehlgeschlagen",
-        "incompleteConfirmation": "Unfertige Integrationen werden übersprungen. Ohne sie fortfahren?"
+        "incompleteConfirmation": "Unfertige Integrationen werden übersprungen. Ohne sie fortfahren?",
+        "skipIncomplete": ""
       },
       "board": {
         "title": "Forme das Brett bevor es gebaut wird",
@@ -142,17 +144,11 @@
         "secondaryColor": "Sekundärfarbe",
         "resetColors": "Farben zurücksetzen",
         "radius": "Widget-Eckradius",
-        "radiusOptions": {
-          "xs": "Klein",
-          "sm": "Dezent",
-          "md": "Ausgewogen",
-          "lg": "Abgerundet",
-          "xl": "Weich"
-        },
+        "radiusOptions": {},
         "columns": "Brettspalten",
         "columnsDescription": "Spalten definieren das horizontale Raster für die Größe und Positionierung von Elementen. 12 ist für die meisten Leute reichlich.",
         "columnCount": "{count, plural, one {# Spalte} other {# Spalten}}",
-        "leftSidebar": "",
+        "leftSidebar": "Linke Seitenleiste",
         "rightSidebar": "Sidebar rechts",
         "previewLabel": "Live-Vorschau des ersten Board-Layouts"
       },
@@ -167,11 +163,11 @@
           "loginAction": "Anmelden, um Assistent zu konfigurieren"
         },
         "workshopSetup": {
-          "title": "",
+          "title": "Homarr Workshop",
           "description": "Durchsuchen Sie Community-benutzerdefinierte Widgets, prüfen Sie die gewünschten Fähigkeiten, installieren Sie sie und veröffentlichen Sie Ihre eigene Arbeit, ohne Code zwischen den Servern zu kopieren.",
           "available": "Verfügbar",
           "checking": "Überprüfe…",
-          "unavailable": "",
+          "unavailable": "Nicht verfügbar",
           "discoverTitle": "Entdecken",
           "discoverDescription": "Finden Sie Widgets für echte selbstgehostete Workflows.",
           "installTitle": "Überprüfen und installieren",
@@ -181,7 +177,7 @@
           "browse": "Workshop durchsuchen"
         },
         "mcpSetup": {
-          "title": "",
+          "title": "Homarr MCP",
           "description": "Verbinden Sie Claude, Codex oder einen anderen MCP-Client mit Homarr's typisierten Tools. API-Schlüssel behalten den Zugriff explizit und widerrufbar.",
           "endpoint": "Streambarer HTTP-Endpunkt",
           "keyTitle": "Diesen Schlüssel jetzt kopieren",
@@ -192,7 +188,6 @@
           "loginRequired": "Melden Sie sich nach dem Einrichten als Administrator an, um einen API-Schlüssel zu erstellen.",
           "configuration": "Client-Konfiguration",
           "copy": "Konfiguration kopieren",
-          "copied": "Kopiert",
           "advanced": "MCP-Werkzeuge, Berechtigungen und Einrichtungsdetails öffnen"
         }
       },
@@ -203,7 +198,7 @@
         "columns": "Brettspalten",
         "columnsValue": "{count, plural, one {# Spalte} other {# Spalten}}",
         "sidebars": "Seitenleisten",
-        "sidebarsValue": "",
+        "sidebarsValue": "{count, plural, =0 {Keine} one {# Sidebar} other {# Sidebars}}",
         "layouts": "Reaktive Layouts",
         "layoutsValue": "Mobile + Basis",
         "integrations": "Integrationen",
@@ -804,9 +799,7 @@
         "examples": "Beispiele für unterstützte Links",
         "requiresHandler": "Benutzerdefinierte Protokolle erfordern eine zugeordnete Anwendung auf deinem Gerät."
       },
-      "description": {
-        "label": "Beschreibung"
-      },
+      "description": {},
       "useDifferentUrlForPing": {
         "checkbox": {
           "label": "Eine andere URL für Ping verwenden",
@@ -844,7 +837,7 @@
   },
   "tips": {
     "dismiss": "Tipp verwerfen",
-    "multiSelectApps": "Tipp: Strg / <unk> halten um mehrere Apps gleichzeitig auszuwählen"
+    "multiSelectApps": "Tipp: Strg / ⌘ halten um mehrere Apps gleichzeitig auszuwählen"
   },
   "customWidget": {
     "secretEntry": {
@@ -858,7 +851,6 @@
       "source": "API-Quelle: {name}",
       "baseUrl": "Server-URL",
       "networkScope": "Netzwerkzugriff",
-      "save": "API-Konfiguration speichern",
       "expires": "Diese einmalige Anfrage läuft unter {time} ab."
     },
     "page": {
@@ -889,13 +881,11 @@
       "pasteImportHint": "Füge ein komplettes benutzerdefiniertes Widget JSON mit Strg+V oder Command+V ein",
       "delete": "Benutzerdefiniertes Widget löschen",
       "deleteConfirm": "Möchtest du „{name}“ wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
-      "export": "Exportieren",
       "duplicate": "Duplizieren",
       "aiPrompt": "Design mit KI",
       "copyAiPrompt": "KI Prompt kopieren",
       "enable": "Aktivieren",
       "disable": "Deaktivieren",
-      "menu": "Aktionen",
       "downloadSkill": "Eigene Widget-Fähigkeit anzeigen",
       "publishWorkshop": "Im Workshop veröffentlichen",
       "migrate": "Benutzerdefiniertes Widget migrieren",
@@ -909,23 +899,19 @@
     "sourceSetupDialog": {
       "title": "Widget-Quellen konfigurieren",
       "description": "Überprüfen Sie, wo sich dieses Widget verbindet, und fügen oder ersetzen Sie seine verschlüsselten Anmeldeinformationen.",
-      "credentialsRequired": "Anfragen werden fehlschlagen, bis die erforderlichen Anmeldedaten hinzugefügt wurden.",
-      "save": "Konfiguration speichern"
+      "credentialsRequired": "Anfragen werden fehlschlagen, bis die erforderlichen Anmeldedaten hinzugefügt wurden."
     },
-    "field": {
-      "description": "Beschreibung"
-    },
+    "field": {},
     "editor": {
       "errorBoundary": {
         "title": "Etwas ist schief gelaufen"
       },
       "action": {
         "components": "Komponenten",
-        "format": "",
-        "insertStarter": "",
+        "format": "Formatieren",
+        "insertStarter": "Starter einfügen",
         "redo": "Wiederholen",
-        "copied": "Kopiert",
-        "schema": ""
+        "schema": "Schema"
       },
       "reference": {
         "minimal": "Minimales Beispiel",
@@ -940,14 +926,14 @@
         "errors": "{count, number} Fehler",
         "warnings": "{count, number} Warnungen",
         "ready": "Keine Tickets gefunden",
-        "position": "",
+        "position": "Zeile {line, number}, Spalte {column, number}",
         "characters": "{count, number} Zeichen",
-        "charactersWithLimit": ""
+        "charactersWithLimit": "{count, number} / {limit, number}"
       },
       "diagnostics": {
         "title": "Vorlagendiagnostik",
         "line": "Linie {line, number}",
-        "ast": "",
+        "ast": "{value}",
         "bindingTypeConflict": "Die Eingabe \"{value}\" wird von Steuerelementen mit inkompatiblen Werttypen geteilt.",
         "runtimeBindingTypeConflict": "Die Eingabe \"{value}\" ist als {firstType} und {secondType} gebunden.",
         "dynamicRequestId": "Eine wörtliche RequestId ist erforderlich. Dynamische Request-IDs werden nicht akzeptiert.",
@@ -971,7 +957,7 @@
         "sources": "API-Quellen",
         "requests": "Anfragen",
         "options": "Optionen",
-        "jsx": "",
+        "jsx": "JSX",
         "preview": "Vorschau"
       },
       "status": {
@@ -1002,10 +988,9 @@
       "builder": {
         "advancedManifest": "Erweitertes rohes Manifest",
         "advancedJson": "Erweitertes Manifest JSON",
-        "manifestFilename": "",
+        "manifestFilename": "widget.json",
         "request": "Anfrage {count, number}",
         "requestId": "Anfrage-ID",
-        "type": "Download Client",
         "method": "Methode",
         "source": "API-Quelle",
         "run": "Ausführen",
@@ -1019,10 +1004,10 @@
         "queryKey": "Abfrageschlüssel",
         "queryKeyInvalid": "Verwenden Sie eine eindeutige ID, die mit einem Buchstaben beginnt und nur Buchstaben, Zahlen - oder _ enthält.",
         "valueSource": "Wertequelle",
-        "literal": "",
+        "literal": "Wortwörtlich",
         "widgetOption": "Widget Option",
         "invocationParameter": "Aufruf-Parameter",
-        "option": "",
+        "option": "Option",
         "parameterName": "Parametername",
         "value": "Wert",
         "removeQueryValue": "Abfragewert entfernen",
@@ -1042,7 +1027,6 @@
         "optionName": "Optionsname",
         "label": "Kategorie",
         "control": "Steuerung",
-        "description": "Beschreibung",
         "default": "Standard",
         "optionDetails": "Beschränkungen und dynamische Optionen",
         "minimum": "Minimal",
@@ -1073,13 +1057,12 @@
       },
       "sources": {
         "title": "API-Quellen und Zugangsdaten",
-        "newName": "",
+        "newName": "API {count, number}",
         "duplicateSourceId": "API-Quell-IDs müssen eindeutig sein.",
         "credentialRemoved": "Anmeldeinformationen entfernt",
         "credentialRemovedDescription": "Der gespeicherte Wert wurde gelöscht.",
         "primary": "Primäre API",
         "id": "Quell-ID",
-        "name": "Job Name",
         "baseUrl": "Basis URL",
         "baseUrlError": {
           "invalid": "Geben Sie eine vollständige URL ein.",
@@ -1096,8 +1079,7 @@
         "remove": "Quelle und ihre Anfragen entfernen",
         "advanced": "Erweitert",
         "add": "Weitere API-Quelle hinzufügen",
-        "sourceType": "Integration",
-        "manualSource": "",
+        "manualSource": "HTTP API",
         "existingIntegration": "Vorhandene Integration",
         "integrationType": "Integrationstyp",
         "selectIntegration": "Konfigurierte Integration",
@@ -1168,9 +1150,9 @@
         "runAction": "Aktion ausführen",
         "deleteConfirmation": "Diese Vorschau-Aktion ändert entfernte Daten über die konfigurierte API.",
         "simulated": "Aktion simuliert",
-        "httpStatus": "",
+        "httpStatus": "HTTP {status, number}",
         "tab": {
-          "widget": "",
+          "widget": "Widget",
           "data": "Daten",
           "options": "Optionen",
           "state": "Jobstatus",
@@ -1179,11 +1161,11 @@
         },
         "size": {
           "compact": "Kompakt",
-          "standard": "",
+          "standard": "Standard",
           "wide": "Breit"
         },
         "fixture": {
-          "live": "",
+          "live": "Live",
           "loading": "Wird geladen",
           "empty": "Leer",
           "error": "Fehler"
@@ -1230,7 +1212,6 @@
       "migrationTitle": "Migrierte v2 ersetzen überprüfen",
       "migrationDescription": "Überprüfen und bestätigen Sie diese generierte v2-Definition. Die Bestätigung der atomaren Ersetzung des erhaltenen v1-Datensatzes, während bestehende Platzierungen mit der gleichen Widget-ID verknüpft bleiben.",
       "fileLabel": "Wähle eine benutzerdefinierte Widget-JSON-Datei",
-      "name": "Job Name",
       "origin": "Basis-Ursprung",
       "authentication": "Authentifizierung",
       "networkScope": "Netzwerkbereich",
@@ -1250,8 +1231,6 @@
         "title": "Dieses Widget kann entfernte Daten ändern",
         "description": "Überprüfen Sie jede benannte Aktion, vererbte Referenzen und zerstörerische Bestätigung nach dem Import. Geheimnisse sind nicht in der Datei enthalten."
       },
-      "cancel": "Import abbrechen",
-      "confirm": "Widget importieren",
       "confirmMigration": "v2 Ersatz bestätigen"
     },
     "secret": {
@@ -1288,7 +1267,7 @@
     "outdated": "Veraltet",
     "outdatedWarning": "Der Autor markierte diese Einreichung als veraltet. Überprüfen Sie sie sorgfältig vor dem Importieren.",
     "score": "Punkte: {count, number}",
-    "upvote": "",
+    "upvote": "Upvote",
     "downvote": "Abstimmen",
     "voteError": "Die Abstimmung konnte nicht gespeichert werden.",
     "signIn": "Mit GitHub anmelden",
@@ -1301,7 +1280,7 @@
     "installReviewTitle": "Vor der Installation überprüfen",
     "installError": "Dieses Widget kann nicht installiert werden",
     "installErrorDescription": "Die Einreichung des Workshops ist kein gültiges benutzerdefiniertes JSX v2 Widget.",
-    "useCss": "",
+    "useCss": "CSS importieren",
     "importCss": "CSS aus Workshop importieren",
     "importCssConfirm": "Ersetzen Sie das aktuelle CSS durch \"{title}\"? Nichts wird gespeichert, bis Sie die Board-Einstellungen speichern.",
     "screenshotAlt": "{title} Screenshot {count, number}",
@@ -1315,7 +1294,6 @@
     "closeScreenshotViewer": "Screenshot-Betrachter schließen",
     "technicalDetails": "Technische Details",
     "sourceCode": "Workshop-Eintrag",
-    "export": "Exportieren",
     "report": "Bericht",
     "reportTitle": "Berichtsvorlage",
     "reportReason": "Grund",
@@ -1329,8 +1307,8 @@
     "reportCategory": {
       "outdated": "Veraltet oder funktioniert nicht mehr",
       "malicious": "Bösartig",
-      "spam": "",
-      "copyright": "",
+      "spam": "Spam",
+      "copyright": "Copyright",
       "inappropriate": "Unangemessen",
       "other": "Andere"
     },
@@ -1346,9 +1324,7 @@
       "viewSubmission": "Einreichung ansehen und verwalten",
       "done": "Fertig",
       "signInHint": "Melden Sie sich an, um unter Ihrer Workshop-Identität zu veröffentlichen.",
-      "titleField": "Titel",
-      "descriptionField": "Beschreibung",
-      "screenshots": "",
+      "screenshots": "Screenshots",
       "screenshotsDescription": "Bis zu fünf PNG-, JPEG- oder WebP-Bilder",
       "screenshotsPlaceholder": "Screenshots auswählen",
       "invalidScreenshot": "Benutzen Sie PNG, JPEG oder WebP-Bilder, die nicht größer als {maxSize} sind.",
@@ -1515,7 +1491,7 @@
       "vpn": "VPN",
       "mediaLibrary": "Medienbibliothek",
       "uptimeMonitoring": "Überwachung der Betriebszeit",
-      "beszel": "",
+      "beszel": "Beszel",
       "systemMonitoring": "Systemüberwachung",
       "security": "Sicherheit",
       "serviceVersion": "Version"
@@ -1564,7 +1540,7 @@
             "untrusted": "Dem Zertifikat wird nicht vertraut.",
             "hostnameMismatch": "Der Hostname des Zertifikats entspricht nicht der URL."
           },
-          "secondaryUrl": "",
+          "secondaryUrl": "Dieses Zertifikat wurde von {url} präsentiert, einem zusätzlichen Endpunkt, der für diese Integration konfiguriert ist.",
           "alert": {
             "permission": {
               "title": "Nicht genügend Berechtigungen",
@@ -1613,11 +1589,9 @@
             },
             "notification": {
               "success": {
-                "title": "Vertrauenswürdige Zertifikate",
                 "message": "Zertifikat zur vertrauenswürdigen Zertifikatsliste hinzugefügt"
               },
               "error": {
-                "title": "Ein Fehler ist beim vertrauen des Zertifikats aufgetreten",
                 "message": "Das Zertifikat konnte nicht zur vertrauenswürdigen Zertifikatsliste hinzugefügt werden"
               }
             }
@@ -1829,7 +1803,7 @@
       "full": "Voller Zugriff auf Integrationen"
     },
     "llamacpp": {
-      "name": "",
+      "name": "llama.cpp",
       "description": "Überwachung eines lokalen llama.cpp Lama-Servers: Gesundheit, Modell- und Generationsmetriken"
     }
   },
@@ -1838,9 +1812,7 @@
     "search": "Medien suchen",
     "field": {
       "preview": "Vorschau",
-      "size": "Größe",
-      "creator": "Ersteller",
-      "actions": "Steuerung"
+      "creator": "Ersteller"
     },
     "action": {
       "upload": {
@@ -1910,7 +1882,7 @@
       "tryAgain": "Erneut versuchen",
       "loading": "Wird geladen",
       "show": "Anzeigen",
-      "showAll": "",
+      "showAll": "Alle anzeigen",
       "hide": "Ausblenden",
       "undo": "Rückgängig",
       "editNamed": "{name} bearbeiten",
@@ -1918,7 +1890,8 @@
       "clearSearch": "Suche löschen",
       "copy": "Kopieren",
       "copied": "Kopiert",
-      "refresh": "Neu laden"
+      "refresh": "Neu laden",
+      "export": "Exportieren"
     },
     "hidden": "Versteckt",
     "pagination": {
@@ -1930,6 +1903,8 @@
     "here": "Hier",
     "serviceUrlTemplate": {
       "serverTitle": "Übliche Server-Adresse",
+      "description": "",
+      "example": "",
       "urlModeLabel": "Service-Adressenmuster",
       "hostPort": "Gleicher Host, andere Ports",
       "subdomain": "Eine Subdomain pro Dienst",
@@ -1943,7 +1918,7 @@
       "clear": "Bild löschen",
       "uploadImage": "Bild hochladen",
       "results": "Bildsuchergebnisse",
-      "websiteIcon": "",
+      "websiteIcon": "Icon der Webseite",
       "localImages": "Ihre Bilder",
       "svgIcons": "SVG-Symbole",
       "otherImages": "Andere Bilder",
@@ -2008,7 +1983,7 @@
         "updateAvailable": "{countUpdates} Updates verfügbar: {tag}",
         "assistant": "Assistent",
         "assistantThinking": "Denken",
-        "modifier": ""
+        "modifier": "Moderator"
       }
     },
     "dangerZone": "Gefahrenbereich",
@@ -2063,7 +2038,18 @@
     "total": "Gesamt",
     "filesystemUsage": "{count, plural, one {Zeige Nutzung für # Dateisystem} other {Zeige Nutzung für # Dateisysteme}}",
     "field": {
-      "name": "Job Name"
+      "name": "Name",
+      "state": "Status",
+      "size": "Größe",
+      "actions": "Aktionen",
+      "source": "Quelle",
+      "title": "Titel",
+      "description": "Beschreibung",
+      "created": "Erstellt",
+      "namespace": "Namensraum",
+      "status": "Status",
+      "architecture": "Architektur",
+      "type": "Typ"
     },
     "label": {
       "new": "Neu"
@@ -2081,6 +2067,15 @@
       "searchEngines": "Suchmaschinen",
       "tasks": "Aufgaben",
       "users": "Benutzer"
+    },
+    "cornerStyle": {
+      "options": {
+        "md": "Ausgewogen",
+        "lg": "Abgerundet",
+        "xs": "Klein",
+        "sm": "Dezent",
+        "xl": "Weich"
+      }
     }
   },
   "section": {
@@ -2118,9 +2113,7 @@
         "collapse": "Einklappen"
       },
       "option": {
-        "title": {
-          "label": "Titel"
-        },
+        "title": {},
         "customCssClasses": {
           "label": "Benutzerdefinierte CSS Klassen"
         },
@@ -2144,8 +2137,7 @@
       "label": {
         "settings": "Einstellungen",
         "settingsFor": "Einstellungen für {name}",
-        "options": "Optionen",
-        "actions": "Aktionen"
+        "options": "Optionen"
       },
       "status": {
         "success": "Ok",
@@ -2198,11 +2190,10 @@
     "selection": {
       "summary": "{count, plural, one {# ausgewählten Eintrag} other {# ausgewählte Elemente}}",
       "selected": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
-      "copy": "Kopieren",
       "copied": "{count, plural, one {# Element in die Zwischenablage kopiert!} other {# Elemente in die Zwischenablage kopiert}}",
       "copyError": "Die ausgewählten Elemente konnten nicht kopiert werden. Ihr Browser erlaubt möglicherweise keinen Zugriff auf die Zwischenablage.",
       "paste": "Einfügen",
-      "pasteShortcut": "Kopierte Elemente hier einfügen (Strg / <unk> + V)",
+      "pasteShortcut": "Kopierte Elemente hier einfügen (Strg / ⌘ + V)",
       "pasted": "{count, plural, one {# Eintrag eingefügt} other {# Einträge eingefügt}}",
       "pasteError": "Die Zwischenablage konnte nicht gelesen werden. Ihr Browser erlaubt möglicherweise keinen Zugriff auf die Zwischenablage.",
       "pasteInvalid": "Die Zwischenablage enthält keine gültigen Homarr-Board-Elemente.",
@@ -2210,7 +2201,6 @@
       "removed": "{count, plural, one {# Element entfernt} other {# Elemente entfernt!}}",
       "move": "Bewegen",
       "moveTo": "Ausgewählte Elemente verschieben",
-      "delete": "Löschen",
       "clear": "Auswahl löschen",
       "clearShortcut": "Auswahl löschen (Escape)",
       "saveErrorTitle": "Artikel konnten nicht aktualisiert werden",
@@ -2237,11 +2227,11 @@
         },
         "width": {
           "label": "Breite",
-          "shortLabel": ""
+          "shortLabel": "W"
         },
         "height": {
           "label": "Höhe",
-          "shortLabel": ""
+          "shortLabel": " H "
         },
         "xOffset": {
           "label": "X Versatz"
@@ -2286,9 +2276,7 @@
           "label": "Integrationen",
           "removeLabel": "{name} Integration entfernen"
         },
-        "title": {
-          "label": "Titel"
-        },
+        "title": {},
         "customCssClasses": {
           "label": "Benutzerdefinierte CSS Klassen"
         },
@@ -2376,7 +2364,7 @@
               "label": "Gitter horizontal"
             },
             "icons": {
-              "label": ""
+              "label": "Symbole"
             }
           }
         },
@@ -2455,7 +2443,7 @@
         "remove": "{name} Kategorie entfernen",
         "rename": "Kategoriename für {name}",
         "assign": "Kategorie für {name}",
-        "ungrouped": ""
+        "ungrouped": "Nicht gruppiert"
       }
     },
     "archiveTeamWarrior": {
@@ -2635,25 +2623,25 @@
         "unsupportedPrimaryTitle": "Primäre Zeitzone ist nicht verfügbar",
         "unsupportedPrimary": "{timeZone} wird in diesem Browser nicht unterstützt. UTC wird als klar markierter Fallback angezeigt.",
         "unsupportedTimeZone": "Nicht unterstützte Zeitzone: {timeZone}",
-        "accessibleTime": "",
+        "accessibleTime": "{city}: {time}, {date}, {timeZone}",
         "advancedLabel": "Erweiterte Weltuhr",
         "cities": "Weltuhren",
-        "cityCount": "",
+        "cityCount": "{count} Zeitzonen",
         "timeBarLabel": "24-Stunden-Tageszeit für {city}",
         "dayProgress": "{percent}% abgelaufen · {hours}h {minutes}m verbleibend",
         "phaseLegend": "Tageslegende",
         "tick": {
-          "midnight": "",
-          "morning": "",
-          "noon": "",
-          "evening": "",
-          "end": ""
+          "midnight": "00",
+          "morning": "06",
+          "noon": "12",
+          "evening": "18",
+          "end": "24"
         },
         "phaseRange": {
-          "night": "",
-          "dawn": "",
-          "day": "",
-          "dusk": ""
+          "night": "00–05 · 21–24",
+          "dawn": "05–08",
+          "day": "08–18",
+          "dusk": "18–21"
         },
         "phase": {
           "night": "Nacht",
@@ -2675,7 +2663,7 @@
           "options": {
             "auto": "Automatisch für Gebietsschema",
             "european": "Europäischer AQI",
-            "us": ""
+            "us": "US AQI"
           }
         },
         "showUv": {
@@ -2713,7 +2701,7 @@
         }
       },
       "dominantPollutant": "",
-      "aqiLabel": "",
+      "aqiLabel": "AQI",
       "strongestPollen": "Höchste Pollen",
       "unit": {
         "concentration": "{value} μg/m3",
@@ -2721,7 +2709,7 @@
       },
       "pollutant": {
         "pm2_5": "PM2,5",
-        "pm10": "",
+        "pm10": "PM10",
         "ozone": "Ozon",
         "nitrogenDioxide": "Stickstoffdioxid",
         "sulphurDioxide": "",
@@ -3501,7 +3489,6 @@
         },
         "table": {
           "header": {
-            "name": "Name",
             "node": "Node"
           }
         }
@@ -3531,8 +3518,6 @@
         },
         "defaultSort": {
           "option": {
-            "name": "Name",
-            "state": "Status",
             "cpuUsage": "CPU-Auslastung",
             "memoryUsage": "Speichernutzung"
           }
@@ -3943,9 +3928,7 @@
       "items": {
         "currentlyPlaying": "Aktuelle Wiedergabe",
         "user": "Benutzer",
-        "name": "Name",
         "id": "Id",
-        "status": "Status",
         "directPlay": "Direkte Wiedergabe",
         "directStream": "Direkter Stream",
         "transcodeVideo": "Video wird transkodiert",
@@ -4021,21 +4004,21 @@
       "authors": ""
     },
     "thingport-featuredModel": {
-      "name": "",
-      "description": "",
+      "name": "Vorgestelltes Thingport Modell",
+      "description": "Jeden Tag ein Modell aus deiner Thingport-Bibliothek, 3D",
       "option": {
         "autoRotate": {
-          "label": ""
+          "label": "Drehe das Modell"
         },
         "showDetails": {
-          "label": ""
+          "label": "Modelldetails anzeigen"
         }
       },
-      "title": "",
-      "empty": "",
-      "hint": "",
-      "noPreview": "",
-      "views": "",
+      "title": "Vorgestelltes Modell",
+      "empty": "Noch keine 3D-Modelle vorhanden",
+      "hint": "Zum Drehen ziehen, zum Öffnen klicken",
+      "noPreview": "Noch keine 3D-Vorschau für dieses Modell",
+      "views": "{count, plural, one {# Aufruf} other {# Aufrufe}}",
       "prints": ""
     },
     "thingport-activityHeatmap": {
@@ -4440,38 +4423,29 @@
           "columnTitle": "Steuerung"
         },
         "added": {
-          "columnTitle": "Hinzugefügt",
-          "detailsTitle": "Hinzugefügt am"
+          "columnTitle": "Hinzugefügt"
         },
         "category": {
-          "columnTitle": "Extras",
-          "detailsTitle": "Kategorien (Oder zusätzliche Informationen)"
+          "columnTitle": "Extras"
         },
         "downSpeed": {
-          "columnTitle": "Download",
-          "detailsTitle": "Download Geschwindigkeit"
+          "columnTitle": "Download"
         },
         "index": {
           "columnTitle": "#",
           "detailsTitle": "Aktueller Index im Client"
         },
         "id": {
-          "columnTitle": "ID",
-          "detailsTitle": "ID"
+          "columnTitle": "ID"
         },
-        "integration": {
-          "columnTitle": "Integration"
-        },
-        "name": {
-          "columnTitle": "Job Name"
-        },
+        "integration": {},
+        "name": {},
         "progress": {
           "columnTitle": "Fortschritt",
           "detailsTitle": "Download Fortschritt"
         },
         "ratio": {
-          "columnTitle": "Verhältnis",
-          "detailsTitle": "Torrent Verhältnis (Empfangen/Gesendet)"
+          "columnTitle": "Verhältnis"
         },
         "received": {
           "columnTitle": "Download gesamt",
@@ -4481,26 +4455,16 @@
           "columnTitle": "Upload gesamt",
           "detailsTitle": "Insgesamt hochgeladen"
         },
-        "size": {
-          "columnTitle": "Dateigröße",
-          "detailsTitle": "Gesamtgröße der Auswahl/Dateien"
-        },
-        "state": {
-          "columnTitle": "Staat",
-          "detailsTitle": "Jobstatus"
-        },
+        "size": {},
+        "state": {},
         "time": {
-          "columnTitle": "Endzeit",
-          "detailsTitle": "Zeit danach/zur Fertigstellung",
-          "eta": ""
+          "columnTitle": "Endzeit"
         },
         "type": {
-          "columnTitle": "Typ",
           "detailsTitle": "Download Client"
         },
         "upSpeed": {
-          "columnTitle": "Upload",
-          "detailsTitle": "Upload Geschwindigkeit"
+          "columnTitle": "Upload"
         }
       },
       "states": {
@@ -4689,9 +4653,7 @@
           }
         },
         "queue": {
-          "table": {
-            "size": "Größe"
-          }
+          "table": {}
         },
         "common": {
           "empty": "Leer",
@@ -4714,7 +4676,7 @@
           "label": ""
         },
         "pageSize": {
-          "label": ""
+          "label": "Einträge pro Seite"
         }
       },
       "tab": {
@@ -4789,11 +4751,11 @@
             "hidden": "Versteckt"
           }
         },
-        "sections": {
+        "groupReleases": {
           "label": "",
           "description": ""
         },
-        "collapsedSections": {
+        "sections": {
           "label": "",
           "description": ""
         },
@@ -4855,8 +4817,10 @@
             "label": "Identifier",
             "placeholder": "Name oder Eigentümer/Name"
           },
-          "name": {
-            "label": "Name"
+          "name": {},
+          "excludePrereleases": {
+            "label": "",
+            "description": ""
           },
           "versionFilter": {
             "label": "Versionsfilter",
@@ -4893,7 +4857,7 @@
           "tokens": {
             "label": "",
             "token": "",
-            "configured": "",
+            "configured": "Token konfiguriert",
             "notConfigured": ""
           }
         }
@@ -4997,7 +4961,11 @@
       "runningVersions": "Laufende Versionen",
       "upToDate": "Aktuell",
       "updateAvailable": "Update verfügbar",
-      "unknownStatus": "Unbekannt"
+      "unknownStatus": "Unbekannt",
+      "error": {
+        "collapsedSaveTitle": "",
+        "collapsedSaveMessage": ""
+      }
     },
     "networkControllerSummary": {
       "advanced": {
@@ -5154,7 +5122,6 @@
       "download": "Download",
       "upload": "Upload",
       "ping": "Ping",
-      "status": "Status",
       "avgDownload": "Durchschnittlicher Download",
       "avgUpload": "Durchschnittlicher Upload",
       "avgPing": "Durchschnittlicher Ping",
@@ -5462,7 +5429,6 @@
         "actionsDisabledEditMode": "Aktionen sind deaktiviert, während das Board im Bearbeitungsmodus ist.",
         "widgetItemUnavailable": "Dieses Widget-Element ist nicht verfügbar.",
         "toggle": "Umschalten",
-        "copied": "Kopiert",
         "confirmDelete": "Bestätigen Sie diese zerstörerische Aktion."
       },
       "option": {
@@ -5503,6 +5469,9 @@
       "name": "Beszel Systeme (Tabelle)",
       "description": "Tabellenansicht aller Beszel-überwachten Systeme mit sortierbaren Spalten und Statusindikatoren",
       "option": {
+        "fahrenheit": {
+          "label": "Temperatur in Fahrenheit"
+        },
         "sortBy": {
           "label": "Sortieren nach"
         },
@@ -5517,7 +5486,12 @@
     },
     "beszelSystemGrid": {
       "name": "Beszel Systems (Grid)",
-      "description": ""
+      "description": "",
+      "option": {
+        "fahrenheit": {
+          "label": "Temperatur in Fahrenheit"
+        }
+      }
     },
     "beszelAlerts": {
       "name": "Beszel-Meldungen",
@@ -5543,7 +5517,7 @@
       }
     },
     "beszelSystemStats": {
-      "name": "",
+      "name": "Beszel Systemstatistiken",
       "description": "Zeit-Diagramme für CPU, Speicher, Festplatte, Netzwerk, GPU und Docker Container-Metriken",
       "option": {
         "systemId": {
@@ -5606,12 +5580,12 @@
         "memory": {
           "title": "Speicherverbrauch",
           "subtitle": "Genaue Auslastung zum erfassten Zeitpunkt",
-          "series": "Belegt",
+          "series": "Benutzt",
           "cache": ""
         },
         "disk": {
           "title": "Festplattenbelegung",
-          "subtitle": "",
+          "subtitle": "Nutzung nach Dateisystem",
           "series": "Root"
         },
         "diskIO": {
@@ -5731,7 +5705,6 @@
       },
       "metric": {
         "system": "System",
-        "source": "Integration",
         "hostname": "Hostname",
         "cpuModel": "CPU-Modell",
         "cores": "Kerne",
@@ -6421,13 +6394,7 @@
       "itemRadius": {
         "label": "Elementradius",
         "description": "Ändert den Grad der Rundung ihrer Kacheln auf dem Board",
-        "option": {
-          "xs": "Sehr klein",
-          "sm": "Klein",
-          "md": "Mittel",
-          "lg": "Groß",
-          "xl": "Sehr groß"
-        }
+        "option": {}
       },
       "isPublic": {
         "label": "Öffentlich",
@@ -6826,9 +6793,9 @@
                 }
               },
               "onboardingTours": {
-                "title": "",
-                "description": "",
-                "reset": "",
+                "title": "Einführungstouren",
+                "description": "Setzen Sie die Einführungstouren zurück, um diese beim nächsten Aufruf des Verwaltungsbereichs oder Dashboards erneut anzuzeigen.",
+                "reset": "Einführungstouren zurücksetzen",
                 "resetSuccess": {
                   "title": "",
                   "message": ""
@@ -7053,15 +7020,13 @@
             "signInOverlay": {
               "label": "Hintergrund-Overlay"
             },
+            "signInMarquee": {
+              "label": "",
+              "description": ""
+            },
             "defaultRadius": {
               "label": "Eckenstil",
-              "options": {
-                "xs": "Klein",
-                "sm": "Dezent",
-                "md": "Ausgewogen",
-                "lg": "Abgerundet",
-                "xl": "Weich"
-              }
+              "options": {}
             },
             "customCss": {
               "label": "Global benutzerdefiniertes CSS",
@@ -7083,7 +7048,6 @@
               "greetingDefault": "Standardgrüße",
               "boardColorLocked": "Brettfarbe gesperrt",
               "boardColorFlexible": "Boardfarben erlaubt",
-              "appName": "Job Name",
               "logo": "",
               "greeting": "Gruß",
               "on": "An",
@@ -7218,6 +7182,7 @@
             "model": {
               "title": "Modell",
               "description": "Wählen Sie ein entdecktes Modell aus oder geben Sie eine exakte Endpunkt-Modell-ID ein.",
+              "save": "",
               "placeholder": "Modell-ID",
               "refresh": "Modelle aktualisieren",
               "chooseModel": "Wählen Sie das Modell, das für neue Gespräche verwendet wird.",
@@ -7310,9 +7275,7 @@
             "lastExecution": {
               "label": "Letzte Ausführung"
             },
-            "actions": {
-              "label": "Aktionen"
-            }
+            "actions": {}
           },
           "table": {
             "search": "{count} Aufgaben suchen..."
@@ -7376,9 +7339,7 @@
               },
               "table": {
                 "header": {
-                  "createdBy": "Erstellt von",
-                  "source": "Integration",
-                  "actions": "Aktionen"
+                  "createdBy": "Erstellt von"
                 }
               },
               "provenance": {
@@ -7418,7 +7379,7 @@
               }
             },
             "mcp": {
-              "label": "",
+              "label": "AI & MCP",
               "title": "",
               "subtitle": "",
               "description": "",
@@ -7528,7 +7489,7 @@
               "title": "",
               "warningTitle": "",
               "warningBody": "",
-              "submit": ""
+              "submit": "Datenbank wiederherstellen"
             },
             "progress": {
               "title": "",
@@ -7671,7 +7632,6 @@
     },
     "field": {
       "state": {
-        "label": "Status",
         "option": {
           "created": "Erstellt",
           "running": "Aktiv",
@@ -7698,7 +7658,6 @@
       }
     },
     "action": {
-      "title": "Aktionen",
       "logs": {
         "label": "Logs anzeigen",
         "page": {
@@ -7936,27 +7895,13 @@
       "internalServerError": "Fehler beim Abrufen der Kubernetes Daten"
     },
     "field": {
-      "name": {
-        "label": "Job Name"
-      },
-      "namespace": {
-        "label": "Namensraum"
-      },
-      "creationTimestamp": {
-        "label": "Erstellt"
-      },
-      "state": {
-        "label": "Jobstatus"
-      },
-      "status": {
-        "label": "Status"
-      },
-      "type": {
-        "label": "Download Client"
-      },
-      "architecture": {
-        "label": "Architektur"
-      }
+      "name": {},
+      "namespace": {},
+      "creationTimestamp": {},
+      "state": {},
+      "status": {},
+      "type": {},
+      "architecture": {}
     }
   },
   "permission": {
@@ -7983,10 +7928,7 @@
         "label": "Berechtigung"
       }
     },
-    "action": {
-      "saveUser": "Benutzerberechtigung hinzufügen",
-      "saveGroup": "Gruppenberechtigung speichern"
-    }
+    "action": {}
   },
   "navigationStructure": {
     "manage": {
@@ -8097,8 +8039,7 @@
       "resultsAriaLabel": "{mode} Ergebnisse",
       "footer": {
         "navigate": "",
-        "open": "Öffnen",
-        "close": "Schließen"
+        "open": "Öffnen"
       }
     },
     "error": {
@@ -8198,7 +8139,7 @@
             "children": {
               "detail": {
                 "title": "",
-                "backHint": "",
+                "backHint": "Drücken Sie die Backspace Taste oder verwenden Sie die Zurück Schaltfläche, um zur vorherigen Seite zurückzukehren",
                 "backAction": "Zurück"
               }
             },
@@ -8256,7 +8197,7 @@
               "ddgBangs": {
                 "children": {
                   "detail": {
-                    "title": ""
+                    "title": "DuckDuckGo-Bangs aktivieren"
                   }
                 }
               },
@@ -8284,7 +8225,7 @@
                 }
               },
               "mobileHomeBoardId": {
-                "label": "",
+                "label": "Mobiles Startdashboard",
                 "children": {
                   "detail": {
                     "title": ""
@@ -8528,9 +8469,7 @@
         "urlTemplate": {
           "label": "URL Suchvorlage"
         },
-        "description": {
-          "label": "Beschreibung"
-        }
+        "description": {}
       },
       "page": {
         "list": {
@@ -8599,8 +8538,7 @@
             "table": {
               "header": {
                 "season": "Staffel",
-                "episodes": "Episoden",
-                "status": "Status"
+                "episodes": "Episoden"
               },
               "status": {
                 "requested": "Angefragt"
@@ -9109,7 +9047,6 @@
       "cssDescription": "Bearbeite das komplette Stylesheet. Bestehende Regeln werden beibehalten, es sei denn, sie werden hier entfernt.",
       "cssCharacters": "{count} von 16384 Zeichen",
       "copyCss": "",
-      "copied": "Kopiert",
       "restoreCss": "",
       "remoteCssTitle": "Dieses CSS lädt eine entfernte Ressource",
       "remoteCssDescription": "Importierte Stylesheets und Remote-URLs kontaktieren einen anderen Server, wenn das Board geladen wird. Überprüfen Sie diese, bevor Sie fortfahren."

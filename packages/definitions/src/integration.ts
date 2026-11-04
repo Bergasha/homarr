@@ -28,7 +28,6 @@ export const integrationSecretKindObject = {
   wazuhIndexerUrl: { isPublic: true, multiline: false },
   wazuhIndexerUsername: { isPublic: true, multiline: false },
   wazuhIndexerPassword: { isPublic: false, multiline: false },
-  wazuhDashboardUrl: { isPublic: true, multiline: false },
 } satisfies Record<string, { isPublic: boolean; multiline: boolean }>;
 
 const isIntegrationSecretKind = (value: string): value is IntegrationSecretKind =>
@@ -176,7 +175,7 @@ export const integrationDefs = {
   homebox: {
     httpAuth: { type: "adapter" },
     name: "Homebox",
-    secretKinds: [["username", "password"]],
+    secretKinds: [["username", "password"], ["apiKey"]],
     iconUrl: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons@master/svg/homebox.svg",
     category: ["miscellaneous"],
     documentationSlug: "homebox",
@@ -1005,8 +1004,6 @@ export const integrationDefs = {
       ["username", "password", "wazuhIndexerUrl", "wazuhIndexerUsername", "wazuhIndexerPassword"],
       ["wazuhIndexerUsername", "wazuhIndexerPassword"],
     ],
-    // Used for deep links from the widgets into the Wazuh dashboard.
-    optionalSecretKinds: ["wazuhDashboardUrl"],
     iconUrl: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons@master/svg/wazuh.svg",
     category: ["security", "notifications"],
     documentationSlug: "wazuh",
@@ -1017,16 +1014,18 @@ export const integrationDefs = {
     httpAuth: {
       type: "modes",
       modes: [
-        { when: [], auth: { type: "none" } },
+        { when: ["personalAccessToken"], auth: { type: "bearer", secretKind: "personalAccessToken" } },
         { when: ["username", "password"], auth: { type: "basic" } },
+        { when: [], auth: { type: "none" } },
       ],
     },
     name: "What's Up Docker",
-    secretKinds: [[], ["username", "password"]],
+    secretKinds: [["personalAccessToken"], ["username", "password"], []],
     iconUrl: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons@master/svg/whats-up-docker.svg",
     category: ["healthMonitoring"],
     documentationSlug: "whats-up-docker",
     defaultPort: 3000,
+    apiKeySettingsPath: "/profile",
   },
   llamacpp: {
     httpAuth: { type: "none" },
