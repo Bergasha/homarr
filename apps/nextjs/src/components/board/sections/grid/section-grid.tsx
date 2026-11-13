@@ -28,7 +28,6 @@ import {
   getLogicalGridSize,
   getReadonlyCanvasAttributes,
   LOGICAL_GRID_PITCH,
-  normalizeGridPlacement,
 } from "~/components/board/layout";
 import { calculateBoardUiScale, useBoardCanvasScale } from "~/components/board/layout/scaled-board-canvas";
 import { useGridEditorRuntimeStatus } from "./grid-editor-runtime";
@@ -39,17 +38,17 @@ import { useAutoExpandedSectionIds, useCollapsedSectionIds, useExpandSectionsFor
 import { SectionProvider } from "../section-context";
 import { useSectionItems } from "../use-section-items";
 import { useBoardGridPortalHost } from "./grid-portal-host";
+import {
+  CONTAINER_CARD_INSET,
+  getContainerGridMetrics,
+  getContainerGridMinimumHeights,
+  rendersContainerHeader,
+} from "./container-grid-sizing";
+import { createGridRowProjection } from "./grid-row-projection";
 import classes from "./section-grid.module.css";
 
 const GridContentScaleContext = createContext(1);
-const GridRowScaleContext = createContext(1);
-const CONTAINER_CARD_INSET = 5;
 const EMPTY_SECTION_ID_SET: ReadonlySet<string> = new Set();
-
-const rendersContainerHeader = (container: ContainerSectionItem) =>
-  container.options.collapsible &&
-  container.options.showLabel &&
-  !(container.options.autoExpand.enabled && container.options.autoExpand.inactiveDisplay === "hidden");
 
 interface SectionGridProps {
   section: Exclude<Section, { kind: "container" }> | ContainerSectionItem;
@@ -57,6 +56,7 @@ interface SectionGridProps {
   requestedRowCount?: number;
   viewportRowCountOverride?: number;
   containerInlineInsetCount?: number;
+  containerBlockInsetCount?: number;
   label: string;
   railPlacement?: "main" | "left" | "right";
   className?: string;
@@ -68,6 +68,7 @@ export const SectionGrid = ({
   requestedRowCount = 0,
   viewportRowCountOverride,
   containerInlineInsetCount = 2,
+  containerBlockInsetCount = 2,
   label,
   railPlacement = "main",
   className,
@@ -75,7 +76,6 @@ export const SectionGrid = ({
   const [isEditMode] = useEditMode();
   const canvasScale = useBoardCanvasScale();
   const parentContentScale = useContext(GridContentScaleContext);
-  const parentRowScale = useContext(GridRowScaleContext);
   const [collapsedRowsPerPixel, setCollapsedRowsPerPixel] = useState<number>();
   const editorRuntimeStatus = useGridEditorRuntimeStatus();
   const editorRegistry = useGridEditorRegistry();
@@ -89,19 +89,34 @@ export const SectionGrid = ({
   const collapsedSectionIds = useCollapsedSectionIds();
   const autoExpandedSectionIds = useAutoExpandedSectionIds();
   const expandSectionsForEditing = useExpandSectionsForEditing();
-  const minimumBySectionId = useMemo(() => {
-    const minimumSizes = getContainerMinimumSizes(board, currentLayoutId);
-    return new Map(innerSections.map((innerSection) => [innerSection.id, minimumSizes.get(innerSection.id)]));
-  }, [board, currentLayoutId, innerSections]);
+  const minimumBySectionId = useMemo(() => getContainerMinimumSizes(board, currentLayoutId), [board, currentLayoutId]);
+  const hiddenSectionIds = useMemo(() => {
+    if (isEditMode) return EMPTY_SECTION_ID_SET;
+    return new Set(
+      board.sections
+        .filter(
+          (candidate) =>
+            candidate.kind === "container" &&
+            candidate.options.autoExpand.enabled &&
+            candidate.options.autoExpand.inactiveDisplay === "hidden" &&
+            !autoExpandedSectionIds.has(candidate.id),
+        )
+        .map((candidate) => candidate.id),
+    );
+  }, [autoExpandedSectionIds, board.sections, isEditMode]);
+  const minimumDisplayHeights = useMemo(
+    () => getContainerGridMinimumHeights(board, currentLayoutId, canvasScale, collapsedSectionIds, hiddenSectionIds),
+    [board, currentLayoutId, canvasScale, collapsedSectionIds, hiddenSectionIds],
+  );
 
   const placements = useMemo(
     () =>
-      [...items, ...innerSections].map((item): SectionGridPlacement => {
-        const minimum = item.type === "section" ? minimumBySectionId.get(item.id) : undefined;
-        const isNonScrollableContainer = item.type === "section" && !item.options.scrollable;
-        const height = isNonScrollableContainer && minimum ? Math.max(item.height, minimum.height) : item.height;
-        return normalizeGridPlacement(
-          {
+      getCollapsedDisplayLayout(
+        [...items, ...innerSections].map((item): SectionGridPlacement => {
+          const minimum = item.type === "section" ? minimumBySectionId.get(item.id) : undefined;
+          const isNonScrollableContainer = item.type === "section" && !item.options.scrollable;
+          const height = isNonScrollableContainer && minimum ? Math.max(item.height, minimum.height) : item.height;
+          return {
             id: item.id,
             type: item.type,
             x: item.xOffset,
@@ -110,10 +125,10 @@ export const SectionGrid = ({
             h: height,
             minW: minimum?.width,
             minH: minimum?.height,
-          },
-          columnCount,
-        );
-      }),
+          };
+        }),
+        { columnCount, collapsedItemIds: new Set() },
+      ),
     [columnCount, innerSections, items, minimumBySectionId],
   );
   const collapsibleSectionIds = useMemo(
@@ -138,23 +153,11 @@ export const SectionGrid = ({
       ),
     [collapsedSectionIds, collapsibleSectionIds, placements],
   );
-  const hasCollapsedHeader = innerSections.some(
-    (child) => rendersContainerHeader(child) && directCollapsedIds.has(child.id),
+  const hiddenInactiveIds = useMemo(
+    () => new Set(innerSections.filter((inner) => hiddenSectionIds.has(inner.id)).map((inner) => inner.id)),
+    [hiddenSectionIds, innerSections],
   );
-  const hiddenInactiveIds = useMemo(() => {
-    if (isEditMode) return EMPTY_SECTION_ID_SET;
-    return new Set(
-      innerSections
-        .filter(
-          (inner) =>
-            inner.options.autoExpand.enabled &&
-            inner.options.autoExpand.inactiveDisplay === "hidden" &&
-            !autoExpandedSectionIds.has(inner.id),
-        )
-        .map((inner) => inner.id),
-    );
-  }, [autoExpandedSectionIds, innerSections, isEditMode]);
-  const displayPlacements = useMemo(() => {
+  const collapsedPlacements = useMemo(() => {
     if (directCollapsedIds.size === 0 && hiddenInactiveIds.size === 0) return placements;
 
     const collapsedRowCountById = new Map<string, number>();
@@ -184,10 +187,26 @@ export const SectionGrid = ({
     railPlacement,
   ]);
 
-  const placementById = useMemo(
+  const displayHeights = useMemo(
+    () =>
+      new Map(
+        innerSections
+          .filter((child) => !directCollapsedIds.has(child.id) && !hiddenInactiveIds.has(child.id))
+          .map((child) => [child.id, minimumDisplayHeights.get(child.id) ?? child.height]),
+      ),
+    [innerSections, minimumDisplayHeights, directCollapsedIds, hiddenInactiveIds],
+  );
+  const rowProjection = useMemo(
+    () => createGridRowProjection(collapsedPlacements, displayHeights),
+    [collapsedPlacements, displayHeights],
+  );
+  const displayPlacements = rowProjection.placements;
+  const displayPlacementById = useMemo(
     () => new Map(displayPlacements.map((placement) => [placement.id, placement])),
     [displayPlacements],
   );
+
+  const placementById = useMemo(() => new Map(placements.map((placement) => [placement.id, placement])), [placements]);
   const displayedItems = useMemo(
     () => items.map((item) => withPlacement(item, placementById.get(item.id))),
     [items, placementById],
@@ -200,71 +219,56 @@ export const SectionGrid = ({
   const isRail = railPlacement !== "main";
   const railLogicalHeight = useRailLogicalHeight(viewportRef, isRail, canvasScale);
   const minimumViewportRowCount = useMinimumViewportRowCount(section.kind === "empty" && isEditMode, canvasScale);
-  const contentRowCount = Math.max(1, getLayoutRowCount(displayPlacements));
+  const contentRowCount = Math.max(1, getLayoutRowCount(collapsedPlacements));
   const railViewportRowCount = getGridRowCountForVisualHeight(railLogicalHeight, 1);
   let rowCount = Math.max(contentRowCount, requestedRowCount, minimumViewportRowCount);
   if (isRail) {
     rowCount = Math.max(railViewportRowCount, contentRowCount);
   }
-  const maxRowCount = section.kind === "container" ? rowCount : null;
-  const placementMaxRowCount = maxRowCount;
+  if (isEditMode && section.kind !== "container") {
+    rowCount = Math.max(rowCount, contentRowCount + 1);
+  }
   // A scrollable container isn't forced to grow with its content - it scrolls internally instead
   // of expanding to fit every widget, so its viewport height is capped independently of rowCount.
   const isScrollableContainer = section.kind === "container" && section.options.scrollable;
-  const viewportRowCount =
-    viewportRowCountOverride ?? (isScrollableContainer ? Math.max(requestedRowCount, 1) : rowCount);
   const parentScale = canvasScale * parentContentScale;
   const effectiveCanvasScale = Number.isFinite(parentScale) && parentScale > 0 ? parentScale : 1;
-  // Match the card's inset without changing its persisted grid footprint. Include ancestor
-  // container zoom so equally sized nested containers keep distinct borders at every depth.
-  let outerCardInset = 0;
-  let outerCardInlineInset = 0;
-  if (section.kind === "container") {
-    outerCardInset = (2 * CONTAINER_CARD_INSET) / effectiveCanvasScale;
-    outerCardInlineInset = (containerInlineInsetCount * CONTAINER_CARD_INSET) / effectiveCanvasScale;
-  }
   const fullGridWidth = getLogicalGridSize(columnCount);
-  const fullGridHeight = getLogicalGridSize(rowCount);
-  const fullViewportHeight = getLogicalGridSize(viewportRowCount);
-  let allocatedViewportHeight = fullViewportHeight;
-  if (isRail && railLogicalHeight > 0) {
-    allocatedViewportHeight = railLogicalHeight;
-  } else if (section.kind === "container") {
-    allocatedViewportHeight *= parentRowScale;
-  }
-  const logicalWidth = Math.max(1, fullGridWidth - outerCardInlineInset);
-  const hasContainerHeader = section.kind === "container" && rendersContainerHeader(section);
-  let headerInset = 0;
-  if (hasContainerHeader && !collapsedSectionIds.has(section.id)) {
-    headerInset = (CONTAINER_HEADER_HEIGHT * calculateBoardUiScale(canvasScale)) / parentContentScale;
-  }
+  let logicalWidth = fullGridWidth;
   let nestedHeaderInset = 0;
-  if (
-    section.kind === "container" &&
-    (section.options.collapsible || (section.options.showLabel && section.options.title)) &&
-    innerSections.some(
-      (child) =>
-        child.yOffset === 0 &&
-        (child.options.collapsible || (child.options.showLabel && child.options.title)) &&
-        (!hasContainerHeader || !child.options.collapsible || !child.options.showLabel),
-    )
-  ) {
-    // Keep the extra gap whenever either adjacent header still floats over its border.
-    nestedHeaderInset = (20 * calculateBoardUiScale(canvasScale)) / effectiveCanvasScale;
-  }
-  nestedHeaderInset = Math.min(nestedHeaderInset, Math.max(0, allocatedViewportHeight - outerCardInset - 1));
-  const viewportHeight = Math.max(1, allocatedViewportHeight - outerCardInset - nestedHeaderInset - headerInset);
-  // Fit columns to the card width. Rows fit the available height independently
-  // without creating horizontal gutters or distorting text and icons.
   let containerContentScale = 1;
   let rowScale = 1;
-  if (section.kind === "container" && fullGridWidth > 0 && fullViewportHeight > 0) {
-    containerContentScale = Math.max(0.01, Math.min(logicalWidth / fullGridWidth, 1));
-    rowScale = Math.max(0.01, viewportHeight / (fullViewportHeight * containerContentScale));
-  } else if (isRail && railLogicalHeight > 0 && rowCount <= railViewportRowCount && !hasCollapsedHeader) {
-    // Keep fixed-height collapsed headers out of the rail's fill compression.
-    rowScale = viewportHeight / fullViewportHeight;
+  let viewportHeight = getLogicalGridSize(rowProjection.getDisplayRow(rowCount));
+  if (section.kind === "container") {
+    const metrics = getContainerGridMetrics({
+      section,
+      innerSections,
+      canvasScale,
+      parentContentScale,
+      inlineInsetCount: containerInlineInsetCount,
+      blockInsetCount: containerBlockInsetCount,
+      collapsed: collapsedSectionIds.has(section.id),
+    });
+    logicalWidth = metrics.logicalWidth;
+    containerContentScale = metrics.contentScale;
+    nestedHeaderInset = metrics.nestedHeaderInset;
+    const allocatedHeight = getLogicalGridSize(viewportRowCountOverride ?? Math.max(requestedRowCount, 1));
+    viewportHeight = Math.max(1, allocatedHeight - metrics.overhead);
+    if (!isScrollableContainer) {
+      viewportHeight = Math.max(
+        viewportHeight,
+        getLogicalGridSize(rowProjection.getDisplayRow(rowCount)) * containerContentScale,
+      );
+    }
+  } else if (isRail && railLogicalHeight > 0) {
+    viewportHeight = railLogicalHeight;
+    if (rowCount <= railViewportRowCount && innerSections.length === 0) {
+      rowScale = viewportHeight / getLogicalGridSize(rowCount);
+    }
   }
+  const fullGridHeight = getLogicalGridSize(rowProjection.getDisplayRow(rowCount));
+  const maxRowCount = section.kind === "container" ? rowCount : null;
+  const placementMaxRowCount = maxRowCount;
   const contentScale = parentContentScale * containerContentScale;
   const effectiveContentScale = effectiveCanvasScale * containerContentScale;
   // Compute the combined value in JS rather than a CSS calc() referencing the existing
@@ -318,14 +322,19 @@ export const SectionGrid = ({
       rowCount,
       maxRowCount,
       placementMaxRowCount,
-      placements: displayPlacements,
+      placements: collapsedPlacements,
+      minimumDisplayHeights: displayHeights,
+      canvasScale,
       transactionPlacements: placements,
       className: editorClassName,
       entryElementStore,
     });
   }, [
+    canvasScale,
     columnCount,
     displayPlacements,
+    displayHeights,
+    collapsedPlacements,
     displayedInnerSections,
     displayedItems,
     editorClassName,
@@ -359,7 +368,8 @@ export const SectionGrid = ({
         integrations,
         columnCount,
         maxRowCount,
-        placements: displayPlacements,
+        placements,
+        displayPlacementById,
         interactionDisabled: isInteractionDisabled,
         announce,
         entryElementStore,
@@ -374,7 +384,7 @@ export const SectionGrid = ({
             width: logicalWidth,
             marginTop: nestedHeaderInset,
             height: `var(--board-grid-drag-height, ${viewportHeight}px)`,
-            "--board-item-radius": `var(--mantine-radius-${board.itemRadius})`,
+            "--board-item-radius": `var(--mantine-radius-${board.itemRadius ?? "default"})`,
             "--board-grid-content-scale": containerContentScale,
             "--board-grid-row-scale": rowScale,
             "--board-container-inset": `${CONTAINER_CARD_INSET / effectiveContentScale}px`,
@@ -406,9 +416,7 @@ export const SectionGrid = ({
           data-grid-editor-error={isEditMode && editorRuntimeStatus === "error" ? "true" : undefined}
         >
           <GridContentScaleContext.Provider value={contentScale}>
-            <GridRowScaleContext.Provider value={rowScale}>
-              <SectionContent />
-            </GridRowScaleContext.Provider>
+            <SectionContent />
           </GridContentScaleContext.Provider>
         </Box>
         <div ref={editorHostRef} className={classes.editorPortalHost} />

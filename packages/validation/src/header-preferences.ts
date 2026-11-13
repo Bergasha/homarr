@@ -1,12 +1,13 @@
 import { z } from "zod/v4";
 
-export const headerPreferencesVersion = 3 as const;
+export const headerPreferencesVersion = 4 as const;
 
 export const headerBuiltinItemIds = [
   "logo",
   "search",
   "home",
   "boardSwitcher",
+  "boardTabs",
   "assistant",
   "docker",
   "boardEdit",
@@ -27,10 +28,12 @@ export type HeaderPreferenceItemId = HeaderBuiltinItemId;
 export const headerZoneIds = ["left", "center", "right"] as const;
 export const headerSearchDisplayValues = ["input", "icon"] as const;
 export const headerLogoDisplayValues = ["logo", "logoAndText"] as const;
+export const headerTabsDisplayValues = ["wide", "compact", "indicator"] as const;
 
 export type HeaderZoneId = (typeof headerZoneIds)[number];
 export type HeaderSearchDisplay = (typeof headerSearchDisplayValues)[number];
 export type HeaderLogoDisplay = (typeof headerLogoDisplayValues)[number];
+export type HeaderTabsDisplay = (typeof headerTabsDisplayValues)[number];
 
 const headerBuiltinItemSchema = z
   .object({
@@ -106,6 +109,7 @@ export const headerPreferencesSchema = z
     searchDisplay: z.enum(headerSearchDisplayValues),
     logoDisplay: z.enum(headerLogoDisplayValues).default("logoAndText"),
     autoHideOnScroll: z.boolean().default(false),
+    tabsDisplay: z.enum(headerTabsDisplayValues).default("compact"),
     zones: headerZonesSchema,
   })
   .strict();
@@ -117,6 +121,7 @@ export const headerPreferencesPatchSchema = z.strictObject({
   visible: headerPreferencesSchema.shape.visible.optional(),
   searchDisplay: headerPreferencesSchema.shape.searchDisplay.optional(),
   logoDisplay: headerPreferencesSchema.shape.logoDisplay.removeDefault().optional(),
+  tabsDisplay: headerPreferencesSchema.shape.tabsDisplay.removeDefault().optional(),
   zones: z
     .strictObject({
       left: headerItemListSchema.optional(),
@@ -171,6 +176,7 @@ const migrateLegacyItems = (
   searchDisplay: "input",
   logoDisplay: "logoAndText",
   autoHideOnScroll: false,
+  tabsDisplay: "compact",
   zones: {
     left: zones.left.map(createBuiltinHeaderItem),
     center: zones.center.map(createBuiltinHeaderItem),
@@ -208,15 +214,36 @@ const includeRequiredHeaderItems = (preferences: HeaderPreferences): HeaderPrefe
   };
 };
 
+const legacyHeaderPreferencesV3Schema = headerPreferencesSchema
+  .omit({ tabsDisplay: true })
+  .extend({ version: z.literal(3) });
+
+const includeDefaultBoardTabs = (preferences: HeaderPreferences): HeaderPreferences => {
+  if (getHeaderItems(preferences.zones).some((item) => item.type === "builtin" && item.id === "boardTabs"))
+    return preferences;
+
+  return {
+    ...preferences,
+    zones: { ...preferences.zones, right: [createBuiltinHeaderItem("boardTabs"), ...preferences.zones.right] },
+  };
+};
+
 export const headerPreferencesMutationSchema = z
   .discriminatedUnion("version", [
     headerPreferencesSchema,
     legacyHeaderPreferencesV1Schema,
     legacyHeaderPreferencesV2Schema,
+    legacyHeaderPreferencesV3Schema,
   ])
   .transform((preferences): HeaderPreferences => {
-    if (preferences.version === 1) return includeRequiredHeaderItems(migrateLegacyHeaderPreferencesV1(preferences));
-    if (preferences.version === 2) return includeRequiredHeaderItems(migrateLegacyHeaderPreferencesV2(preferences));
+    if (preferences.version === 1)
+      return includeRequiredHeaderItems(includeDefaultBoardTabs(migrateLegacyHeaderPreferencesV1(preferences)));
+    if (preferences.version === 2)
+      return includeRequiredHeaderItems(includeDefaultBoardTabs(migrateLegacyHeaderPreferencesV2(preferences)));
+    if (preferences.version === 3)
+      return includeRequiredHeaderItems(
+        includeDefaultBoardTabs({ ...preferences, version: headerPreferencesVersion, tabsDisplay: "compact" }),
+      );
     return includeRequiredHeaderItems(preferences);
   });
 
@@ -226,10 +253,12 @@ export const defaultHeaderPreferences = {
   searchDisplay: "input",
   logoDisplay: "logoAndText",
   autoHideOnScroll: false,
+  tabsDisplay: "compact",
   zones: {
     left: [createBuiltinHeaderItem("logo")],
     center: [createBuiltinHeaderItem("search")],
     right: [
+      createBuiltinHeaderItem("boardTabs"),
       createBuiltinHeaderItem("boardEdit"),
       createBuiltinHeaderItem("boardSettings"),
       createBuiltinHeaderItem("user"),
